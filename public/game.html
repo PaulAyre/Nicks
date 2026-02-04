@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Pin the Nipple on the Nic - nics5nips.com</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#c9a84c;--gold-light:#e4c76b;--dark:#0a0a0a;--card:#141414;--muted:#777}
+body{background:var(--dark);color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;overflow-x:hidden;min-height:100vh;min-height:100dvh}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(201,168,76,0.15);padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:1.1rem;letter-spacing:4px;color:var(--gold);font-weight:700}
+.logo span{color:#fff;font-weight:300}
+.nav-links{display:flex;gap:1.5rem;align-items:center;font-size:.8rem;letter-spacing:1px}
+.nav-links a{color:var(--muted);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--gold)}
+
+/* GAME CONTAINER */
+.game-wrap{padding:72px 0 2rem;display:flex;flex-direction:column;align-items:center;min-height:100vh;min-height:100dvh}
+.game-header{text-align:center;padding:1rem 1.5rem;max-width:600px}
+.game-header h1{font-family:Georgia,'Times New Roman',serif;font-size:1.6rem;font-weight:400;margin-bottom:.4rem}
+.game-header h1 em{color:var(--gold);font-style:italic}
+.game-header p{color:var(--muted);font-size:.85rem;line-height:1.5}
+.round-info{display:flex;align-items:center;justify-content:center;gap:1.5rem;margin:1rem 0;font-size:.85rem}
+.round-info .label{color:var(--muted)}
+.round-info .value{color:var(--gold);font-weight:700;font-size:1.1rem}
+.nips-remaining{display:flex;gap:4px}
+.nip-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--gold);transition:all .3s}
+.nip-dot.found{background:var(--gold);transform:scale(1.15)}
+
+/* GAME BOARD */
+.board-container{position:relative;width:min(92vw,500px);aspect-ratio:1;margin:0 auto;border-radius:12px;overflow:hidden;border:1px solid rgba(201,168,76,0.2);touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;cursor:crosshair}
+.board-container picture img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.tap-marker{position:absolute;width:44px;height:44px;margin-left:-22px;margin-top:-22px;border-radius:50%;border:3px solid var(--gold);background:rgba(201,168,76,0.15);animation:markerPop .3s ease-out;pointer-events:none;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:var(--gold)}
+@keyframes markerPop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.tap-marker.correct{border-color:#22c55e;background:rgba(34,197,94,0.2);color:#22c55e}
+.tap-marker.wrong{border-color:#ef4444;background:rgba(239,68,68,0.15);color:#ef4444}
+.target-reveal{position:absolute;width:48px;height:48px;margin-left:-24px;margin-top:-24px;border-radius:50%;border:2px dashed rgba(201,168,76,0.5);pointer-events:none;animation:revealPulse .5s ease-out}
+@keyframes revealPulse{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* INSTRUCTIONS OVERLAY */
+.instructions{position:absolute;inset:0;background:rgba(10,10,10,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;z-index:10;backdrop-filter:blur(4px)}
+.instructions h2{font-family:Georgia,serif;font-size:1.5rem;font-weight:400;margin-bottom:.75rem}
+.instructions h2 em{color:var(--gold)}
+.instructions p{color:var(--muted);font-size:.9rem;margin-bottom:1.5rem;max-width:320px;line-height:1.6}
+.instructions .hint{font-size:.75rem;color:rgba(255,255,255,0.3);margin-top:.5rem}
+.btn{display:inline-block;padding:14px 36px;border-radius:8px;text-decoration:none;font-size:.9rem;font-weight:600;letter-spacing:1px;transition:all .2s;cursor:pointer;border:none}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0a0a0a}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(201,168,76,0.3)}
+
+/* RESULTS */
+.results-overlay{position:fixed;inset:0;background:rgba(10,10,10,0.92);display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;z-index:200;backdrop-filter:blur(8px)}
+.results-overlay.show{display:flex}
+.results-score{font-size:4rem;font-weight:700;color:var(--gold);margin:.5rem 0}
+.results-label{color:var(--muted);font-size:.85rem;letter-spacing:2px;text-transform:uppercase}
+.results-detail{color:var(--muted);font-size:.9rem;margin:1rem 0 2rem;max-width:360px;line-height:1.6}
+.results-stars{font-size:2rem;margin:.5rem 0}
+.results-btns{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+.btn-outline{border:1px solid rgba(201,168,76,0.3);color:var(--gold);background:transparent;padding:14px 36px;border-radius:8px;text-decoration:none;font-size:.9rem;font-weight:600;letter-spacing:1px;cursor:pointer}
+
+/* LEADERBOARD (fake) */
+.leaderboard{margin-top:2rem;width:min(90vw,400px)}
+.leaderboard h3{font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem}
+.lb-row{display:flex;justify-content:space-between;padding:.5rem .75rem;background:var(--card);border-radius:6px;margin-bottom:4px;font-size:.8rem}
+.lb-row .name{color:var(--gold)}
+.lb-row .score{color:var(--muted)}
+
+@media(max-width:400px){
+  .game-header h1{font-size:1.3rem}
+  .board-container{width:96vw}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo" style="text-decoration:none">NIC'S<span>5</span>NIPS</a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="stories.html">Stories</a>
+    <a href="subscribe.html">Subscribe</a>
+  </div>
+</nav>
+
+<div class="game-wrap">
+  <div class="game-header">
+    <h1>Pin the Nipple <em>on the Nic</em></h1>
+    <p>Nic has 5 nipples. Tap where you think each one is. Get as close as you can.</p>
+    <div class="round-info">
+      <div><span class="label">Nipple </span><span class="value" id="round-num">0</span><span class="label"> / 5</span></div>
+      <div class="nips-remaining" id="nip-dots"></div>
+    </div>
+  </div>
+
+  <div class="board-container" id="board">
+    <picture>
+      <source srcset="img/nic.avif" type="image/avif">
+      <img src="img/nic.jpg" alt="The legendary torso" width="500" height="500" draggable="false">
+    </picture>
+    <div class="instructions" id="instructions">
+      <h2>Ready to <em>find the nips?</em></h2>
+      <p>Tap on the image to place each nipple. You get 5 taps &mdash; one for each of Nic's legendary nips.</p>
+      <button class="btn btn-gold" id="start-btn">Start Game</button>
+      <div class="hint">15,312 games played today</div>
+    </div>
+  </div>
+
+  <div class="leaderboard" id="leaderboard-preview" style="display:none">
+    <h3>Today's Top Scores</h3>
+    <div id="fake-lb"></div>
+  </div>
+</div>
+
+<div class="results-overlay" id="results">
+  <div class="results-label">Your Score</div>
+  <div class="results-score" id="final-score">0%</div>
+  <div class="results-stars" id="result-stars"></div>
+  <div class="results-detail" id="result-msg"></div>
+  <div class="results-btns">
+    <button class="btn btn-gold" id="share-btn">Share Result</button>
+    <button class="btn-outline" id="replay-btn">Play Again</button>
+  </div>
+  <div class="leaderboard" style="margin-top:2rem">
+    <h3>Today's Top Scores</h3>
+    <div id="results-lb"></div>
+  </div>
+</div>
+
+<script>
+// === CONFIG ===
+// Nipple positions as % of image dimensions (x%, y%)
+// ADJUST THESE after testing with the actual image!
+const TARGETS = [
+  { x: 33.5, y: 21.5, label: "Upper Right" },
+  { x: 56.5, y: 18.0, label: "Upper Left" },
+  { x: 28.0, y: 40.0, label: "Mid Right" },
+  { x: 62.5, y: 36.5, label: "Mid Left" },
+  { x: 45.0, y: 52.0, label: "The Fifth" },
+];
+const HIT_RADIUS = 8; // % of image width to count as a "hit"
+
+// === STATE ===
+let taps = [];
+let gameActive = false;
+let boardRect = null;
+
+// === ELEMENTS ===
+const board = document.getElementById('board');
+const instructions = document.getElementById('instructions');
+const roundNum = document.getElementById('round-num');
+const nipDots = document.getElementById('nip-dots');
+const results = document.getElementById('results');
+
+// Build nip dots
+for (let i = 0; i < 5; i++) {
+  const d = document.createElement('div');
+  d.className = 'nip-dot';
+  nipDots.appendChild(d);
+}
+
+// === START ===
+document.getElementById('start-btn').addEventListener('click', () => {
+  instructions.style.display = 'none';
+  gameActive = true;
+  taps = [];
+  roundNum.textContent = '0';
+  document.querySelectorAll('.nip-dot').forEach(d => d.classList.remove('found'));
+  // Remove old markers
+  board.querySelectorAll('.tap-marker,.target-reveal').forEach(m => m.remove());
+  updateRound();
+});
+
+function updateRound() {
+  roundNum.textContent = taps.length;
+}
+
+// === TAP HANDLER ===
+board.addEventListener('click', handleTap);
+board.addEventListener('touchend', (e) => {
+  if (!gameActive) return;
+  e.preventDefault();
+  const touch = e.changedTouches[0];
+  const rect = board.getBoundingClientRect();
+  placeTap(
+    ((touch.clientX - rect.left) / rect.width) * 100,
+    ((touch.clientY - rect.top) / rect.height) * 100,
+    touch.clientX - rect.left,
+    touch.clientY - rect.top
+  );
+});
+
+function handleTap(e) {
+  if (!gameActive) return;
+  const rect = board.getBoundingClientRect();
+  const px = ((e.clientX - rect.left) / rect.width) * 100;
+  const py = ((e.clientY - rect.top) / rect.height) * 100;
+  placeTap(px, py, e.clientX - rect.left, e.clientY - rect.top);
+}
+
+function placeTap(px, py, absX, absY) {
+  if (taps.length >= 5) return;
+
+  taps.push({ x: px, y: py });
+
+  // Place marker
+  const marker = document.createElement('div');
+  marker.className = 'tap-marker';
+  marker.textContent = taps.length;
+  marker.style.left = px + '%';
+  marker.style.top = py + '%';
+  board.appendChild(marker);
+
+  // Update dots
+  const dots = document.querySelectorAll('.nip-dot');
+  if (dots[taps.length - 1]) dots[taps.length - 1].classList.add('found');
+  updateRound();
+
+  // Check if done
+  if (taps.length >= 5) {
+    gameActive = false;
+    setTimeout(showResults, 600);
+  }
+}
+
+// === SCORING ===
+function calculateScore() {
+  // For each target, find the closest tap
+  let totalDist = 0;
+  const matched = [];
+
+  // Greedy matching: for each target find closest unused tap
+  const usedTaps = new Set();
+  const targetResults = [];
+
+  for (const target of TARGETS) {
+    let bestDist = Infinity;
+    let bestIdx = -1;
+    taps.forEach((tap, i) => {
+      if (usedTaps.has(i)) return;
+      const d = Math.sqrt(Math.pow(tap.x - target.x, 2) + Math.pow(tap.y - target.y, 2));
+      if (d < bestDist) {
+        bestDist = d;
+        bestIdx = i;
+      }
+    });
+    if (bestIdx >= 0) usedTaps.add(bestIdx);
+    targetResults.push({ target, dist: bestDist, tapIdx: bestIdx });
+    totalDist += bestDist;
+  }
+
+  // Score: 100% if all within HIT_RADIUS, scales down with distance
+  // Max possible distance per target ~= 140 (diagonal of 100x100)
+  const maxDist = HIT_RADIUS * 5;
+  const score = Math.max(0, Math.round((1 - totalDist / (maxDist + totalDist)) * 100));
+
+  return { score, targetResults, totalDist };
+}
+
+function showResults() {
+  const { score, targetResults } = calculateScore();
+
+  // Color the tap markers
+  const markers = board.querySelectorAll('.tap-marker');
+  targetResults.forEach(r => {
+    if (r.tapIdx >= 0 && markers[r.tapIdx]) {
+      markers[r.tapIdx].classList.add(r.dist <= HIT_RADIUS ? 'correct' : 'wrong');
+    }
+    // Show actual target positions
+    const reveal = document.createElement('div');
+    reveal.className = 'target-reveal';
+    reveal.style.left = r.target.x + '%';
+    reveal.style.top = r.target.y + '%';
+    board.appendChild(reveal);
+  });
+
+  // Stars
+  let stars = score >= 90 ? 5 : score >= 75 ? 4 : score >= 55 ? 3 : score >= 35 ? 2 : 1;
+  document.getElementById('result-stars').textContent = '\u2B50'.repeat(stars);
+
+  // Message
+  const msgs = [
+    [90, "Nip Whisperer! You know these nips like the back of your hand."],
+    [75, "Impressive! You clearly have an eye for nipple placement."],
+    [55, "Not bad! A few more rounds and you'll be a certified nip-spotter."],
+    [35, "Keep trying! Nic's nips are trickier than they look."],
+    [0, "Were you even looking at the same torso? Nic is disappointed."],
+  ];
+  const msg = msgs.find(m => score >= m[0])[1];
+
+  document.getElementById('final-score').textContent = score + '%';
+  document.getElementById('result-msg').textContent = msg;
+
+  // Fake leaderboard
+  buildLeaderboard('results-lb', score);
+
+  results.classList.add('show');
+}
+
+function buildLeaderboard(elId, playerScore) {
+  const names = ['@nip_master_99','@sarah_found_5','@dave_m','@jenny_w','@that_guy','@nipseeker','@curious_cat','@pinpro'];
+  const scores = [98, 94, 91, 87, 82, 76, 71, 63];
+  // Insert player score
+  let rows = scores.map((s, i) => ({ name: names[i], score: s }));
+  rows.push({ name: 'You', score: playerScore, isPlayer: true });
+  rows.sort((a, b) => b.score - a.score);
+  rows = rows.slice(0, 8);
+
+  const el = document.getElementById(elId);
+  el.innerHTML = rows.map((r, i) => `
+    <div class="lb-row" style="${r.isPlayer ? 'border:1px solid var(--gold)' : ''}">
+      <span>${i + 1}. <span class="name">${r.name}</span></span>
+      <span class="score">${r.score}%</span>
+    </div>
+  `).join('');
+}
+
+// === SHARE ===
+document.getElementById('share-btn').addEventListener('click', () => {
+  const score = document.getElementById('final-score').textContent;
+  const stars = document.getElementById('result-stars').textContent;
+  const text = `${stars} I scored ${score} on Pin the Nipple!\n\nThink you can find all 5 of Nic's nips?\nnics5nips.com`;
+
+  if (navigator.share) {
+    navigator.share({ title: "Pin the Nipple on the Nic", text, url: 'https://nics5nips.com/game.html' }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('share-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Share Result', 2000);
+    });
+  }
+});
+
+// === REPLAY ===
+document.getElementById('replay-btn').addEventListener('click', () => {
+  results.classList.remove('show');
+  board.querySelectorAll('.tap-marker,.target-reveal').forEach(m => m.remove());
+  taps = [];
+  gameActive = true;
+  document.querySelectorAll('.nip-dot').forEach(d => d.classList.remove('found'));
+  updateRound();
+});
+
+// Show fake leaderboard preview after a delay
+setTimeout(() => {
+  buildLeaderboard('fake-lb', 0);
+  // Remove "You" row since they haven't played yet
+  const fakeRows = document.querySelectorAll('#fake-lb .lb-row');
+  fakeRows.forEach(r => { if (r.style.border) r.remove(); });
+  document.getElementById('leaderboard-preview').style.display = 'block';
+}, 1000);
+</script>
+</body>
+</html>

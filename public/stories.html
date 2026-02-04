@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stories - Nic's 5 Nips</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#c9a84c;--gold-light:#e4c76b;--dark:#0a0a0a;--card:#141414;--muted:#777}
+body{background:var(--dark);color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(201,168,76,0.15);padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:1.1rem;letter-spacing:4px;color:var(--gold);font-weight:700}
+.logo span{color:#fff;font-weight:300}
+.nav-links{display:flex;gap:1.5rem;align-items:center;font-size:.8rem;letter-spacing:1px}
+.nav-links a{color:var(--muted);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--gold)}
+
+.page{padding:80px 1.5rem 3rem;max-width:780px;margin:0 auto}
+.page-header{text-align:center;margin-bottom:2.5rem}
+.page-header h1{font-family:Georgia,'Times New Roman',serif;font-size:clamp(1.8rem,5vw,2.5rem);font-weight:400;margin-bottom:.4rem}
+.page-header h1 em{color:var(--gold);font-style:italic}
+.page-header p{color:var(--muted);font-size:.9rem}
+
+/* STORY CARDS (list view) */
+#list-view .story-card{display:flex;gap:1.25rem;background:var(--card);border:1px solid rgba(201,168,76,0.08);border-radius:12px;padding:1.5rem;margin-bottom:1rem;cursor:pointer;transition:border-color .2s,transform .15s}
+#list-view .story-card:hover{border-color:rgba(201,168,76,0.25);transform:translateY(-2px)}
+.card-badge{flex-shrink:0;width:56px;height:56px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;background:rgba(201,168,76,0.08)}
+.card-body{flex:1;min-width:0}
+.card-tag{font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.35rem}
+.card-title{font-family:Georgia,serif;font-size:1.05rem;font-weight:400;margin-bottom:.35rem;line-height:1.35}
+.card-excerpt{font-size:.8rem;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-meta{font-size:.7rem;color:rgba(255,255,255,0.25);margin-top:.5rem}
+
+/* ARTICLE VIEW */
+#article-view{display:none}
+#article-view.show{display:block}
+#list-view.hide{display:none}
+.back-btn{display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--gold);cursor:pointer;margin-bottom:1.5rem;background:none;border:none;letter-spacing:1px;transition:opacity .2s}
+.back-btn:hover{opacity:.7}
+.article-tag{font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem}
+.article-title{font-family:Georgia,serif;font-size:clamp(1.5rem,4vw,2rem);font-weight:400;margin-bottom:.5rem;line-height:1.3}
+.article-meta{font-size:.75rem;color:var(--muted);margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid rgba(201,168,76,0.1)}
+.article-body{font-family:Georgia,serif;font-size:.95rem;line-height:1.8;color:rgba(255,255,255,0.82)}
+.article-body p{margin-bottom:1.25rem}
+.article-body blockquote{border-left:3px solid var(--gold);padding-left:1.25rem;margin:1.5rem 0;font-style:italic;color:var(--gold)}
+.article-body .pullquote{text-align:center;font-size:1.3rem;color:var(--gold);font-style:italic;padding:1.5rem 1rem;margin:2rem 0;border-top:1px solid rgba(201,168,76,0.15);border-bottom:1px solid rgba(201,168,76,0.15)}
+.article-body .stat-block{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:2rem 0;text-align:center}
+.article-body .stat-block .num{font-family:-apple-system,sans-serif;font-size:1.5rem;color:var(--gold);font-weight:700}
+.article-body .stat-block .lbl{font-family:-apple-system,sans-serif;font-size:.65rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.share-row{margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid rgba(201,168,76,0.1);display:flex;align-items:center;justify-content:space-between}
+.share-row span{font-size:.7rem;color:var(--muted);letter-spacing:1px}
+.share-row .views{color:var(--gold)}
+.related{margin-top:3rem}
+.related h3{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+
+@media(max-width:600px){
+  #list-view .story-card{flex-direction:column;gap:.75rem}
+  .card-badge{width:44px;height:44px;font-size:1.2rem}
+  .article-body .stat-block{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo" style="text-decoration:none">NIC'S<span>5</span>NIPS</a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="game.html">Play</a>
+    <a href="subscribe.html">Subscribe</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1>The <em>Stories</em></h1>
+    <p>News, features, and deep dives into the world's most documented torso</p>
+  </div>
+
+  <div id="list-view"></div>
+  <div id="article-view"></div>
+</div>
+
+<script>
+const stories = [
+  {
+    tag: "Breaking News",
+    icon: "📰",
+    title: "Man With 5 Nipples Breaks Internet, Crashes Three Servers",
+    date: "January 28, 2025",
+    author: "Staff Reporter",
+    views: "847K",
+    excerpt: "What started as a quiet Tuesday evening turned into a global phenomenon when a single photograph of a man known only as 'Nic' surfaced online, revealing what experts are calling the most remarkable torso in recorded history.",
+    body: `<p>What started as a quiet Tuesday evening turned into a global phenomenon when a single photograph of a man known only as "Nic" surfaced online, revealing what experts are calling the most remarkable torso in recorded history.</p>
+<p>The image, which first appeared on an invite-only messaging group before rapidly spreading to mainstream platforms, shows a male torso bearing not the standard two nipples, but an extraordinary five. The internet, predictably, lost its collective mind.</p>
+<div class="pullquote">"In 22 years of web hosting, I have never seen traffic like this. Not even close."</div>
+<p>Within hours, three major hosting providers reported service disruptions as millions attempted to access the image simultaneously. Cloudflare confirmed the photograph generated more traffic in its first four hours than the entire country of Luxembourg produces in a week.</p>
+<p>"We had to spin up emergency infrastructure across six continents," said a visibly shaken Cloudflare engineer who asked not to be named. "We have protocols for presidential elections and Super Bowl halftime shows. Nothing prepared us for five nipples."</p>
+<div class="stat-block">
+  <div><div class="num">2.3M</div><div class="lbl">Views in 24hrs</div></div>
+  <div><div class="num">147</div><div class="lbl">Countries</div></div>
+  <div><div class="num">3</div><div class="lbl">Servers Crashed</div></div>
+</div>
+<p>Social media platforms were similarly overwhelmed. Twitter/X reported that "5 nipples" trended globally for 18 consecutive hours, while TikTok saw over 40,000 reaction videos posted within the first day. Facebook's content moderation team reportedly held an emergency meeting to determine whether the image violated community standards, ultimately ruling that additional nipples are "a natural anatomical variation and not inherently sexual."</p>
+<p>At the time of publication, the official nics5nips.com website had amassed over 15,000 paying subscribers, with the $1,200 "Elite" lifetime package selling out twice. The man himself has declined to comment, though sources close to him describe him as "remarkably calm about the whole thing."</p>`
+  },
+  {
+    tag: "Science",
+    icon: "🔬",
+    title: "Leading Dermatologist Confirms: \"The Fifth Nipple Is Medically Perfect\"",
+    date: "January 25, 2025",
+    author: "Dr. Helena Marsh, MD, PhD",
+    views: "412K",
+    excerpt: "In an exclusive peer-reviewed analysis, a team of dermatologists from three countries have confirmed what millions already suspected: all five of Nic's nipples are anatomically flawless.",
+    body: `<p>In an exclusive peer-reviewed analysis, a team of dermatologists from three countries have confirmed what millions already suspected: all five of Nic's nipples are anatomically flawless.</p>
+<p>The study, conducted jointly by researchers at the Royal College of Dermatology, the University of Melbourne, and Johns Hopkins, examined high-resolution imagery of the subject's torso over a period of six weeks. Their findings, published this week in the Journal of Extraordinary Dermatology, have sent shockwaves through the medical community.</p>
+<blockquote>"Each nipple demonstrates perfect areolar symmetry, consistent pigmentation, and what can only be described as textbook positioning relative to the surrounding musculature. In thirty years of practice, I have never used the word 'elegant' to describe a nipple. I'm using it now."<br>&mdash; Dr. Helena Marsh, Lead Researcher</blockquote>
+<p>The condition, known medically as polythelia, occurs in approximately 1-5% of the population. However, cases typically present as small, rudimentary formations. What makes this case unprecedented is the quality.</p>
+<p>"Most supernumerary nipples are vestigial — barely noticeable nubs," explained Dr. James Chen, a co-author from Melbourne. "These are fully formed, aesthetically proportioned, and — I cannot stress this enough — beautifully placed. It's as if evolution looked at the standard template and said, 'We can do better.'"</p>
+<p>The team has recommended the subject's torso be classified as a "living anatomical reference" and has submitted a formal request to include it in the next edition of Gray's Anatomy.</p>
+<p>When reached for comment, the subject reportedly replied, "Cheers, that's nice of them."</p>`
+  },
+  {
+    tag: "Opinion",
+    icon: "💭",
+    title: "I Subscribed Ironically. Now I Can't Look Away.",
+    date: "January 22, 2025",
+    author: "Rachel Nguyen",
+    views: "289K",
+    excerpt: "I clicked the link at 11pm on a Wednesday. It's now Saturday and I've cancelled all my weekend plans. A personal essay on falling down the five-nipple rabbit hole.",
+    body: `<p>I clicked the link at 11pm on a Wednesday. My friend Sarah sent it with no context — just the URL and three crying-laughing emojis. "You HAVE to see this," she wrote.</p>
+<p>I was going to close the tab. I really was. I had an early meeting. I had laundry to fold. I had a life — or at least, I thought I did. That was before I knew about the nipples.</p>
+<p>The landing page alone held me for twenty minutes. The viewer counter. The testimonials scrolling past. The blurred preview image that revealed just enough to make you need more. I told myself I'd just look for a second. $4.99 felt like nothing. A coffee. A bad sandwich. A reasonable price to satisfy idle curiosity.</p>
+<div class="pullquote">"I told myself it was ironic. I told myself I'd cancel after one day. That was three weeks ago."</div>
+<p>Then I saw the image. Unblurred. In full resolution.</p>
+<p>Reader, there are five nipples, and they are magnificent.</p>
+<p>I zoomed in on each one individually. I compared their placement to anatomical charts. I downloaded the image and showed it to my flatmate, who immediately subscribed without saying a word. We sat in silence for a full minute, just looking.</p>
+<p>By Thursday I'd played Pin the Nipple fourteen times. My high score is 94%, which I'm told puts me in the top 2% globally. I've joined the community forums. I have a badge. I made a friend named Dave from Bristol who is equally obsessed.</p>
+<p>It's now Saturday. I've cancelled brunch, a gym class, and a date. I'm writing this from my couch in my dressing gown, refreshing the community page. Someone just posted a watercolour painting of the torso and it has 3,000 upvotes.</p>
+<p>I subscribed ironically. But there's nothing ironic about how I feel. I feel seen. I feel part of something. I feel like I've finally found my people.</p>
+<p>Nic, if you're reading this: thank you. And please never wear a shirt.</p>`
+  },
+  {
+    tag: "Investigation",
+    icon: "🔍",
+    title: "The Hunt for the Fifth: How Amateur Sleuths Mapped Every Nipple",
+    date: "January 20, 2025",
+    author: "Tom Ashworth",
+    views: "198K",
+    excerpt: "Within 48 hours of the image going viral, an online community of thousands had formed with one shared mission: to precisely locate, catalogue, and debate the positioning of each nipple.",
+    body: `<p>Within 48 hours of the image going viral, an online community of thousands had formed with one shared mission: to precisely locate, catalogue, and debate the positioning of every single nipple on Nic's torso.</p>
+<p>The group, which calls itself "The Nip Detectives," began as a small Discord server before rapidly expanding to over 8,000 members across 47 countries. Their methods are meticulous. Their dedication, frankly, is terrifying.</p>
+<p>"We started with basic grid analysis," explained the group's founder, who goes by the handle @chest_inspector. "We overlaid a coordinate system on the image and began mapping each nipple's position relative to anatomical landmarks — the clavicle, the sternum, the navel."</p>
+<blockquote>"Nipples 1 and 2 are in standard positions. Nipple 3 sits at a mathematically fascinating angle. Nipple 4 maintains perfect symmetry with 3. And Nipple 5... Nipple 5 is the wildcard."</blockquote>
+<p>The debate over Nipple 5 has become the group's defining obsession. Some members argue it sits precisely on the "milk line" — the embryological path along which supernumerary nipples typically form. Others contend it breaks from the pattern entirely, occupying what one member described as "uncharted nipple territory."</p>
+<p>The group has produced over 200 pages of analysis, including heat maps, symmetry calculations, and a 45-minute documentary titled "The Fifth Element" that has been viewed over 300,000 times on YouTube.</p>
+<p>"People think we're mad," admitted @chest_inspector. "But what we're doing is important. Future generations deserve a complete, accurate record of this torso."</p>
+<p>At press time, the group had submitted a formal request to have the image preserved in the Internet Archive's permanent collection.</p>`
+  },
+  {
+    tag: "Lifestyle",
+    icon: "✨",
+    title: "5 Nips, 5 Life Lessons: What Nic's Torso Taught Me About Self-Acceptance",
+    date: "January 18, 2025",
+    author: "Sophie Williams",
+    views: "156K",
+    excerpt: "In a world obsessed with perfection, one man's extraordinary torso is teaching us all that being different isn't just okay — it's spectacular.",
+    body: `<p>We live in a world that tells us to conform. To fit in. To have exactly two nipples like everybody else. But Nic — blessed, extraordinary Nic — looked at convention and said: "No. I will have five."</p>
+<p>And honestly? It's the most inspiring thing I've encountered all year.</p>
+<p><strong>Lesson 1: Own what makes you different.</strong> Nic doesn't hide his nipples. He doesn't wear turtlenecks or avoid the beach. He stands proudly, torso forward, all five nips blazing. There's a lesson there for all of us.</p>
+<p><strong>Lesson 2: More is more.</strong> We've been told that less is more. Minimalism. Clean lines. Two nipples. But what if we've been wrong this whole time? What if the answer was always: more nipples?</p>
+<p><strong>Lesson 3: Community finds you.</strong> Nic didn't set out to build a community of 15,000 devoted subscribers. He just existed, authentically, with his five nipples, and the community built itself around him. When you're genuine, people show up.</p>
+<div class="pullquote">"He didn't choose the five-nipple life. The five-nipple life chose him."</div>
+<p><strong>Lesson 4: Perfection is subjective.</strong> Three separate dermatologists have described Nic's torso as "medically perfect." But perfection, in this case, doesn't mean standard. It means extraordinary. It means five where others have two, and every single one flawless.</p>
+<p><strong>Lesson 5: Never underestimate the internet.</strong> A single photograph turned a quiet bloke into a global phenomenon with a subscriber count that rivals mid-tier streaming services. The internet, for all its faults, still knows greatness when it sees it.</p>
+<p>Nic, you beautiful five-nippled king. Never change. (Unless it's to grow a sixth. We'd all subscribe to that.)</p>`
+  },
+  {
+    tag: "Technology",
+    icon: "⚡",
+    title: "Inside 'Pin the Nipple': The Game That's Been Played 2 Million Times",
+    date: "January 15, 2025",
+    author: "Marcus Webb",
+    views: "234K",
+    excerpt: "The deceptively simple browser game has become a viral sensation in its own right, with players across 147 countries competing for nipple-placement supremacy.",
+    body: `<p>It started as a throwaway feature — a quick interactive element to complement the main attraction. But "Pin the Nipple on the Nic" has taken on a life of its own, racking up over 2 million plays in just two weeks and spawning a competitive scene that nobody saw coming.</p>
+<p>The premise is disarmingly simple: you're shown Nic's torso and must tap where you think each of the five nipples is located. You get five taps. Accuracy is scored as a percentage. That's it.</p>
+<p>"We thought it'd be a fun distraction," said the site's anonymous developer. "We did not anticipate speedrunning leaderboards."</p>
+<div class="stat-block">
+  <div><div class="num">2.1M</div><div class="lbl">Games Played</div></div>
+  <div><div class="num">94%</div><div class="lbl">Top Score</div></div>
+  <div><div class="num">6.3</div><div class="lbl">Avg. Plays Per User</div></div>
+</div>
+<p>The competitive scene centres around a Discord server called "Nip Speedruns" where players share strategies, analyse optimal tap sequences, and debate whether Nipple 3 is "slightly left of where everyone thinks it is."</p>
+<p>The current world record holder, a user known as @that_guy_pete, has achieved a verified 98% accuracy score, which he attributes to "hundreds of hours of practice and an intimate understanding of Nic's musculature."</p>
+<blockquote>"People say it's just a game. But when you're staring at that torso, finger hovering, trying to remember if Nipple 4 is 2 pixels left or right of the ab crease — that's pressure. That's real pressure."</blockquote>
+<p>Several universities have reportedly incorporated the game into their anatomy courses, though none would confirm this on the record. A primary school in Leeds was forced to issue a statement after students were caught playing during assembly.</p>
+<p>The developer is rumoured to be working on a sequel: "Pin the Nipple: Night Mode," where players must locate the nipples on a darkened image using only a small torch-like cursor. No release date has been confirmed.</p>`
+  },
+  {
+    tag: "Travel",
+    icon: "✈️",
+    title: "Nip Tourism: The Fans Who've Travelled Thousands of Miles",
+    date: "January 12, 2025",
+    author: "Kate Marshall",
+    views: "87K",
+    excerpt: "From New Zealand to Norway, devoted fans are booking flights to attend meet-ups, share stories, and celebrate the torso that brought them together.",
+    body: `<p>When Rachel Huang booked a flight from Auckland to London, her family assumed she was visiting friends. She was, in a sense — just not the kind they expected.</p>
+<p>"I'd been in the online community for two weeks," she explains over coffee in Shoreditch, wearing a custom t-shirt that reads 'I FLEW 18,000KM FOR 5 NIPS.' "Someone suggested a meet-up, and I thought: why not? When is life going to present an opportunity like this again?"</p>
+<p>Rachel is one of a growing number of "Nip Tourists" — fans who have travelled significant distances to attend community events, visit the location where the original photograph was taken, or simply to be among fellow enthusiasts.</p>
+<blockquote>"My husband thinks I've lost the plot. But he also scored 31% on Pin the Nipple, so his judgement is questionable."</blockquote>
+<p>The first official meet-up, held at a pub in East London, drew over 200 attendees from 14 countries. Organisers had expected 30. The pub ran out of beer by 9pm.</p>
+<p>"It was genuinely emotional," recalls organiser Dave Mitchell, 34, from Bristol. "You spend weeks talking to these people online about nipples, and then suddenly they're real, standing in front of you, wearing nipple-themed fancy dress. I'm not ashamed to say I teared up."</p>
+<p>A second meet-up is planned for Melbourne, with a third rumoured for Cape Town. There is an unconfirmed report that a cruise line has expressed interest in hosting a "Nips at Sea" themed voyage, though this remains speculation.</p>
+<p>Rachel, meanwhile, says the trip was worth every penny. "I've seen the world's great wonders," she says, gesturing broadly. "The Grand Canyon. The Northern Lights. Nothing — and I mean nothing — compares to being in a room of 200 people who truly understand the magnificence of a fifth nipple."</p>`
+  },
+  {
+    tag: "Exclusive",
+    icon: "👑",
+    title: "Confessions of an Elite Subscriber: \"The Signed Print Hangs Above My Fireplace\"",
+    date: "January 10, 2025",
+    author: "Anonymous (as told to Staff)",
+    views: "341K",
+    excerpt: "One of the first buyers of the $1,200 Elite lifetime package opens up about their purchase, the signed torso print, and the private video call that changed everything.",
+    body: `<p>I want to be clear about something upfront: I am a serious person. I have a mortgage. I chair the local parish council. I drive a Volvo. I am not, by any conventional measure, the sort of person who spends $1,200 on a subscription to a website about nipples.</p>
+<p>And yet here we are.</p>
+<p>It happened on a Tuesday. My daughter sent me the link. I dismissed it. Then I looked. Then I subscribed to Basic. Then Premium. Then, at 2am, with the kind of clarity that only arrives in the small hours, I purchased the Elite lifetime package.</p>
+<div class="pullquote">"I chair the parish council. I drive a Volvo. I am not the sort of person who does this. And yet."</div>
+<p>The confirmation email arrived with a warmth I hadn't expected. "Welcome to the inner circle," it read. "You are now part of something extraordinary." I won't lie — I felt something.</p>
+<p>The signed torso print arrived within the week, beautifully mounted in a museum-quality frame. The signature is modest — just "Nic" in silver pen, bottom right corner. It now hangs above our fireplace, where a watercolour of the Lake District used to be. My wife has not commented on the change, which I take as tacit approval.</p>
+<p>The private video call was... transformative. I can't share details — there's an NDA — but I can say this: meeting the man behind the nipples was profoundly moving. He's gracious. He's humble. He offered me a biscuit. The nipples, even through a screen, are everything the photographs promise.</p>
+<blockquote>"He offered me a biscuit. The nipples, even through a screen, are everything the photographs promise."</blockquote>
+<p>Do I regret spending $1,200? I do not. I've spent more on a sofa that I sit on less than I look at that print. Value is subjective. Nipples are forever.</p>
+<p>My name, as promised, is now engraved on the Nip Wall of Fame. I check it weekly. It brings me peace.</p>`
+  },
+  {
+    tag: "Culture",
+    icon: "🎨",
+    title: "From Reddit to the Royal Academy: How 5 Nipples Conquered the Art World",
+    date: "January 8, 2025",
+    author: "James Whitfield",
+    views: "124K",
+    excerpt: "Fan art, oil paintings, interpretive sculptures, and one very controversial watercolour — the creative response to Nic's torso has been nothing short of extraordinary.",
+    body: `<p>When the photograph first circulated, the internet's creative community did what it always does: it created. Within hours, the first fan art appeared — a hastily drawn but oddly moving pencil sketch posted to Reddit with the caption: "I had to."</p>
+<p>That sketch has since been upvoted 47,000 times. And it was only the beginning.</p>
+<p>In the two weeks since the image went viral, artists across every medium have responded. Oil paintings. Watercolours. Digital art. Sculptures. One ceramicist in Portland created a full-scale torso replica that sold on Etsy for $3,400 within minutes of listing. A graffiti artist in Berlin painted a three-storey mural on the side of an apartment building. Residents have petitioned to have it preserved.</p>
+<div class="stat-block">
+  <div><div class="num">12K+</div><div class="lbl">Fan Art Pieces</div></div>
+  <div><div class="num">$3,400</div><div class="lbl">Top Sale Price</div></div>
+  <div><div class="num">1</div><div class="lbl">Berlin Mural</div></div>
+</div>
+<p>The most controversial piece — a large-scale watercolour titled "Five Points of Light" by emerging artist Maya Chen — depicts the torso in luminous, almost spiritual tones. It was submitted to the Royal Academy's Summer Exhibition and, according to sources within the selection committee, provoked "the most heated debate in recent memory."</p>
+<blockquote>"Art has always been about the human form. This is simply... more human form than usual."<br>&mdash; Maya Chen, Artist</blockquote>
+<p>Not all responses have been visual. A composer in Vienna wrote a five-movement symphony, each movement representing a nipple. A poet in Edinburgh published a sonnet cycle. A playwright in Melbourne is workshopping a one-man show titled "The Fifth," which premiered to a sold-out audience at a 50-seat fringe venue.</p>
+<p>The subject himself has been characteristically understated about his impact on the arts. When informed that his torso had inspired a symphony, he reportedly replied: "That's mental."</p>
+<p>It is, Nic. Beautifully, wonderfully mental.</p>`
+  }
+];
+
+// Render list view
+const listView = document.getElementById('list-view');
+const articleView = document.getElementById('article-view');
+
+function renderList() {
+  listView.innerHTML = stories.map((s, i) => `
+    <div class="story-card" data-idx="${i}">
+      <div class="card-badge">${s.icon}</div>
+      <div class="card-body">
+        <div class="card-tag">${s.tag}</div>
+        <div class="card-title">${s.title}</div>
+        <div class="card-excerpt">${s.excerpt}</div>
+        <div class="card-meta">${s.date} &middot; ${s.author} &middot; ${s.views} views</div>
+      </div>
+    </div>
+  `).join('');
+
+  listView.querySelectorAll('.story-card').forEach(card => {
+    card.addEventListener('click', () => openArticle(parseInt(card.dataset.idx)));
+  });
+}
+
+function openArticle(idx) {
+  const s = stories[idx];
+  // Fake a random view count bump
+  const liveViews = parseInt(s.views.replace(/[^0-9]/g, '')) * 1000 + Math.floor(Math.random() * 5000);
+
+  articleView.innerHTML = `
+    <button class="back-btn" id="back-btn">&larr; BACK TO STORIES</button>
+    <div class="article-tag">${s.tag}</div>
+    <h1 class="article-title">${s.title}</h1>
+    <div class="article-meta">By ${s.author} &middot; ${s.date} &middot; ${liveViews.toLocaleString()} views</div>
+    <div class="article-body">${s.body}</div>
+    <div class="share-row">
+      <span><span class="views">${liveViews.toLocaleString()}</span> views</span>
+      <span style="font-size:.75rem;color:var(--gold);cursor:pointer" id="share-article">Share this story</span>
+    </div>
+    <div class="related">
+      <h3>More Stories</h3>
+      ${getRelated(idx)}
+    </div>
+  `;
+
+  listView.classList.add('hide');
+  articleView.classList.add('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  document.getElementById('back-btn').addEventListener('click', closeArticle);
+  document.getElementById('share-article').addEventListener('click', () => {
+    const text = `"${s.title}" - Read the full story at nics5nips.com/stories`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        document.getElementById('share-article').textContent = 'Link copied!';
+      });
+    }
+  });
+
+  // Related clicks
+  articleView.querySelectorAll('.story-card').forEach(card => {
+    card.addEventListener('click', () => openArticle(parseInt(card.dataset.idx)));
+  });
+}
+
+function getRelated(currentIdx) {
+  const indices = stories.map((_, i) => i).filter(i => i !== currentIdx);
+  // Pick 2 random
+  const shuffled = indices.sort(() => Math.random() - 0.5).slice(0, 2);
+  return shuffled.map(i => {
+    const s = stories[i];
+    return `<div class="story-card" data-idx="${i}" style="margin-top:.75rem">
+      <div class="card-badge">${s.icon}</div>
+      <div class="card-body">
+        <div class="card-tag">${s.tag}</div>
+        <div class="card-title">${s.title}</div>
+        <div class="card-meta">${s.date} &middot; ${s.views} views</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function closeArticle() {
+  articleView.classList.remove('show');
+  listView.classList.remove('hide');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Handle browser back
+window.addEventListener('popstate', () => {
+  if (articleView.classList.contains('show')) {
+    closeArticle();
+  }
+});
+
+renderList();
+</script>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About Nic - The Man, The Myth, The Nipples</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#c9a84c;--gold-light:#e4c76b;--dark:#0a0a0a;--card:#141414;--muted:#777}
+body{background:var(--dark);color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(201,168,76,0.15);padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:1.1rem;letter-spacing:4px;color:var(--gold);font-weight:700}
+.logo span{color:#fff;font-weight:300}
+.nav-links{display:flex;gap:1.5rem;align-items:center;font-size:.8rem;letter-spacing:1px}
+.nav-links a{color:var(--muted);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--gold)}
+
+.page{padding:80px 1.5rem 3rem;max-width:720px;margin:0 auto}
+
+/* HERO BIO */
+.bio-hero{text-align:center;margin-bottom:3rem}
+.bio-avatar{width:180px;height:180px;border-radius:50%;margin:0 auto 1.5rem;overflow:hidden;border:3px solid var(--gold);box-shadow:0 12px 40px rgba(0,0,0,0.5)}
+.bio-avatar picture img{width:100%;height:100%;object-fit:cover;object-position:center 15%}
+.bio-hero h1{font-family:Georgia,serif;font-size:clamp(1.8rem,5vw,2.5rem);font-weight:400;margin-bottom:.3rem}
+.bio-hero h1 em{color:var(--gold);font-style:italic}
+.bio-tagline{color:var(--gold);font-size:.8rem;letter-spacing:3px;text-transform:uppercase;margin-bottom:1rem}
+.bio-subtitle{color:var(--muted);font-size:.95rem;max-width:500px;margin:0 auto;line-height:1.6}
+
+/* STATS ROW */
+.bio-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:1px;background:rgba(201,168,76,0.08);border-radius:12px;overflow:hidden;margin:2.5rem 0}
+.bio-stat{background:var(--dark);padding:1.5rem 1rem;text-align:center}
+.bio-stat .num{font-size:1.6rem;color:var(--gold);font-weight:700;margin-bottom:.15rem}
+.bio-stat .lbl{font-size:.65rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+
+/* BIO SECTIONS */
+.bio-section{margin-bottom:2.5rem}
+.bio-section h2{font-family:Georgia,serif;font-size:1.4rem;font-weight:400;margin-bottom:.75rem}
+.bio-section h2 em{color:var(--gold);font-style:italic}
+.bio-section p{font-family:Georgia,serif;color:rgba(255,255,255,0.8);font-size:.92rem;line-height:1.8;margin-bottom:1rem}
+.bio-section blockquote{border-left:3px solid var(--gold);padding-left:1.25rem;margin:1.25rem 0;font-style:italic;color:var(--gold);font-family:Georgia,serif;font-size:1rem;line-height:1.6}
+
+/* TIMELINE */
+.timeline{position:relative;padding-left:2rem;margin:1.5rem 0}
+.timeline::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:2px;background:rgba(201,168,76,0.2)}
+.timeline-item{position:relative;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid rgba(201,168,76,0.05)}
+.timeline-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.timeline-item::before{content:'';position:absolute;left:-2rem;top:4px;width:16px;height:16px;border-radius:50%;border:2px solid var(--gold);background:var(--dark)}
+.timeline-year{font-size:.7rem;letter-spacing:2px;color:var(--gold);margin-bottom:.25rem}
+.timeline-title{font-size:.95rem;font-weight:600;margin-bottom:.25rem}
+.timeline-desc{font-size:.82rem;color:var(--muted);line-height:1.5}
+.timeline-nip{display:inline-block;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--dark);background:var(--gold);border-radius:20px;padding:2px 10px;margin-top:.35rem}
+
+/* NIPPLE MAP */
+.nip-map{background:var(--card);border:1px solid rgba(201,168,76,0.1);border-radius:12px;padding:2rem;margin:2rem 0}
+.nip-map h3{font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;text-align:center}
+.nip-list{display:grid;gap:.75rem}
+.nip-entry{display:flex;gap:1rem;align-items:flex-start}
+.nip-num{flex-shrink:0;width:36px;height:36px;border-radius:50%;background:rgba(201,168,76,0.1);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:var(--gold)}
+.nip-info .nip-name{font-size:.85rem;font-weight:600;color:#fff}
+.nip-info .nip-desc{font-size:.78rem;color:var(--muted);line-height:1.4}
+
+/* LANG SELECTOR */
+.lang-selector{position:fixed;bottom:1rem;right:1rem;z-index:95}
+.lang-btn{background:rgba(20,20,20,0.92);border:1px solid rgba(201,168,76,0.15);border-radius:10px;padding:8px 14px;font-size:.75rem;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:6px;backdrop-filter:blur(8px);transition:border-color .2s}
+.lang-btn:hover{border-color:rgba(201,168,76,0.3)}
+.lang-btn .flag{font-size:1rem}
+.lang-menu{display:none;position:absolute;bottom:100%;right:0;margin-bottom:6px;background:rgba(20,20,20,0.95);border:1px solid rgba(201,168,76,0.15);border-radius:10px;overflow:hidden;min-width:200px;backdrop-filter:blur(10px);box-shadow:0 8px 30px rgba(0,0,0,0.5)}
+.lang-menu.show{display:block}
+.lang-option{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:.8rem;color:var(--muted);cursor:pointer;transition:background .15s}
+.lang-option:hover{background:rgba(201,168,76,0.08);color:#fff}
+.lang-option .flag{font-size:1.1rem}
+.lang-option.active{color:var(--gold)}
+
+footer{padding:3rem 1.5rem 5rem;text-align:center;border-top:1px solid rgba(201,168,76,0.08);font-size:.7rem;color:rgba(255,255,255,0.25);line-height:2}
+footer a{color:rgba(201,168,76,0.4);text-decoration:none}
+
+@media(max-width:600px){
+  .bio-avatar{width:140px;height:140px}
+  .timeline{padding-left:1.5rem}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo" style="text-decoration:none">NIC'S<span>5</span>NIPS</a>
+  <div class="nav-links">
+    <a href="stories.html">Stories</a>
+    <a href="game.html">Play</a>
+    <a href="subscribe.html">Subscribe</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="bio-hero">
+    <div class="bio-avatar">
+      <picture>
+        <source srcset="img/nic.avif" type="image/avif">
+        <img src="img/nic.jpg" alt="Nic" width="180" height="180">
+      </picture>
+    </div>
+    <div class="bio-tagline">The Man. The Myth. The Nipples.</div>
+    <h1>About <em>Nic</em></h1>
+    <p class="bio-subtitle">Born in Manchester. Educated in business. Blessed with nipples. The internet's most extraordinary torso belongs to an extraordinarily ordinary bloke.</p>
+  </div>
+
+  <div class="bio-stats">
+    <div class="bio-stat"><div class="num">5</div><div class="lbl">Nipples</div></div>
+    <div class="bio-stat"><div class="num">1</div><div class="lbl">Business Degree</div></div>
+    <div class="bio-stat"><div class="num">5</div><div class="lbl">Career Ventures</div></div>
+    <div class="bio-stat"><div class="num">1</div><div class="lbl">Legend</div></div>
+  </div>
+
+  <div class="bio-section">
+    <h2>The <em>Early Years</em></h2>
+    <p>Nicholas was born in Manchester in the early 1990s to a family of perfectly standard nipple counts. The third nipple was first noticed by his mum during bath time at age two. She described it as "a bonus." The fourth was identified by a school nurse during a routine check-up in Year 7, causing what Nic later described as "a bit of a scene in the medical room." The fifth arrived — or was discovered, depending on your philosophical outlook — during freshers' week at university, when a flatmate pointed it out after a particularly enthusiastic game of shirts vs. skins football.</p>
+    <blockquote>"Most people go to uni and discover politics, or philosophy, or themselves. I discovered a fifth nipple."</blockquote>
+  </div>
+
+  <div class="bio-section">
+    <h2>The <em>Education</em></h2>
+    <p>Nic studied Business Management at university, graduating with what he describes as "a solid 2:1 and a torso that would eventually be worth more than the degree." The irony is not lost on him: a man with five nipples holds a business degree, making each nipple — statistically speaking — a learn-ed nipple.</p>
+    <p>"People ask if I use my degree," he says. "I tell them I'm managing the most unique personal brand in Britain. So yes. Constantly."</p>
+  </div>
+
+  <div class="bio-section">
+    <h2>The <em>Five Ventures</em></h2>
+    <p>In a coincidence that Nic insists is "completely accidental and honestly a bit weird," he has held exactly five distinct career ventures — one per nipple. Each chapter of his professional life has brought its own lessons, and each nipple, he claims, provided silent moral support throughout.</p>
+
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-year">Venture #1</div>
+        <div class="timeline-title">Recruitment Consultant</div>
+        <div class="timeline-desc">Fresh out of university, Nic entered the world of recruitment. He excelled at reading people, which he attributes to "having more nipples than most — it gives you a sixth sense, except it's technically a fifth nipple." Left after 18 months to pursue "something with more soul."</div>
+        <span class="timeline-nip">Nipple 1: Upper Right</span>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-year">Venture #2</div>
+        <div class="timeline-title">Co-Founder, Mobile Car Valeting</div>
+        <div class="timeline-desc">Launched a mobile car cleaning service with a mate from school. The business model was sound; the mate's work ethic less so. Nic describes this period as "educational" and "a reminder that not everyone brings five nipples' worth of effort to a partnership."</div>
+        <span class="timeline-nip">Nipple 2: Upper Left</span>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-year">Venture #3</div>
+        <div class="timeline-title">Property Development</div>
+        <div class="timeline-desc">Entered the property game with characteristic Mancunian confidence. Flipped two houses. Renovated a flat. Lost money on a garage conversion that "taught him more than university ever did." The nipples, he notes, "were with him through every viewing."</div>
+        <span class="timeline-nip">Nipple 3: Mid Right</span>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-year">Venture #4</div>
+        <div class="timeline-title">Personal Training & Fitness</div>
+        <div class="timeline-desc">Retrained as a personal trainer, finally putting the torso to professional use. Built a loyal client base who valued his motivational style, described by one regular as "intense, supportive, and slightly distracting because of the nipple situation." Clients averaged a 94% retention rate — the same score most people can only dream of on Pin the Nipple.</div>
+        <span class="timeline-nip">Nipple 4: Mid Left</span>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-year">Venture #5</div>
+        <div class="timeline-title">Internet Phenomenon</div>
+        <div class="timeline-desc">The current chapter. One photograph. Five nipples. 15,000+ subscribers. A global community. An interactive game played over 2 million times. A $1,200 Elite package that keeps selling out. Nic didn't plan this. But then again, he didn't plan the nipples either. Some things are simply destiny.</div>
+        <span class="timeline-nip">Nipple 5: The Wildcard</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="nip-map">
+    <h3>The Official Nipple Registry</h3>
+    <div class="nip-list">
+      <div class="nip-entry">
+        <div class="nip-num">1</div>
+        <div class="nip-info">
+          <div class="nip-name">The Original</div>
+          <div class="nip-desc">Upper right. The first. The OG. Present from birth and setting the standard for all that would follow. Perfectly positioned, medically unremarkable, and foundational to the collection.</div>
+        </div>
+      </div>
+      <div class="nip-entry">
+        <div class="nip-num">2</div>
+        <div class="nip-info">
+          <div class="nip-name">The Mirror</div>
+          <div class="nip-desc">Upper left. The symmetrical counterpart. Together with Nipple 1, they form what dermatologists describe as "a textbook pair." Little did they know they were merely the opening act.</div>
+        </div>
+      </div>
+      <div class="nip-entry">
+        <div class="nip-num">3</div>
+        <div class="nip-info">
+          <div class="nip-name">The Discovery</div>
+          <div class="nip-desc">Mid-torso right. The one that started the conversation. First identified at age two during bath time. Nic's mum reportedly said, "Oh, there's another one," with the calm of a woman who had clearly been expecting it.</div>
+        </div>
+      </div>
+      <div class="nip-entry">
+        <div class="nip-num">4</div>
+        <div class="nip-info">
+          <div class="nip-name">The School Nurse Special</div>
+          <div class="nip-desc">Mid-torso left. Discovered during a Year 7 health check. The school nurse reportedly went quiet for several seconds before saying, "I'm going to need a second opinion." The second opinion confirmed: nipple.</div>
+        </div>
+      </div>
+      <div class="nip-entry">
+        <div class="nip-num">5</div>
+        <div class="nip-info">
+          <div class="nip-name">The Wildcard</div>
+          <div class="nip-desc">Position classified. The final frontier. Discovered during freshers' week and the subject of more internet debate than any anatomical feature in recorded history. Its exact location has been the subject of over 200 pages of community analysis and one amateur documentary.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bio-section">
+    <h2>In His <em>Own Words</em></h2>
+    <blockquote>"Look, I didn't ask for five nipples. Nobody does. You don't tick a box on a form. They just... appear. And once they're there, what are you going to do? Hide them? Pretend you've only got the standard two? That's no way to live. I've got five nipples and a business degree. I'm using both."</blockquote>
+    <p style="text-align:right;font-size:.8rem;color:var(--muted)">&mdash; Nic, 2025</p>
+  </div>
+</div>
+
+<footer>
+  <p>&copy; 2025 nics5nips.com &mdash; All Rights Reserved</p>
+  <p><a href="#">Privacy Policy</a> &middot; <a href="#">Terms of Service</a> &middot; <a href="#">Contact</a></p>
+</footer>
+
+<!-- LANGUAGE SELECTOR (included on every page) -->
+<div class="lang-selector" id="lang-selector">
+  <button class="lang-btn" id="lang-btn">
+    <span class="flag" id="current-flag">🇬🇧</span>
+    <span id="current-lang">English</span>
+    <span style="font-size:.6rem">&#9650;</span>
+  </button>
+  <div class="lang-menu" id="lang-menu">
+    <div class="lang-option active" data-lang="en" data-flag="🇬🇧">
+      <span class="flag">🇬🇧</span> English
+    </div>
+    <div class="lang-option" data-lang="es" data-flag="🇪🇸">
+      <span class="flag">🇪🇸</span> Espa&ntilde;ol
+    </div>
+    <div class="lang-option" data-lang="km" data-flag="🇰🇭">
+      <span class="flag">🇰🇭</span> ភាសាខ្មែរ
+    </div>
+  </div>
+</div>
+
+<script>
+// Language selector
+const langBtn = document.getElementById('lang-btn');
+const langMenu = document.getElementById('lang-menu');
+
+langBtn.addEventListener('click', () => langMenu.classList.toggle('show'));
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.lang-selector')) langMenu.classList.remove('show');
+});
+
+// Translation data (key sections)
+const translations = {
+  es: {
+    tagline: "El Hombre. El Mito. Los Pezones.",
+    title: "Sobre <em>Nic</em>",
+    subtitle: "Nacido en Manchester. Educado en negocios. Bendecido con pezones. El torso m\u00e1s extraordinario de internet pertenece a un tipo extraordinariamente ordinario.",
+    stats: ["Pezones", "T\u00edtulo Empresarial", "Empresas", "Leyenda"],
+    earlyTitle: "Los <em>Primeros A\u00f1os</em>",
+    earlyP1: "Nicholas naci\u00f3 en Manchester a principios de los a\u00f1os 90 en una familia con un n\u00famero de pezones perfectamente est\u00e1ndar. El tercer pez\u00f3n fue notado por primera vez por su madre durante la hora del ba\u00f1o a los dos a\u00f1os. Ella lo describi\u00f3 como \"una bonificaci\u00f3n.\" El cuarto fue identificado por una enfermera escolar durante un chequeo rutinario en s\u00e9ptimo a\u00f1o, causando lo que Nic describi\u00f3 m\u00e1s tarde como \"un poco de esc\u00e1ndalo en la enfermer\u00eda.\" El quinto lleg\u00f3 \u2014 o fue descubierto, seg\u00fan tu perspectiva filos\u00f3fica \u2014 durante la semana de novatos en la universidad.",
+    earlyQuote: "\"La mayor\u00eda de la gente va a la universidad y descubre la pol\u00edtica, o la filosof\u00eda, o a s\u00ed mismos. Yo descubr\u00ed un quinto pez\u00f3n.\"",
+    eduTitle: "La <em>Educaci\u00f3n</em>",
+    eduP1: "Nic estudi\u00f3 Gesti\u00f3n Empresarial en la universidad, gradu\u00e1ndose con lo que describe como \"un s\u00f3lido notable y un torso que eventualmente valdr\u00eda m\u00e1s que el t\u00edtulo.\" La iron\u00eda no se le escapa: un hombre con cinco pezones tiene un t\u00edtulo en negocios, haciendo que cada pez\u00f3n sea \u2014 estad\u00edsticamente hablando \u2014 un pez\u00f3n educado.",
+    venturesTitle: "Las <em>Cinco Empresas</em>",
+    quote: "\"Mira, yo no ped\u00ed cinco pezones. Nadie lo hace. No marcas una casilla en un formulario. Simplemente... aparecen. Y una vez que est\u00e1n ah\u00ed, \u00bfqu\u00e9 vas a hacer? \u00bfEsconderlos? \u00bfFingir que solo tienes los dos est\u00e1ndar? Esa no es forma de vivir. Tengo cinco pezones y un t\u00edtulo empresarial. Estoy usando ambos.\""
+  },
+  km: {
+    tagline: "\u1794\u17bb\u179a\u179f\u17d4 \u178a\u17c6\u178e\u17b6\u179b\u17d4 \u1791\u17d2\u179a\u17bc\u1784\u17d4",
+    title: "\u17a2\u17c6\u1796\u17b8 <em>Nic</em>",
+    subtitle: "\u1780\u17be\u178f\u1793\u17c5\u1798\u17c9\u17b6\u1793\u17cb\u1788\u17c1\u179f\u17d2\u178f\u17b0\u17d4 \u179f\u17b7\u1780\u17d2\u179f\u17b6\u1787\u17c6\u178e\u17b6\u1789\u17d4 \u1794\u17b6\u1793\u1796\u179a\u178a\u17c5\u1791\u17d2\u179a\u17bc\u1784\u17d4 \u179f\u17c6\u178e\u17b6\u1784\u1795\u17d2\u1793\u17c2\u1780\u1780\u17b6\u1799\u178a\u17c2\u179b\u1796\u17b7\u179f\u17c1\u179f\u1794\u17c6\u1795\u17bb\u178f\u1793\u17c5\u179b\u17be\u17a2\u17ca\u17b8\u1793\u1792\u17ba\u178e\u17c2\u178f\u200b\u1787\u17b6\u1780\u1798\u17d2\u1798\u179f\u17b7\u178f\u17d2\u178b\u1794\u17bb\u179a\u179f\u1798\u17d2\u1796\u17b6\u1791\u178a\u17c2\u179b\u1796\u17b7\u179f\u17c1\u179f\u1798\u17bd\u1799\u17d4",
+    stats: ["\u1791\u17d2\u179a\u17bc\u1784", "\u179f\u1789\u17d2\u1789\u17b6\u1794\u178f\u17d2\u179a\u1787\u17c6\u178e\u17b6\u1789", "\u17a2\u17b6\u1787\u17b8\u179c\u1780\u1798\u17d2\u1798", "\u178a\u17c6\u178e\u17b6\u179b"],
+    earlyTitle: "\u1786\u17d2\u1793\u17b6\u17c6 <em>\u178a\u17c6\u1794\u17bc\u1784</em>",
+    earlyP1: "Nicholas \u1780\u17be\u178f\u1793\u17c5\u1798\u17c9\u17b6\u1793\u17cb\u1788\u17c1\u179f\u17d2\u178f\u17b0\u1793\u17c5\u178a\u17be\u1798\u1786\u17d2\u1793\u17b6\u17c6 1990 \u1780\u17d2\u1793\u17bb\u1784\u1780\u17d2\u179a\u17bb\u1798\u1787\u17c6\u178e\u17b6\u1789\u1798\u17bd\u1799\u178a\u17c2\u179b\u1798\u17b6\u1793\u1791\u17d2\u179a\u17bc\u1784\u1796\u17b8\u179a\u178a\u17c4\u1799\u179f\u17d2\u178f\u1784\u17cb\u178a\u17b6\u179a\u17d4 \u1791\u17d2\u179a\u17bc\u1784\u1791\u17b8\u1794\u17b8\u178f\u17d2\u179a\u17bc\u179c\u1794\u17b6\u1793\u179f\u1798\u17d2\u1782\u17b6\u179b\u17cb\u178a\u17c4\u1799\u1798\u17d2\u178f\u17b6\u1799\u179a\u1794\u179f\u17cb\u1782\u17b6\u178f\u17cb\u1793\u17c5\u1796\u17c1\u179b\u1784\u17bc\u178f\u1791\u17b9\u1780\u1793\u17c5\u17a2\u17b6\u1799\u17bb\u1796\u17b8\u179a\u1786\u17d2\u1793\u17b6\u17c6\u17d4",
+    earlyQuote: "\"\u1798\u1793\u17bb\u179f\u17d2\u179f\u1797\u17b6\u1782\u1785\u17d2\u179a\u17be\u1793\u1791\u17c5\u179f\u17b6\u1780\u179b\u179c\u17b7\u1791\u17d2\u1799\u17b6\u179b\u17d0\u1799\u179a\u1780\u1783\u17be\u1789\u1793\u1799\u17c4\u1794\u17b6\u1799 \u17ac\u1791\u179f\u17d2\u179f\u1793\u179c\u17b7\u1787\u17d2\u1787\u17b6 \u17ac\u1781\u17d2\u179b\u17bd\u1793\u17a2\u17c2\u1784\u17d4 \u1781\u17d2\u1789\u17bb\u17c6\u179a\u1780\u1783\u17be\u1789\u1791\u17d2\u179a\u17bc\u1784\u1791\u17b8\u17e5\u17d4\"",
+    eduTitle: "<em>\u1780\u17b6\u179a\u179f\u17b7\u1780\u17d2\u179f\u17b6</em>",
+    eduP1: "Nic \u179f\u17b7\u1780\u17d2\u179f\u17b6\u1782\u17d2\u179a\u1794\u17cb\u1782\u17d2\u179a\u1784\u1787\u17c6\u178e\u17b6\u1789\u1793\u17c5\u179f\u17b6\u1780\u179b\u179c\u17b7\u1791\u17d2\u1799\u17b6\u179b\u17d0\u1799 \u178a\u17c4\u1799\u1794\u17b6\u1793\u1794\u1789\u17d2\u1785\u1794\u17cb\u178a\u17c4\u1799\u17a2\u17d2\u179c\u17b8\u178a\u17c2\u179b\u1782\u17b6\u178f\u17cb\u1796\u17b7\u178f\u1787\u17b6\u1780\u17cb\u179f\u17d2\u178f\u17c2\u1784\u1787\u17b6 \"\u179f\u1789\u17d2\u1789\u17b6\u1794\u178f\u17d2\u179a\u179a\u17b9\u1784\u1798\u17b6\u17c6 \u1793\u17b7\u1784\u179f\u17c6\u178e\u17b6\u1784\u1795\u17d2\u1793\u17c2\u1780\u1780\u17b6\u1799\u178a\u17c2\u179b\u1793\u17c5\u1791\u17b8\u1794\u1789\u17d2\u1785\u1794\u17cb\u1793\u17b9\u1784\u1798\u17b6\u1793\u178f\u1798\u17d2\u179b\u17c3\u179b\u17be\u179f\u1796\u17b8\u179f\u1789\u17d2\u1789\u17b6\u1794\u178f\u17d2\u179a\u17d4\"",
+    venturesTitle: "<em>\u17a2\u17b6\u1787\u17b8\u179c\u1780\u1798\u17d2\u1798\u1791\u17b6\u17c6\u1785\u17c6\u178e\u17bd\u1793\u17e5</em>",
+    quote: "\"\u1798\u17be\u179b\u17d4 \u1781\u17d2\u1789\u17bb\u17c6\u1798\u17b7\u1793\u1794\u17b6\u1793\u179f\u17bb\u17c6\u1791\u17d2\u179a\u17bc\u1784\u17e5\u1791\u17c1\u17d4 \u1782\u17d2\u1798\u17b6\u1793\u17a2\u17d2\u1793\u1780\u179f\u17bb\u17c6\u17d4 \u17a2\u17d2\u1793\u1780\u1798\u17b7\u1793\u1782\u17bc\u179f\u1794\u17d2\u179a\u17a2\u17b6\u1794\u17cb\u1793\u17c5\u1780\u17d2\u1793\u17bb\u1784\u179f\u17c6\u178e\u17bb\u17c6\u1794\u17d0\u178e\u17d2\u178e\u17d4 \u1796\u17bd\u1780\u1782\u17c1\u1782\u17d2\u179a\u17b6\u1793\u178f\u17c2... \u179b\u17c1\u1785\u17a1\u17be\u1784\u17d4 \u1793\u17b7\u1784\u1793\u17c5\u1796\u17c1\u179b\u1796\u17bd\u1780\u1782\u17c1\u1793\u17c5\u1791\u17b8\u1793\u17c4\u17c7 \u178f\u17be\u17a2\u17d2\u1793\u1780\u1793\u17b9\u1784\u1792\u17d2\u179c\u17be\u17a2\u17d2\u179c\u17b8? \u179b\u17b6\u1780\u17cb\u1796\u17bd\u1780\u1782\u17c1? \u1781\u17d2\u1789\u17bb\u17c6\u1798\u17b6\u1793\u1791\u17d2\u179a\u17bc\u1784\u17e5 \u1793\u17b7\u1784\u179f\u1789\u17d2\u1789\u17b6\u1794\u178f\u17d2\u179a\u1787\u17c6\u178e\u17b6\u1789\u17d4 \u1781\u17d2\u1789\u17bb\u17c6\u1780\u17c6\u1796\u17bb\u1784\u1794\u17d2\u179a\u17be\u1791\u17b6\u17c6\u1784\u1796\u17b8\u179a\u17d4\""
+  }
+};
+
+document.querySelectorAll('.lang-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    const lang = opt.dataset.lang;
+    const flag = opt.dataset.flag;
+    document.getElementById('current-flag').textContent = flag;
+    document.getElementById('current-lang').textContent = opt.textContent.trim();
+    document.querySelectorAll('.lang-option').forEach(o => o.classList.remove('active'));
+    opt.classList.add('active');
+    langMenu.classList.remove('show');
+
+    if (lang === 'en') {
+      location.reload();
+      return;
+    }
+
+    const t = translations[lang];
+    if (!t) return;
+
+    // Apply translations to key visible elements
+    document.querySelector('.bio-tagline').textContent = t.tagline;
+    document.querySelector('.bio-hero h1').innerHTML = t.title;
+    document.querySelector('.bio-subtitle').textContent = t.subtitle;
+
+    const statLabels = document.querySelectorAll('.bio-stat .lbl');
+    t.stats.forEach((s, i) => { if (statLabels[i]) statLabels[i].textContent = s; });
+
+    const sections = document.querySelectorAll('.bio-section');
+    if (sections[0]) {
+      sections[0].querySelector('h2').innerHTML = t.earlyTitle;
+      sections[0].querySelector('p').textContent = t.earlyP1;
+      sections[0].querySelector('blockquote').textContent = t.earlyQuote;
+    }
+    if (sections[1]) {
+      sections[1].querySelector('h2').innerHTML = t.eduTitle;
+      sections[1].querySelector('p').textContent = t.eduP1;
+    }
+    if (sections[2]) {
+      sections[2].querySelector('h2').innerHTML = t.venturesTitle;
+    }
+    if (sections[3]) {
+      sections[3].querySelector('blockquote').textContent = t.quote;
+    }
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: nics5nips
+    runtime: static
+    buildCommand: echo "nothing to build"
+    staticPublishPath: ./public
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=3600

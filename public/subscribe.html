@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subscribe - Nic's 5 Nips Premium</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#c9a84c;--gold-light:#e4c76b;--dark:#0a0a0a;--card:#141414;--muted:#777}
+body{background:var(--dark);color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(201,168,76,0.15);padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:1.1rem;letter-spacing:4px;color:var(--gold);font-weight:700}
+.logo span{color:#fff;font-weight:300}
+.nav-links{display:flex;gap:1.5rem;align-items:center;font-size:.8rem;letter-spacing:1px}
+.nav-links a{color:var(--muted);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--gold)}
+
+.page{padding:80px 1.5rem 3rem;max-width:700px;margin:0 auto}
+.page h1{font-family:Georgia,serif;font-size:clamp(1.8rem,5vw,2.5rem);font-weight:400;text-align:center;margin-bottom:.5rem}
+.page h1 em{color:var(--gold);font-style:italic}
+.page > .sub{text-align:center;color:var(--muted);margin-bottom:2.5rem;font-size:.9rem}
+
+/* PLANS */
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.25rem;margin-bottom:3rem}
+.plan{background:var(--card);border:1px solid rgba(201,168,76,0.1);border-radius:12px;padding:2rem 1.5rem;text-align:center;position:relative;transition:border-color .2s}
+.plan:hover{border-color:rgba(201,168,76,0.3)}
+.plan.popular{border-color:var(--gold)}
+.plan.popular::before{content:'MOST POPULAR';position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--gold);color:#0a0a0a;font-size:.6rem;font-weight:700;letter-spacing:2px;padding:3px 14px;border-radius:20px}
+.plan-name{font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem}
+.plan-price{font-size:2.2rem;font-weight:700;color:#fff;margin-bottom:.25rem}
+.plan-price small{font-size:.8rem;font-weight:400;color:var(--muted)}
+.plan-desc{font-size:.8rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.5}
+.plan-features{list-style:none;text-align:left;margin-bottom:1.5rem;font-size:.8rem;color:var(--muted)}
+.plan-features li{padding:.3rem 0;display:flex;align-items:center;gap:.5rem}
+.plan-features li::before{content:'\2713';color:var(--gold);font-weight:700}
+.btn{display:block;width:100%;padding:12px;border-radius:8px;text-decoration:none;font-size:.85rem;font-weight:600;letter-spacing:1px;transition:all .2s;cursor:pointer;border:none;text-align:center}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0a0a0a}
+.btn-gold:hover{box-shadow:0 8px 30px rgba(201,168,76,0.3)}
+.btn-outline{border:1px solid rgba(201,168,76,0.3);color:var(--gold);background:transparent}
+
+/* FORM */
+.form-section{background:var(--card);border:1px solid rgba(201,168,76,0.1);border-radius:12px;padding:2rem;margin-bottom:2rem;display:none}
+.form-section.show{display:block}
+.form-section h2{font-family:Georgia,serif;font-size:1.3rem;font-weight:400;margin-bottom:.25rem}
+.form-section h2 em{color:var(--gold)}
+.form-section .sub2{color:var(--muted);font-size:.8rem;margin-bottom:1.5rem}
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;font-size:.75rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem}
+.form-group input,.form-group select{width:100%;padding:12px 14px;background:var(--dark);border:1px solid rgba(201,168,76,0.15);border-radius:8px;color:#fff;font-size:.9rem;outline:none;transition:border-color .2s}
+.form-group input:focus{border-color:var(--gold)}
+.form-group input::placeholder{color:rgba(255,255,255,0.2)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.secure-note{display:flex;align-items:center;gap:.5rem;font-size:.7rem;color:var(--muted);margin:1rem 0}
+.secure-note::before{content:'\1F512'}
+
+/* ERROR MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(10,10,10,0.9);display:none;align-items:center;justify-content:center;z-index:300;padding:1.5rem;backdrop-filter:blur(6px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--card);border:1px solid rgba(201,168,76,0.2);border-radius:16px;padding:2.5rem 2rem;max-width:420px;width:100%;text-align:center}
+.modal-icon{font-size:3rem;margin-bottom:1rem}
+.modal h2{font-family:Georgia,serif;font-size:1.4rem;font-weight:400;margin-bottom:.5rem}
+.modal p{color:var(--muted);font-size:.85rem;line-height:1.6;margin-bottom:1.5rem}
+.modal .btn{width:auto;display:inline-block;padding:12px 36px}
+.modal .countdown{color:var(--gold);font-weight:700;font-size:1.1rem}
+
+/* TESTIMONIALS */
+.testimonials{margin:2rem 0}
+.testimonials h3{font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;text-align:center}
+.testimonial{background:var(--card);border-radius:10px;padding:1.25rem;margin-bottom:.75rem;border:1px solid rgba(201,168,76,0.05)}
+.testimonial q{font-family:Georgia,serif;font-size:.9rem;font-style:italic;color:rgba(255,255,255,0.8);line-height:1.5;display:block;margin-bottom:.5rem}
+.testimonial .author{font-size:.75rem;color:var(--gold)}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo" style="text-decoration:none">NIC'S<span>5</span>NIPS</a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="about.html">About</a>
+    <a href="stories.html">Stories</a>
+    <a href="game.html">Play</a>
+  </div>
+</nav>
+
+<div class="page">
+  <h1>Choose Your <em>Experience</em></h1>
+  <p class="sub">Unlock full access to the internet's most exclusive anatomical phenomenon</p>
+
+  <div class="plans">
+    <div class="plan">
+      <div class="plan-name">Basic</div>
+      <div class="plan-price">$4.99 <small>/mo</small></div>
+      <div class="plan-desc">Perfect for casual nip-curious browsers</div>
+      <ul class="plan-features">
+        <li>Standard resolution gallery</li>
+        <li>Pin the Nipple game</li>
+        <li>Community access</li>
+      </ul>
+      <button class="btn btn-outline plan-btn" data-plan="Basic - $4.99/mo">Select Basic</button>
+    </div>
+
+    <div class="plan popular">
+      <div class="plan-name">Premium</div>
+      <div class="plan-price">$9.99 <small>/mo</small></div>
+      <div class="plan-desc">The full 5-nipple experience</div>
+      <ul class="plan-features">
+        <li>4K Ultra HD gallery</li>
+        <li>Exclusive behind-the-nips content</li>
+        <li>Priority community badge</li>
+        <li>Monthly Nic Q&amp;A livestream</li>
+      </ul>
+      <button class="btn btn-gold plan-btn" data-plan="Premium - $9.99/mo">Select Premium</button>
+    </div>
+
+    <div class="plan">
+      <div class="plan-name">Elite</div>
+      <div class="plan-price">$1,200 <small>lifetime</small></div>
+      <div class="plan-desc">For the true connoisseur</div>
+      <ul class="plan-features">
+        <li>Everything in Premium</li>
+        <li>Signed torso print</li>
+        <li>Private video call with Nic</li>
+        <li>Name engraved on Nip Wall of Fame</li>
+      </ul>
+      <button class="btn btn-outline plan-btn" data-plan="Elite - $1,200 lifetime">Select Elite</button>
+    </div>
+  </div>
+
+  <div class="form-section" id="form-section">
+    <h2>Complete Your <em>Subscription</em></h2>
+    <div class="sub2">Selected plan: <strong id="selected-plan"></strong></div>
+
+    <form id="sub-form" novalidate>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" placeholder="you@email.com" required id="email-input">
+      </div>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" placeholder="Your name" required>
+      </div>
+      <div class="form-group">
+        <label>Card Number</label>
+        <input type="text" placeholder="4242 4242 4242 4242" maxlength="19" required id="card-input">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Expiry</label>
+          <input type="text" placeholder="MM / YY" maxlength="7">
+        </div>
+        <div class="form-group">
+          <label>CVC</label>
+          <input type="text" placeholder="123" maxlength="4">
+        </div>
+      </div>
+      <div class="secure-note">256-bit SSL encrypted. We never store your card details.</div>
+      <button type="submit" class="btn btn-gold" id="submit-btn">Subscribe Now</button>
+    </form>
+  </div>
+
+  <div class="testimonials">
+    <h3>What Subscribers Say</h3>
+    <div class="testimonial">
+      <q>I showed my whole office and now we have a company subscription. Best team-building exercise we've ever done.</q>
+      <div class="author">&mdash; @corporate_dave, Premium member since 2024</div>
+    </div>
+    <div class="testimonial">
+      <q>I'm a dermatologist and even I've never seen anything like this. Worth every penny for the 4K gallery.</q>
+      <div class="author">&mdash; Dr. Sarah Mitchell, Elite member</div>
+    </div>
+    <div class="testimonial">
+      <q>Bought the Elite package for my husband's birthday. The signed print hangs above our fireplace.</q>
+      <div class="author">&mdash; @jenny_w, Gift subscriber</div>
+    </div>
+  </div>
+</div>
+
+<!-- ERROR MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-icon">&#9888;&#65039;</div>
+    <h2>Servers Overloaded!</h2>
+    <p>Due to unprecedented demand (we're trending in <strong>147 countries</strong>), our payment servers are temporarily at capacity.</p>
+    <p>Estimated wait: <span class="countdown" id="countdown">2:47</span></p>
+    <p style="font-size:.75rem;color:rgba(255,255,255,0.3)">15,482 people in queue ahead of you</p>
+    <button class="btn btn-gold" id="modal-close">Try Again Later</button>
+  </div>
+</div>
+
+<script>
+// Plan selection
+document.querySelectorAll('.plan-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const plan = btn.dataset.plan;
+    document.getElementById('selected-plan').textContent = plan;
+    const form = document.getElementById('form-section');
+    form.classList.add('show');
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+// Card number formatting
+document.getElementById('card-input').addEventListener('input', (e) => {
+  let v = e.target.value.replace(/\D/g, '').substring(0, 16);
+  v = v.replace(/(.{4})/g, '$1 ').trim();
+  e.target.value = v;
+});
+
+// Form submission - always fails with "servers overloaded"
+document.getElementById('sub-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  btn.textContent = 'Processing...';
+  btn.disabled = true;
+
+  // Fake loading
+  setTimeout(() => {
+    btn.textContent = 'Connecting to payment server...';
+  }, 800);
+  setTimeout(() => {
+    btn.textContent = 'Authenticating...';
+  }, 2000);
+  setTimeout(() => {
+    btn.textContent = 'Subscribe Now';
+    btn.disabled = false;
+    showModal();
+  }, 3500);
+});
+
+function showModal() {
+  document.getElementById('modal').classList.add('show');
+  // Fake countdown that never actually finishes
+  let sec = 167;
+  const cd = document.getElementById('countdown');
+  const interval = setInterval(() => {
+    // Randomly go up or down to frustrate
+    sec += Math.random() > 0.4 ? -1 : Math.floor(Math.random() * 3);
+    sec = Math.max(30, sec);
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    cd.textContent = m + ':' + String(s).padStart(2, '0');
+  }, 1000);
+
+  document.getElementById('modal-close').addEventListener('click', () => {
+    document.getElementById('modal').classList.remove('show');
+    clearInterval(interval);
+  });
+}
+</script>
+</body>
+</html>
