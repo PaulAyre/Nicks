@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dpkg:*)",
+      "Bash(python3:*)",
+      "Bash(pip3 install:*)",
+      "Bash(pip install:*)",
+      "Bash(curl:*)",
+      "Bash(du:*)",
+      "WebFetch(domain:www.spacejam.com)",
+      "Bash(for:*)",
+      "Bash(done)",
+      "Bash(tree:*)",
+      "Bash(gh auth:*)",
+      "Bash(git --version:*)",
+      "Bash(sudo apt-get:*)",
+      "Bash(sudo apt-get install:*)",
+      "Bash(git config:*)",
+      "Bash(git branch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(gh repo create:*)",
+      "Bash(git push:*)",
+      "Bash(htpasswd:*)"
+    ]
+  }
+}
