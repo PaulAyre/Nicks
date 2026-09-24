@@ -45,6 +45,13 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
 .article-body p{margin-bottom:1.25rem}
 .article-body blockquote{border-left:3px solid var(--gold);padding-left:1.25rem;margin:1.5rem 0;font-style:italic;color:var(--gold)}
 .article-body .pullquote{text-align:center;font-size:1.3rem;color:var(--gold);font-style:italic;padding:1.5rem 1rem;margin:2rem 0;border-top:1px solid rgba(201,168,76,0.15);border-bottom:1px solid rgba(201,168,76,0.15)}
+.article-body figure{margin:1.75rem auto;max-width:430px;border-radius:10px;overflow:hidden;border:1px solid rgba(201,168,76,0.12);background:var(--card)}
+.article-body figure.wide{max-width:100%}
+.article-body figure img{width:100%;display:block}
+.article-body figure figcaption{padding:.7rem .9rem;font-size:.72rem;color:var(--muted);line-height:1.6}
+.article-body figure figcaption b{color:var(--gold)}
+.article-body .trio{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:1.75rem 0}
+.article-body .trio img{width:100%;height:190px;object-fit:cover;display:block;border-radius:8px}
 .article-body .stat-block{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:2rem 0;text-align:center}
 .article-body .stat-block .num{font-family:-apple-system,sans-serif;font-size:1.5rem;color:var(--gold);font-weight:700}
 .article-body .stat-block .lbl{font-family:-apple-system,sans-serif;font-size:.65rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
@@ -87,6 +94,43 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
 const stories = [
   {
     tag: "Breaking News",
+    icon: "\ud83d\udcf8",
+    title: "The Photographs Emerge: 15 Images Of Nic, Not One Nipple",
+    date: "September 20, 2026",
+    author: "Investigations Desk",
+    views: "1.4M",
+    excerpt: "After twenty-three years of speculation, a complete photographic record of the man known as Nic has been released to this publication. It answers everything except the one question anybody was asking.",
+    body: `<p>For over two decades, the world has known Nic by a single photograph: a torso, five nipples, one kitchen. This week, that changed. An archive of thirty-one images \u2014 spanning twenty-three years, four countries and an unbroken run of cotton t-shirts \u2014 was released to this publication by persons close to the subject.</p>
+<p>The archive answers a great many questions. It does not answer the only one that matters.</p>
+<div class="pullquote">"We have thirty-one photographs of this man and I can tell you, with total confidence, absolutely nothing."</div>
+<figure>
+  <img src="img/nic/wheatfield.jpg" alt="Nic in a wheat field" loading="lazy">
+  <figcaption>The image now being called "the classic Nic". Arms fully extended, maximum thoracic exposure. <b>Nips visible: 0.</b></figcaption>
+</figure>
+<p>Sixteen images were withheld on the grounds that they show the same man standing near a slightly different shrub. Our research team examined every remaining frame at maximum available resolution. In not one image is a single nipple, supernumerary or otherwise, directly observable. In every photograph without exception, Nic is wearing a shirt. He is wearing one in fields. He is wearing one on cliffs. He is wearing one, our analysts confirmed with some frustration, while airborne.</p>
+<div class="stat-block">
+  <div><div class="num">15</div><div class="lbl">Published</div></div>
+  <div><div class="num">23</div><div class="lbl">Years Covered</div></div>
+  <div><div class="num">0</div><div class="lbl">Nips Visible</div></div>
+</div>
+<p>"I want to be clear that this is the most documented man in the history of this website," said one member of the verification team, who has spent nine years on the file. "And we are precisely where we started."</p>
+<div class="trio">
+  <img src="img/nic/jump-joy-t.jpg" alt="Airborne" loading="lazy">
+  <img src="img/nic/leap-log-t.jpg" alt="Log clearance" loading="lazy">
+  <img src="img/nic/bluebells-t.jpg" alt="Bluebell season" loading="lazy">
+</div>
+<p>Community reaction has been immediate and largely emotional. Within an hour of release, the forums had produced 400 pages of analysis, a fourteen-part video essay, and at least one resignation. A recurring theme is the shirt.</p>
+<div class="pullquote">"Twenty-three years. Eleven counties. He has jumped over a log in a t-shirt. Who does that?"</div>
+<figure>
+  <img src="img/nic/arch-arms.jpg" alt="The driftwood arch" loading="lazy">
+  <figcaption>The Driftwood Arch, to which Nic returns annually. The purpose of these visits remains unestablished. <b>Nips visible: 0.</b></figcaption>
+</figure>
+<p>A small but vocal faction has raised the obvious point: that the man in these photographs bears little resemblance to the celebrated torso. This publication considers the matter settled. People change. Fame is hard. The count is five.</p>
+<p>The surviving images remain with this publication. A decision on wider release is pending, and our commercial team has asked that it not be rushed.</p>`
+  },
+
+  {
+    tag: "Breaking News",
     icon: "📰",
     title: "Man With 5 Nipples Breaks Internet, Crashes Three Servers",
     date: "January 28, 2025",
@@ -104,7 +148,7 @@ const stories = [
   <div><div class="num">3</div><div class="lbl">Servers Crashed</div></div>
 </div>
 <p>Social media platforms were similarly overwhelmed. Twitter/X reported that "5 nipples" trended globally for 18 consecutive hours, while TikTok saw over 40,000 reaction videos posted within the first day. Facebook's content moderation team reportedly held an emergency meeting to determine whether the image violated community standards, ultimately ruling that additional nipples are "a natural anatomical variation and not inherently sexual."</p>
-<p>At the time of publication, the official nics5nips.com website had amassed over 15,000 paying subscribers, with the $1,200 "Elite" lifetime package selling out twice. The man himself has declined to comment, though sources close to him describe him as "remarkably calm about the whole thing."</p>`
+<p>At the time of publication, the official nicsfivenips.com website had amassed over 15,000 paying subscribers, with the $1,200 "Elite" lifetime package selling out twice. The man himself has declined to comment, though sources close to him describe him as "remarkably calm about the whole thing."</p>`
   },
   {
     tag: "Science",
@@ -308,7 +352,7 @@ function openArticle(idx) {
 
   document.getElementById('back-btn').addEventListener('click', closeArticle);
   document.getElementById('share-article').addEventListener('click', () => {
-    const text = `"${s.title}" - Read the full story at nics5nips.com/stories`;
+    const text = `"${s.title}" - Read the full story at nicsfivenips.com/stories`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text).then(() => {
         document.getElementById('share-article').textContent = 'Link copied!';

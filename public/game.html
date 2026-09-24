@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Pin the Nipple on the Nic - nics5nips.com</title>
+<title>Pin the Nipple on the Nic - nicsfivenips.com</title>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{--gold:#c9a84c;--gold-light:#e4c76b;--dark:#0a0a0a;--card:#141414;--muted:#777}
+:root{--gold:#c9a84c;--gold-light:#e4c76b;--dark:#0a0a0a;--card:#141414;--muted:#777;--good:#22c55e;--bad:#ef4444}
 body{background:var(--dark);color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;overflow-x:hidden;min-height:100vh;min-height:100dvh}
 
 /* NAV */
@@ -18,47 +18,87 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
 .nav-links a:hover{color:var(--gold)}
 
 /* GAME CONTAINER */
-.game-wrap{padding:72px 0 2rem;display:flex;flex-direction:column;align-items:center;min-height:100vh;min-height:100dvh}
+.game-wrap{padding:72px 0 3rem;display:flex;flex-direction:column;align-items:center;min-height:100vh;min-height:100dvh}
 .game-header{text-align:center;padding:1rem 1.5rem;max-width:600px}
 .game-header h1{font-family:Georgia,'Times New Roman',serif;font-size:1.6rem;font-weight:400;margin-bottom:.4rem}
 .game-header h1 em{color:var(--gold);font-style:italic}
 .game-header p{color:var(--muted);font-size:.85rem;line-height:1.5}
-.round-info{display:flex;align-items:center;justify-content:center;gap:1.5rem;margin:1rem 0;font-size:.85rem}
+.round-info{display:flex;align-items:center;justify-content:center;gap:1.5rem;margin:1rem 0 .5rem;font-size:.85rem}
 .round-info .label{color:var(--muted)}
 .round-info .value{color:var(--gold);font-weight:700;font-size:1.1rem}
 .nips-remaining{display:flex;gap:4px}
 .nip-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--gold);transition:all .3s}
 .nip-dot.found{background:var(--gold);transform:scale(1.15)}
 
+/* THE TRAY OF LOOSE NIPS */
+.tray-label{font-size:.68rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-align:center;margin:.5rem 0 .75rem}
+.tray{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;width:min(92vw,500px);margin:0 auto 1.9rem}
+.slot{position:relative;width:76px;height:76px;border-radius:50%;border:2px dashed rgba(201,168,76,.35);background:rgba(201,168,76,.05);display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;transition:border-color .2s,box-shadow .2s,opacity .2s}
+.slot img{display:block;border-radius:50%;pointer-events:none}
+.slot .num{position:absolute;bottom:-19px;left:0;right:0;text-align:center;font-size:.62rem;letter-spacing:1px;color:var(--muted)}
+.slot.selected{border-style:solid;border-color:var(--gold);box-shadow:0 0 0 4px rgba(201,168,76,.22)}
+.slot.used{opacity:.22;cursor:default}
+.slot.used img{filter:grayscale(1)}
+
 /* GAME BOARD */
 .board-container{position:relative;width:min(92vw,500px);aspect-ratio:1;margin:0 auto;border-radius:12px;overflow:hidden;border:1px solid rgba(201,168,76,0.2);touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;cursor:crosshair}
 .board-container picture img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
-.tap-marker{position:absolute;width:44px;height:44px;margin-left:-22px;margin-top:-22px;border-radius:50%;border:3px solid var(--gold);background:rgba(201,168,76,0.15);animation:markerPop .3s ease-out;pointer-events:none;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:var(--gold)}
-@keyframes markerPop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
-.tap-marker.correct{border-color:#22c55e;background:rgba(34,197,94,0.2);color:#22c55e}
-.tap-marker.wrong{border-color:#ef4444;background:rgba(239,68,68,0.15);color:#ef4444}
-.target-reveal{position:absolute;width:48px;height:48px;margin-left:-24px;margin-top:-24px;border-radius:50%;border:2px dashed rgba(201,168,76,0.5);pointer-events:none;animation:revealPulse .5s ease-out}
-@keyframes revealPulse{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.board-container.armed{cursor:copy}
+.placed{position:absolute;transform:translate(-50%,-50%);cursor:grab;touch-action:none;z-index:4}
+.placed img{display:block;width:100%;height:100%;pointer-events:none}
+.placed.homing{transition:left .7s cubic-bezier(.2,.8,.2,1),top .7s cubic-bezier(.2,.8,.2,1)}
+.placed.judged{cursor:default}
+.placed::after{content:'';position:absolute;inset:-6%;border-radius:50%;border:2px solid transparent;transition:border-color .3s}
+.placed.hit::after{border-color:var(--good)}
+.placed.near::after{border-color:var(--gold)}
+.placed.miss::after{border-color:var(--bad)}
+.ghost{position:fixed;transform:translate(-50%,-50%);pointer-events:none;z-index:500;filter:drop-shadow(0 10px 22px rgba(0,0,0,.65))}
+.ghost img{display:block;width:100%;height:100%}
+.truth{position:absolute;border-radius:50%;border:2px dashed rgba(201,168,76,.8);transform:translate(-50%,-50%);pointer-events:none;z-index:3;animation:revealPulse .45s ease-out}
+@keyframes revealPulse{from{transform:translate(-50%,-50%) scale(.2);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+.links{position:absolute;inset:0;pointer-events:none;z-index:2}
 
 /* INSTRUCTIONS OVERLAY */
 .instructions{position:absolute;inset:0;background:rgba(10,10,10,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;z-index:10;backdrop-filter:blur(4px)}
 .instructions h2{font-family:Georgia,serif;font-size:1.5rem;font-weight:400;margin-bottom:.75rem}
 .instructions h2 em{color:var(--gold)}
-.instructions p{color:var(--muted);font-size:.9rem;margin-bottom:1.5rem;max-width:320px;line-height:1.6}
+.instructions p{color:var(--muted);font-size:.9rem;margin-bottom:1.5rem;max-width:330px;line-height:1.6}
 .instructions .hint{font-size:.75rem;color:rgba(255,255,255,0.3);margin-top:.5rem}
 .btn{display:inline-block;padding:14px 36px;border-radius:8px;text-decoration:none;font-size:.9rem;font-weight:600;letter-spacing:1px;transition:all .2s;cursor:pointer;border:none}
 .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0a0a0a}
 .btn-gold:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(201,168,76,0.3)}
+.btn:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* SUBMIT BAR */
+.submit-bar{display:flex;gap:1rem;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:1.25rem}
+.submit-hint{width:min(92vw,500px);text-align:center;color:var(--muted);font-size:.75rem;margin-top:.75rem;line-height:1.5}
 
 /* RESULTS */
-.results-overlay{position:fixed;inset:0;background:rgba(10,10,10,0.92);display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;z-index:200;backdrop-filter:blur(8px)}
+.results-overlay{position:fixed;inset:0;background:rgba(10,10,10,0.94);display:none;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;padding:2rem 1rem;z-index:200;backdrop-filter:blur(8px);overflow-y:auto}
 .results-overlay.show{display:flex}
-.results-score{font-size:4rem;font-weight:700;color:var(--gold);margin:.5rem 0}
+.results-score{font-size:4rem;font-weight:700;color:var(--gold);margin:.25rem 0;line-height:1}
 .results-label{color:var(--muted);font-size:.85rem;letter-spacing:2px;text-transform:uppercase}
-.results-detail{color:var(--muted);font-size:.9rem;margin:1rem 0 2rem;max-width:360px;line-height:1.6}
-.results-stars{font-size:2rem;margin:.5rem 0}
-.results-btns{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+.results-detail{color:var(--muted);font-size:.9rem;margin:.75rem 0 1.25rem;max-width:360px;line-height:1.6}
+.results-stars{font-size:2rem;margin:.25rem 0}
+.results-btns{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:1.5rem}
 .btn-outline{border:1px solid rgba(201,168,76,0.3);color:var(--gold);background:transparent;padding:14px 36px;border-radius:8px;text-decoration:none;font-size:.9rem;font-weight:600;letter-spacing:1px;cursor:pointer}
+
+/* PER-NIP BREAKDOWN */
+.breakdown{width:min(90vw,400px);margin-top:.5rem}
+.bd-row{display:flex;align-items:center;gap:.6rem;padding:.45rem .6rem;background:var(--card);border-radius:6px;margin-bottom:4px;font-size:.78rem;text-align:left}
+.bd-row .chip{width:26px;height:26px;border-radius:50%;flex:0 0 26px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#222}
+.bd-row .chip img{width:26px;height:26px;object-fit:cover}
+.bd-row .nm{flex:1;color:#ddd}
+.bd-row .ds{color:var(--muted);font-size:.7rem;white-space:nowrap}
+.bd-row .pt{font-weight:700;width:46px;text-align:right}
+.bd-row.hit .pt{color:var(--good)}
+.bd-row.near .pt{color:var(--gold)}
+.bd-row.miss .pt{color:var(--bad)}
+
+/* REVEAL BAR */
+.reveal-bar{display:none;gap:.75rem;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:1.25rem}
+.reveal-bar.show{display:flex}
+.reveal-note{width:min(92vw,500px);text-align:center;color:var(--muted);font-size:.78rem;margin-top:.75rem;line-height:1.5}
 
 /* LEADERBOARD (fake) */
 .leaderboard{margin-top:2rem;width:min(90vw,400px)}
@@ -69,7 +109,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
 
 @media(max-width:400px){
   .game-header h1{font-size:1.3rem}
-  .board-container{width:96vw}
+  .board-container,.tray,.submit-hint,.reveal-note{width:96vw}
+  .slot{width:62px;height:62px}
 }
 </style>
 </head>
@@ -88,25 +129,41 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
 <div class="game-wrap">
   <div class="game-header">
     <h1>Pin the Nipple <em>on the Nic</em></h1>
-    <p>Nic has 5 nipples. Tap where you think each one is. Get as close as you can.</p>
+    <p>All five nips have been surgically removed and laid out below. Put each one back exactly where it came from. They are not interchangeable.</p>
     <div class="round-info">
-      <div><span class="label">Nipple </span><span class="value" id="round-num">0</span><span class="label"> / 5</span></div>
+      <div><span class="label">Placed </span><span class="value" id="round-num">0</span><span class="label"> / 5</span></div>
       <div class="nips-remaining" id="nip-dots"></div>
     </div>
   </div>
 
+  <div class="tray-label">The Loose Nips &mdash; drag one onto Nic</div>
+  <div class="tray" id="tray"></div>
+
   <div class="board-container" id="board">
     <picture>
-      <source srcset="img/nic.avif" type="image/avif">
-      <img src="img/nic.jpg" alt="The legendary torso" width="500" height="500" draggable="false">
+      <source srcset="img/nic-blank.avif" type="image/avif">
+      <img src="img/nic-blank.jpg" alt="The legendary torso, nips removed" width="500" height="500" draggable="false">
     </picture>
+    <svg class="links" id="links" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
     <div class="instructions" id="instructions">
-      <h2>Ready to <em>find the nips?</em></h2>
-      <p>Tap on the image to place each nipple. You get 5 taps &mdash; one for each of Nic's legendary nips.</p>
+      <h2>Ready to <em>rebuild the man?</em></h2>
+      <p>Five nips. Five homes. Drag each one onto the torso, or tap a nip and then tap the spot. Move them as much as you like, then hit Submit.</p>
       <button class="btn btn-gold" id="start-btn">Start Game</button>
-      <div class="hint">15,312 games played today</div>
+      <div class="hint">15,312 reconstructions attempted today</div>
     </div>
   </div>
+
+  <div class="submit-bar">
+    <button class="btn btn-gold" id="submit-btn" disabled>Submit Reconstruction</button>
+    <button class="btn-outline" id="reset-btn">Clear Board</button>
+  </div>
+  <div class="submit-hint" id="submit-hint">Place all 5 nips to submit.</div>
+
+  <div class="reveal-bar" id="reveal-bar">
+    <button class="btn-outline" id="back-btn">Back To Score</button>
+    <button class="btn btn-gold" id="again-btn">Play Again</button>
+  </div>
+  <div class="reveal-note" id="reveal-note"></div>
 
   <div class="leaderboard" id="leaderboard-preview" style="display:none">
     <h3>Today's Top Scores</h3>
@@ -119,8 +176,10 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
   <div class="results-score" id="final-score">0%</div>
   <div class="results-stars" id="result-stars"></div>
   <div class="results-detail" id="result-msg"></div>
+  <div class="breakdown" id="breakdown"></div>
   <div class="results-btns">
     <button class="btn btn-gold" id="share-btn">Share Result</button>
+    <button class="btn-outline" id="reveal-btn">Where They Really Were</button>
     <button class="btn-outline" id="replay-btn">Play Again</button>
   </div>
   <div class="leaderboard" style="margin-top:2rem">
@@ -131,185 +190,316 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
 
 <script>
 // === CONFIG ===
-// Nipple positions as % of image dimensions (x%, y%)
-// ADJUST THESE after testing with the actual image!
-const TARGETS = [
-  { x: 33.5, y: 21.5, label: "Upper Right" },
-  { x: 56.5, y: 18.0, label: "Upper Left" },
-  { x: 28.0, y: 40.0, label: "Mid Right" },
-  { x: 62.5, y: 36.5, label: "Mid Left" },
-  { x: 45.0, y: 52.0, label: "The Fifth" },
+// One entry per nip. x/y are the true positions as a % of the board, measured
+// off the original img/nic.jpg (1200x1200) before the nips were painted out.
+// Each x/y is the exact centre of that nip's cut-out token, so a token dropped
+// on its true home melts back into the skin and scores 100.
+// size = the token's width as a % of the board, i.e. its real scale on Nic.
+const NIPS = [
+  { id: 1, name: "The Original",             img: "img/nip-1.png", size: 17.50, x: 29.00, y: 34.83 },
+  { id: 2, name: "The Mirror",               img: "img/nip-2.png", size:  6.00, x: 78.33, y: 42.17 },
+  { id: 3, name: "The Discovery",            img: "img/nip-3.png", size: 11.67, x: 39.00, y: 48.75 },
+  { id: 4, name: "The School Nurse Special", img: "img/nip-4.png", size: 10.33, x: 72.67, y: 52.33 },
+  { id: 5, name: "The Wildcard",             img: "img/nip-5.png", size: 12.33, x: 47.08, y: 69.83 },
 ];
-const HIT_RADIUS = 8; // % of image width to count as a "hit"
+const PERFECT = 3;    // within this many % of the board = full marks
+const ZERO_AT = 25;   // this far out = nothing
+const DRAG_SLOP = 6;  // px of movement before a tap becomes a drag
 
 // === STATE ===
-let taps = [];
+const placed = NIPS.map(() => null);  // {x,y} in board % , or null if still in the tray
+let selected = null;                  // index of the nip waiting for a tap
 let gameActive = false;
-let boardRect = null;
+let judged = false;
+let lastResult = null;
 
 // === ELEMENTS ===
 const board = document.getElementById('board');
+const tray = document.getElementById('tray');
+const links = document.getElementById('links');
 const instructions = document.getElementById('instructions');
 const roundNum = document.getElementById('round-num');
 const nipDots = document.getElementById('nip-dots');
 const results = document.getElementById('results');
+const submitBtn = document.getElementById('submit-btn');
+const submitHint = document.getElementById('submit-hint');
+const revealBar = document.getElementById('reveal-bar');
+const revealNote = document.getElementById('reveal-note');
 
-// Build nip dots
-for (let i = 0; i < 5; i++) {
-  const d = document.createElement('div');
-  d.className = 'nip-dot';
-  nipDots.appendChild(d);
-}
+// === BUILD THE TRAY ===
+// Tokens keep their relative sizes in the tray: the size of a nip is a clue to
+// which hole it came out of.
+const maxSize = Math.max(...NIPS.map(n => n.size));
+NIPS.forEach((nip, i) => {
+  const slot = document.createElement('div');
+  slot.className = 'slot';
+  slot.dataset.i = i;
+  const img = document.createElement('img');
+  img.src = nip.img;
+  img.alt = nip.name;
+  img.draggable = false;
+  const px = Math.round(58 * (nip.size / maxSize));
+  img.style.width = px + 'px';
+  img.style.height = px + 'px';
+  const num = document.createElement('div');
+  num.className = 'num';
+  num.textContent = nip.id;
+  slot.appendChild(img);
+  slot.appendChild(num);
+  tray.appendChild(slot);
 
-// === START ===
-document.getElementById('start-btn').addEventListener('click', () => {
-  instructions.style.display = 'none';
-  gameActive = true;
-  taps = [];
-  roundNum.textContent = '0';
-  document.querySelectorAll('.nip-dot').forEach(d => d.classList.remove('found'));
-  // Remove old markers
-  board.querySelectorAll('.tap-marker,.target-reveal').forEach(m => m.remove());
-  updateRound();
+  const dot = document.createElement('div');
+  dot.className = 'nip-dot';
+  nipDots.appendChild(dot);
 });
+const slots = [...tray.querySelectorAll('.slot')];
 
-function updateRound() {
-  roundNum.textContent = taps.length;
+// === HELPERS ===
+function boardPct(clientX, clientY) {
+  const r = board.getBoundingClientRect();
+  return {
+    x: ((clientX - r.left) / r.width) * 100,
+    y: ((clientY - r.top) / r.height) * 100,
+    inside: clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom,
+  };
 }
 
-// === TAP HANDLER ===
-board.addEventListener('click', handleTap);
-board.addEventListener('touchend', (e) => {
+function tokenEl(i) { return board.querySelector('.placed[data-i="' + i + '"]'); }
+
+function setSelected(i) {
+  selected = i;
+  slots.forEach((s, j) => s.classList.toggle('selected', j === i));
+  board.classList.toggle('armed', i !== null);
+}
+
+function renderToken(i) {
+  const nip = NIPS[i];
+  const pos = placed[i];
+  let el = tokenEl(i);
+  if (!pos) { if (el) el.remove(); return; }
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'placed';
+    el.dataset.i = i;
+    el.style.width = nip.size + '%';
+    el.style.height = nip.size + '%';
+    const img = document.createElement('img');
+    img.src = nip.img;
+    img.alt = nip.name;
+    img.draggable = false;
+    el.appendChild(img);
+    board.appendChild(el);
+    el.addEventListener('pointerdown', onPointerDown);
+  }
+  el.style.left = pos.x + '%';
+  el.style.top = pos.y + '%';
+}
+
+function refresh() {
+  const n = placed.filter(Boolean).length;
+  roundNum.textContent = n;
+  [...nipDots.children].forEach((d, i) => d.classList.toggle('found', !!placed[i]));
+  slots.forEach((s, i) => s.classList.toggle('used', !!placed[i]));
+  const ready = n === 5 && gameActive;
+  submitBtn.disabled = !ready;
+  if (!gameActive && judged) submitHint.textContent = 'Scored. Play again for another go.';
+  else if (ready) submitHint.textContent = 'All five are on. Nudge them about, then submit.';
+  else submitHint.textContent = 'Place all 5 nips to submit. (' + (5 - n) + ' still loose.)';
+}
+
+function placeAt(i, x, y) {
+  placed[i] = {
+    x: Math.max(2, Math.min(98, x)),
+    y: Math.max(2, Math.min(98, y)),
+  };
+  renderToken(i);
+  setSelected(null);
+  refresh();
+}
+
+function unplace(i) {
+  placed[i] = null;
+  const el = tokenEl(i);
+  if (el) el.remove();
+  refresh();
+}
+
+// === DRAG + TAP ===
+// One pointer pipeline for the tray and the board. A short press is a tap
+// (select, then tap the board); anything longer than DRAG_SLOP is a drag.
+let drag = null;
+
+function onPointerDown(e) {
   if (!gameActive) return;
+  const host = e.currentTarget;
+  const i = +host.dataset.i;
+  if (host.classList.contains('slot') && placed[i]) return;  // already on the board
   e.preventDefault();
-  const touch = e.changedTouches[0];
-  const rect = board.getBoundingClientRect();
-  placeTap(
-    ((touch.clientX - rect.left) / rect.width) * 100,
-    ((touch.clientY - rect.top) / rect.height) * 100,
-    touch.clientX - rect.left,
-    touch.clientY - rect.top
-  );
-});
-
-function handleTap(e) {
-  if (!gameActive) return;
-  const rect = board.getBoundingClientRect();
-  const px = ((e.clientX - rect.left) / rect.width) * 100;
-  const py = ((e.clientY - rect.top) / rect.height) * 100;
-  placeTap(px, py, e.clientX - rect.left, e.clientY - rect.top);
+  host.setPointerCapture(e.pointerId);
+  drag = { i, host, id: e.pointerId, x0: e.clientX, y0: e.clientY, moved: false, ghost: null, fromBoard: host.classList.contains('placed') };
+  host.addEventListener('pointermove', onPointerMove);
+  host.addEventListener('pointerup', onPointerUp);
+  host.addEventListener('pointercancel', onPointerUp);
 }
 
-function placeTap(px, py, absX, absY) {
-  if (taps.length >= 5) return;
+function startGhost(e) {
+  const nip = NIPS[drag.i];
+  const px = (board.getBoundingClientRect().width * nip.size) / 100;
+  const g = document.createElement('div');
+  g.className = 'ghost';
+  g.style.width = px + 'px';
+  g.style.height = px + 'px';
+  const img = document.createElement('img');
+  img.src = nip.img;
+  img.draggable = false;
+  g.appendChild(img);
+  document.body.appendChild(g);
+  drag.ghost = g;
+  moveGhost(e);
+  const el = tokenEl(drag.i);
+  if (el) el.style.visibility = 'hidden';
+  if (drag.host.classList.contains('slot')) drag.host.style.opacity = '.25';
+}
 
-  taps.push({ x: px, y: py });
+function moveGhost(e) {
+  drag.ghost.style.left = e.clientX + 'px';
+  drag.ghost.style.top = e.clientY + 'px';
+}
 
-  // Place marker
-  const marker = document.createElement('div');
-  marker.className = 'tap-marker';
-  marker.textContent = taps.length;
-  marker.style.left = px + '%';
-  marker.style.top = py + '%';
-  board.appendChild(marker);
+function onPointerMove(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > DRAG_SLOP) {
+    drag.moved = true;
+    startGhost(e);
+  }
+  if (drag.moved) moveGhost(e);
+}
 
-  // Update dots
-  const dots = document.querySelectorAll('.nip-dot');
-  if (dots[taps.length - 1]) dots[taps.length - 1].classList.add('found');
-  updateRound();
+function onPointerUp(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  const d = drag;
+  d.host.removeEventListener('pointermove', onPointerMove);
+  d.host.removeEventListener('pointerup', onPointerUp);
+  d.host.removeEventListener('pointercancel', onPointerUp);
+  drag = null;
+  if (d.host.classList.contains('slot')) d.host.style.opacity = '';
+  const el = tokenEl(d.i);
+  if (el) el.style.visibility = '';
 
-  // Check if done
-  if (taps.length >= 5) {
-    gameActive = false;
-    setTimeout(showResults, 600);
+  if (d.moved) {
+    d.ghost.remove();
+    const p = boardPct(e.clientX, e.clientY);
+    if (p.inside) placeAt(d.i, p.x, p.y);
+    else if (d.fromBoard) unplace(d.i);   // dragged off Nic, back in the tray it goes
+    setSelected(null);
+  } else {
+    // A tap. On a tray nip, arm it. On a placed nip, pick it back up.
+    if (d.fromBoard) { unplace(d.i); setSelected(d.i); }
+    else setSelected(selected === d.i ? null : d.i);
   }
 }
+
+slots.forEach(s => s.addEventListener('pointerdown', onPointerDown));
+
+board.addEventListener('click', (e) => {
+  if (!gameActive || selected === null) return;
+  if (e.target.closest('.placed')) return;   // handled by the token's own pointer logic
+  const p = boardPct(e.clientX, e.clientY);
+  if (p.inside) placeAt(selected, p.x, p.y);
+});
 
 // === SCORING ===
-function calculateScore() {
-  // For each target, find the closest tap
-  let totalDist = 0;
-  const matched = [];
-
-  // Greedy matching: for each target find closest unused tap
-  const usedTaps = new Set();
-  const targetResults = [];
-
-  for (const target of TARGETS) {
-    let bestDist = Infinity;
-    let bestIdx = -1;
-    taps.forEach((tap, i) => {
-      if (usedTaps.has(i)) return;
-      const d = Math.sqrt(Math.pow(tap.x - target.x, 2) + Math.pow(tap.y - target.y, 2));
-      if (d < bestDist) {
-        bestDist = d;
-        bestIdx = i;
-      }
-    });
-    if (bestIdx >= 0) usedTaps.add(bestIdx);
-    targetResults.push({ target, dist: bestDist, tapIdx: bestIdx });
-    totalDist += bestDist;
-  }
-
-  // Score: 100% if all within HIT_RADIUS, scales down with distance
-  // Max possible distance per target ~= 140 (diagonal of 100x100)
-  const maxDist = HIT_RADIUS * 5;
-  const score = Math.max(0, Math.round((1 - totalDist / (maxDist + totalDist)) * 100));
-
-  return { score, targetResults, totalDist };
+// Every nip is scored against its OWN home, so swapping two of them costs you
+// both. Full marks inside PERFECT, sliding linearly to nothing at ZERO_AT.
+function pointsFor(dist) {
+  if (dist <= PERFECT) return 100;
+  return Math.max(0, Math.round(100 * (1 - (dist - PERFECT) / (ZERO_AT - PERFECT))));
 }
 
-function showResults() {
-  const { score, targetResults } = calculateScore();
+function calculateScore() {
+  const rows = NIPS.map((nip, i) => {
+    const p = placed[i];
+    const dist = Math.hypot(p.x - nip.x, p.y - nip.y);
+    const pts = pointsFor(dist);
+    return { nip, i, dist, pts, band: pts >= 90 ? 'hit' : pts >= 50 ? 'near' : 'miss' };
+  });
+  const score = Math.round(rows.reduce((t, r) => t + r.pts, 0) / rows.length);
+  return { score, rows };
+}
 
-  // Color the tap markers
-  const markers = board.querySelectorAll('.tap-marker');
-  targetResults.forEach(r => {
-    if (r.tapIdx >= 0 && markers[r.tapIdx]) {
-      markers[r.tapIdx].classList.add(r.dist <= HIT_RADIUS ? 'correct' : 'wrong');
+function judge() {
+  const res = calculateScore();
+  lastResult = res;
+  gameActive = false;
+  judged = true;
+  setSelected(null);
+
+  // Mark each token and draw its line of shame to the real spot.
+  links.innerHTML = '';
+  res.rows.forEach(r => {
+    const el = tokenEl(r.i);
+    if (el) { el.classList.add('judged', r.band); }
+    const truth = document.createElement('div');
+    truth.className = 'truth';
+    truth.style.width = r.nip.size + '%';
+    truth.style.height = r.nip.size + '%';
+    truth.style.left = r.nip.x + '%';
+    truth.style.top = r.nip.y + '%';
+    board.appendChild(truth);
+    if (r.dist > PERFECT) {
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', placed[r.i].x); line.setAttribute('y1', placed[r.i].y);
+      line.setAttribute('x2', r.nip.x);       line.setAttribute('y2', r.nip.y);
+      line.setAttribute('stroke', r.band === 'near' ? 'rgba(201,168,76,.8)' : 'rgba(239,68,68,.8)');
+      line.setAttribute('stroke-width', '.6');
+      line.setAttribute('stroke-dasharray', '2 1.6');
+      links.appendChild(line);
     }
-    // Show actual target positions
-    const reveal = document.createElement('div');
-    reveal.className = 'target-reveal';
-    reveal.style.left = r.target.x + '%';
-    reveal.style.top = r.target.y + '%';
-    board.appendChild(reveal);
   });
 
-  // Stars
-  let stars = score >= 90 ? 5 : score >= 75 ? 4 : score >= 55 ? 3 : score >= 35 ? 2 : 1;
-  document.getElementById('result-stars').textContent = '\u2B50'.repeat(stars);
+  refresh();
+  setTimeout(() => showResults(res), 800);
+}
 
-  // Message
+function showResults({ score, rows }) {
+  const stars = score >= 90 ? 5 : score >= 75 ? 4 : score >= 55 ? 3 : score >= 35 ? 2 : 1;
+  document.getElementById('result-stars').textContent = '⭐'.repeat(stars);
+
+  const perfect = rows.filter(r => r.pts === 100).length;
   const msgs = [
-    [90, "Nip Whisperer! You know these nips like the back of your hand."],
-    [75, "Impressive! You clearly have an eye for nipple placement."],
-    [55, "Not bad! A few more rounds and you'll be a certified nip-spotter."],
-    [35, "Keep trying! Nic's nips are trickier than they look."],
-    [0, "Were you even looking at the same torso? Nic is disappointed."],
+    [90, "Nip Whisperer. You have clearly spent time with this torso."],
+    [75, "Strong reconstruction. Nic would let you do it again unsupervised."],
+    [55, "Anatomically plausible. Legally, not the same man."],
+    [35, "You have invented a new person. He is fine, but he is not Nic."],
+    [0,  "Were you even looking at the same torso? Nic is disappointed."],
   ];
-  const msg = msgs.find(m => score >= m[0])[1];
+  let msg = msgs.find(m => score >= m[0])[1];
+  if (perfect) msg += ' ' + perfect + (perfect === 1 ? ' nip was' : ' nips were') + ' dead on.';
 
   document.getElementById('final-score').textContent = score + '%';
   document.getElementById('result-msg').textContent = msg;
 
-  // Fake leaderboard
-  buildLeaderboard('results-lb', score);
+  document.getElementById('breakdown').innerHTML = rows.map(r => `
+    <div class="bd-row ${r.band}">
+      <span class="chip"><img src="${r.nip.img}" alt=""></span>
+      <span class="nm">${r.nip.id}. ${r.nip.name}</span>
+      <span class="ds">${r.dist <= PERFECT ? 'spot on' : r.dist.toFixed(1) + '% out'}</span>
+      <span class="pt">${r.pts}</span>
+    </div>
+  `).join('');
 
+  buildLeaderboard('results-lb', score);
   results.classList.add('show');
 }
 
 function buildLeaderboard(elId, playerScore) {
   const names = ['@nip_master_99','@sarah_found_5','@dave_m','@jenny_w','@that_guy','@nipseeker','@curious_cat','@pinpro'];
   const scores = [98, 94, 91, 87, 82, 76, 71, 63];
-  // Insert player score
   let rows = scores.map((s, i) => ({ name: names[i], score: s }));
   rows.push({ name: 'You', score: playerScore, isPlayer: true });
   rows.sort((a, b) => b.score - a.score);
   rows = rows.slice(0, 8);
-
-  const el = document.getElementById(elId);
-  el.innerHTML = rows.map((r, i) => `
+  document.getElementById(elId).innerHTML = rows.map((r, i) => `
     <div class="lb-row" style="${r.isPlayer ? 'border:1px solid var(--gold)' : ''}">
       <span>${i + 1}. <span class="name">${r.name}</span></span>
       <span class="score">${r.score}%</span>
@@ -317,14 +507,62 @@ function buildLeaderboard(elId, playerScore) {
   `).join('');
 }
 
+// === CONTROLS ===
+function newGame() {
+  results.classList.remove('show');
+  revealBar.classList.remove('show');
+  revealNote.textContent = '';
+  board.querySelectorAll('.placed,.truth').forEach(el => el.remove());
+  links.innerHTML = '';
+  placed.fill(null);
+  judged = false;
+  gameActive = true;
+  setSelected(null);
+  refresh();
+}
+
+document.getElementById('start-btn').addEventListener('click', () => {
+  instructions.style.display = 'none';
+  newGame();
+});
+document.getElementById('submit-btn').addEventListener('click', () => {
+  if (placed.filter(Boolean).length === 5 && gameActive) judge();
+});
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (judged) newGame();
+  else { placed.fill(null); board.querySelectorAll('.placed').forEach(el => el.remove()); setSelected(null); refresh(); }
+});
+document.getElementById('replay-btn').addEventListener('click', newGame);
+document.getElementById('again-btn').addEventListener('click', newGame);
+document.getElementById('back-btn').addEventListener('click', () => {
+  results.classList.add('show');
+  revealBar.classList.remove('show');
+});
+
+// Slide every nip home, so Nic is briefly whole again.
+document.getElementById('reveal-btn').addEventListener('click', () => {
+  results.classList.remove('show');
+  links.innerHTML = '';
+  board.querySelectorAll('.truth').forEach(el => el.remove());
+  NIPS.forEach((nip, i) => {
+    const el = tokenEl(i);
+    if (!el) return;
+    el.classList.add('homing');
+    el.classList.remove('hit', 'near', 'miss');
+    requestAnimationFrame(() => { el.style.left = nip.x + '%'; el.style.top = nip.y + '%'; });
+  });
+  revealBar.classList.add('show');
+  revealNote.textContent = 'That is where they live. All five, back in the correct holes.';
+});
+
 // === SHARE ===
 document.getElementById('share-btn').addEventListener('click', () => {
   const score = document.getElementById('final-score').textContent;
   const stars = document.getElementById('result-stars').textContent;
-  const text = `${stars} I scored ${score} on Pin the Nipple!\n\nThink you can find all 5 of Nic's nips?\nnics5nips.com`;
-
+  const perfect = lastResult ? lastResult.rows.filter(r => r.pts === 100).length : 0;
+  const text = `${stars} I scored ${score} rebuilding Nic (${perfect}/5 nips dead on).\n\nThink you can put them back better?\nnicsfivenips.com`;
   if (navigator.share) {
-    navigator.share({ title: "Pin the Nipple on the Nic", text, url: 'https://nics5nips.com/game.html' }).catch(() => {});
+    navigator.share({ title: "Pin the Nipple on the Nic", text, url: 'https://nicsfivenips.com/game.html' }).catch(() => {});
   } else if (navigator.clipboard) {
     navigator.clipboard.writeText(text).then(() => {
       const btn = document.getElementById('share-btn');
@@ -334,24 +572,14 @@ document.getElementById('share-btn').addEventListener('click', () => {
   }
 });
 
-// === REPLAY ===
-document.getElementById('replay-btn').addEventListener('click', () => {
-  results.classList.remove('show');
-  board.querySelectorAll('.tap-marker,.target-reveal').forEach(m => m.remove());
-  taps = [];
-  gameActive = true;
-  document.querySelectorAll('.nip-dot').forEach(d => d.classList.remove('found'));
-  updateRound();
-});
-
-// Show fake leaderboard preview after a delay
+// Fake leaderboard preview
 setTimeout(() => {
   buildLeaderboard('fake-lb', 0);
-  // Remove "You" row since they haven't played yet
-  const fakeRows = document.querySelectorAll('#fake-lb .lb-row');
-  fakeRows.forEach(r => { if (r.style.border) r.remove(); });
+  document.querySelectorAll('#fake-lb .lb-row').forEach(r => { if (r.style.border) r.remove(); });
   document.getElementById('leaderboard-preview').style.display = 'block';
 }, 1000);
+
+refresh();
 </script>
 </body>
 </html>

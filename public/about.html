@@ -39,6 +39,21 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
 .bio-section h2 em{color:var(--gold);font-style:italic}
 .bio-section p{font-family:Georgia,serif;color:rgba(255,255,255,0.8);font-size:.92rem;line-height:1.8;margin-bottom:1rem}
 .bio-section blockquote{border-left:3px solid var(--gold);padding-left:1.25rem;margin:1.25rem 0;font-style:italic;color:var(--gold);font-family:Georgia,serif;font-size:1rem;line-height:1.6}
+.bio-figure{max-width:430px;margin:1.75rem auto;border-radius:12px;overflow:hidden;border:1px solid rgba(201,168,76,0.12);background:var(--card)}
+.bio-figure.wide{max-width:100%}
+.bio-figure img{width:100%;display:block}
+.bio-figure figcaption{padding:.8rem 1rem;font-size:.75rem;color:var(--muted);line-height:1.6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.bio-figure figcaption b{color:var(--gold);font-weight:600}
+.bio-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:1.75rem 0}
+.bio-row figure{border-radius:10px;overflow:hidden;border:1px solid rgba(201,168,76,0.12);background:var(--card)}
+.bio-row img{width:100%;height:210px;object-fit:cover;display:block}
+.bio-row figcaption{padding:.6rem .7rem;font-size:.68rem;color:var(--muted);line-height:1.5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.avatar-note{font-size:.7rem;color:#555;letter-spacing:1px;text-transform:uppercase;margin:-.75rem 0 1rem}
+.archive-cta{text-align:center;margin:3rem 0 1rem;padding:2rem 1.5rem;border:1px solid rgba(201,168,76,0.15);border-radius:12px;background:var(--card)}
+.archive-cta p{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--muted);font-size:.85rem;line-height:1.7;margin-bottom:1.25rem}
+.archive-cta a{display:inline-block;border:1px solid rgba(201,168,76,0.35);color:var(--gold);padding:12px 30px;border-radius:8px;text-decoration:none;font-size:.8rem;letter-spacing:1.5px;text-transform:uppercase;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.archive-cta a:hover{background:rgba(201,168,76,0.08)}
+@media(max-width:560px){.bio-row{grid-template-columns:1fr 1fr}.bio-row figure:last-child{display:none}}
 
 /* TIMELINE */
 .timeline{position:relative;padding-left:2rem;margin:1.5rem 0}
@@ -95,11 +110,9 @@ footer a{color:rgba(201,168,76,0.4);text-decoration:none}
 <div class="page">
   <div class="bio-hero">
     <div class="bio-avatar">
-      <picture>
-        <source srcset="img/nic.avif" type="image/avif">
-        <img src="img/nic.jpg" alt="Nic" width="180" height="180">
-      </picture>
+      <img src="img/nic/portrait.jpg" alt="Nic" width="180" height="180">
     </div>
+    <div class="avatar-note">Photographed 2024 &middot; nipples not pictured</div>
     <div class="bio-tagline">The Man. The Myth. The Nipples.</div>
     <h1>About <em>Nic</em></h1>
     <p class="bio-subtitle">Born in Manchester. Educated in business. Blessed with nipples. The internet's most extraordinary torso belongs to an extraordinarily ordinary bloke.</p>
@@ -114,14 +127,22 @@ footer a{color:rgba(201,168,76,0.4);text-decoration:none}
 
   <div class="bio-section">
     <h2>The <em>Early Years</em></h2>
-    <p>Nicholas was born in Manchester in the early 1990s to a family of perfectly standard nipple counts. The third nipple was first noticed by his mum during bath time at age two. She described it as "a bonus." The fourth was identified by a school nurse during a routine check-up in Year 7, causing what Nic later described as "a bit of a scene in the medical room." The fifth arrived — or was discovered, depending on your philosophical outlook — during freshers' week at university, when a flatmate pointed it out after a particularly enthusiastic game of shirts vs. skins football.</p>
+    <p>Nicholas was born in Manchester in the early 1980s to a family of perfectly standard nipple counts. The third nipple was first noticed by his mum during bath time at age two. She described it as "a bonus." The fourth was identified by a school nurse during a routine check-up in Year 7, causing what Nic later described as "a bit of a scene in the medical room." The fifth arrived — or was discovered, depending on your philosophical outlook — during freshers' week at university, when a flatmate pointed it out after a particularly enthusiastic game of shirts vs. skins football.</p>
     <blockquote>"Most people go to uni and discover politics, or philosophy, or themselves. I discovered a fifth nipple."</blockquote>
+    <figure class="bio-figure">
+      <img src="img/nic/indoors-old.jpg" alt="Nic before the fame" loading="lazy">
+      <figcaption>Undated, early career. The arm is raised. The shirt is down. <b>Nips visible: 0.</b> This photograph has been studied by the community for years and has yielded nothing.</figcaption>
+    </figure>
   </div>
 
   <div class="bio-section">
     <h2>The <em>Education</em></h2>
     <p>Nic studied Business Management at university, graduating with what he describes as "a solid 2:1 and a torso that would eventually be worth more than the degree." The irony is not lost on him: a man with five nipples holds a business degree, making each nipple — statistically speaking — a learn-ed nipple.</p>
     <p>"People ask if I use my degree," he says. "I tell them I'm managing the most unique personal brand in Britain. So yes. Constantly."</p>
+    <figure class="bio-figure wide">
+      <img src="img/nic/pub-bw.jpg" alt="Nic with friends, early 2000s" loading="lazy">
+      <figcaption>The university years. Three friends, nine nipples between them, and not one of them aware of what was coming. <b>Nips visible: 0.</b></figcaption>
+    </figure>
   </div>
 
   <div class="bio-section">
@@ -159,6 +180,16 @@ footer a{color:rgba(201,168,76,0.4);text-decoration:none}
         <div class="timeline-desc">The current chapter. One photograph. Five nipples. 15,000+ subscribers. A global community. An interactive game played over 2 million times. A $1,200 Elite package that keeps selling out. Nic didn't plan this. But then again, he didn't plan the nipples either. Some things are simply destiny.</div>
         <span class="timeline-nip">Nipple 5: The Wildcard</span>
       </div>
+    </div>
+  </div>
+
+  <div class="bio-section">
+    <h2>Nic <em>Today</em></h2>
+    <p>Now semi-retired from the ventures and fully committed to the countryside, Nic spends most of the year outdoors, photographed constantly, and clothed without exception. Our research team has catalogued every known image. The results are consistent.</p>
+    <div class="bio-row">
+      <figure><img src="img/nic/wheatfield-t.jpg" alt="The Wheat Field" loading="lazy"><figcaption>Arms out. Nips visible: 0.</figcaption></figure>
+      <figure><img src="img/nic/jump-joy-t.jpg" alt="Airborne" loading="lazy"><figcaption>Airborne. Nips visible: 0.</figcaption></figure>
+      <figure><img src="img/nic/arch-arms-t.jpg" alt="The Driftwood Arch" loading="lazy"><figcaption>The arch, again. Nips visible: 0.</figcaption></figure>
     </div>
   </div>
 
@@ -211,7 +242,7 @@ footer a{color:rgba(201,168,76,0.4);text-decoration:none}
 </div>
 
 <footer>
-  <p>&copy; 2025 nics5nips.com &mdash; All Rights Reserved</p>
+  <p>&copy; 2025 nicsfivenips.com &mdash; All Rights Reserved</p>
   <p><a href="#">Privacy Policy</a> &middot; <a href="#">Terms of Service</a> &middot; <a href="#">Contact</a></p>
 </footer>
 
@@ -253,7 +284,7 @@ const translations = {
     subtitle: "Nacido en Manchester. Educado en negocios. Bendecido con pezones. El torso m\u00e1s extraordinario de internet pertenece a un tipo extraordinariamente ordinario.",
     stats: ["Pezones", "T\u00edtulo Empresarial", "Empresas", "Leyenda"],
     earlyTitle: "Los <em>Primeros A\u00f1os</em>",
-    earlyP1: "Nicholas naci\u00f3 en Manchester a principios de los a\u00f1os 90 en una familia con un n\u00famero de pezones perfectamente est\u00e1ndar. El tercer pez\u00f3n fue notado por primera vez por su madre durante la hora del ba\u00f1o a los dos a\u00f1os. Ella lo describi\u00f3 como \"una bonificaci\u00f3n.\" El cuarto fue identificado por una enfermera escolar durante un chequeo rutinario en s\u00e9ptimo a\u00f1o, causando lo que Nic describi\u00f3 m\u00e1s tarde como \"un poco de esc\u00e1ndalo en la enfermer\u00eda.\" El quinto lleg\u00f3 \u2014 o fue descubierto, seg\u00fan tu perspectiva filos\u00f3fica \u2014 durante la semana de novatos en la universidad.",
+    earlyP1: "Nicholas naci\u00f3 en Manchester a principios de los a\u00f1os 80 en una familia con un n\u00famero de pezones perfectamente est\u00e1ndar. El tercer pez\u00f3n fue notado por primera vez por su madre durante la hora del ba\u00f1o a los dos a\u00f1os. Ella lo describi\u00f3 como \"una bonificaci\u00f3n.\" El cuarto fue identificado por una enfermera escolar durante un chequeo rutinario en s\u00e9ptimo a\u00f1o, causando lo que Nic describi\u00f3 m\u00e1s tarde como \"un poco de esc\u00e1ndalo en la enfermer\u00eda.\" El quinto lleg\u00f3 \u2014 o fue descubierto, seg\u00fan tu perspectiva filos\u00f3fica \u2014 durante la semana de novatos en la universidad.",
     earlyQuote: "\"La mayor\u00eda de la gente va a la universidad y descubre la pol\u00edtica, o la filosof\u00eda, o a s\u00ed mismos. Yo descubr\u00ed un quinto pez\u00f3n.\"",
     eduTitle: "La <em>Educaci\u00f3n</em>",
     eduP1: "Nic estudi\u00f3 Gesti\u00f3n Empresarial en la universidad, gradu\u00e1ndose con lo que describe como \"un s\u00f3lido notable y un torso que eventualmente valdr\u00eda m\u00e1s que el t\u00edtulo.\" La iron\u00eda no se le escapa: un hombre con cinco pezones tiene un t\u00edtulo en negocios, haciendo que cada pez\u00f3n sea \u2014 estad\u00edsticamente hablando \u2014 un pez\u00f3n educado.",
@@ -266,7 +297,7 @@ const translations = {
     subtitle: "\u1780\u17be\u178f\u1793\u17c5\u1798\u17c9\u17b6\u1793\u17cb\u1788\u17c1\u179f\u17d2\u178f\u17b0\u17d4 \u179f\u17b7\u1780\u17d2\u179f\u17b6\u1787\u17c6\u178e\u17b6\u1789\u17d4 \u1794\u17b6\u1793\u1796\u179a\u178a\u17c5\u1791\u17d2\u179a\u17bc\u1784\u17d4 \u179f\u17c6\u178e\u17b6\u1784\u1795\u17d2\u1793\u17c2\u1780\u1780\u17b6\u1799\u178a\u17c2\u179b\u1796\u17b7\u179f\u17c1\u179f\u1794\u17c6\u1795\u17bb\u178f\u1793\u17c5\u179b\u17be\u17a2\u17ca\u17b8\u1793\u1792\u17ba\u178e\u17c2\u178f\u200b\u1787\u17b6\u1780\u1798\u17d2\u1798\u179f\u17b7\u178f\u17d2\u178b\u1794\u17bb\u179a\u179f\u1798\u17d2\u1796\u17b6\u1791\u178a\u17c2\u179b\u1796\u17b7\u179f\u17c1\u179f\u1798\u17bd\u1799\u17d4",
     stats: ["\u1791\u17d2\u179a\u17bc\u1784", "\u179f\u1789\u17d2\u1789\u17b6\u1794\u178f\u17d2\u179a\u1787\u17c6\u178e\u17b6\u1789", "\u17a2\u17b6\u1787\u17b8\u179c\u1780\u1798\u17d2\u1798", "\u178a\u17c6\u178e\u17b6\u179b"],
     earlyTitle: "\u1786\u17d2\u1793\u17b6\u17c6 <em>\u178a\u17c6\u1794\u17bc\u1784</em>",
-    earlyP1: "Nicholas \u1780\u17be\u178f\u1793\u17c5\u1798\u17c9\u17b6\u1793\u17cb\u1788\u17c1\u179f\u17d2\u178f\u17b0\u1793\u17c5\u178a\u17be\u1798\u1786\u17d2\u1793\u17b6\u17c6 1990 \u1780\u17d2\u1793\u17bb\u1784\u1780\u17d2\u179a\u17bb\u1798\u1787\u17c6\u178e\u17b6\u1789\u1798\u17bd\u1799\u178a\u17c2\u179b\u1798\u17b6\u1793\u1791\u17d2\u179a\u17bc\u1784\u1796\u17b8\u179a\u178a\u17c4\u1799\u179f\u17d2\u178f\u1784\u17cb\u178a\u17b6\u179a\u17d4 \u1791\u17d2\u179a\u17bc\u1784\u1791\u17b8\u1794\u17b8\u178f\u17d2\u179a\u17bc\u179c\u1794\u17b6\u1793\u179f\u1798\u17d2\u1782\u17b6\u179b\u17cb\u178a\u17c4\u1799\u1798\u17d2\u178f\u17b6\u1799\u179a\u1794\u179f\u17cb\u1782\u17b6\u178f\u17cb\u1793\u17c5\u1796\u17c1\u179b\u1784\u17bc\u178f\u1791\u17b9\u1780\u1793\u17c5\u17a2\u17b6\u1799\u17bb\u1796\u17b8\u179a\u1786\u17d2\u1793\u17b6\u17c6\u17d4",
+    earlyP1: "Nicholas \u1780\u17be\u178f\u1793\u17c5\u1798\u17c9\u17b6\u1793\u17cb\u1788\u17c1\u179f\u17d2\u178f\u17b0\u1793\u17c5\u178a\u17be\u1798\u1786\u17d2\u1793\u17b6\u17c6 1980 \u1780\u17d2\u1793\u17bb\u1784\u1780\u17d2\u179a\u17bb\u1798\u1787\u17c6\u178e\u17b6\u1789\u1798\u17bd\u1799\u178a\u17c2\u179b\u1798\u17b6\u1793\u1791\u17d2\u179a\u17bc\u1784\u1796\u17b8\u179a\u178a\u17c4\u1799\u179f\u17d2\u178f\u1784\u17cb\u178a\u17b6\u179a\u17d4 \u1791\u17d2\u179a\u17bc\u1784\u1791\u17b8\u1794\u17b8\u178f\u17d2\u179a\u17bc\u179c\u1794\u17b6\u1793\u179f\u1798\u17d2\u1782\u17b6\u179b\u17cb\u178a\u17c4\u1799\u1798\u17d2\u178f\u17b6\u1799\u179a\u1794\u179f\u17cb\u1782\u17b6\u178f\u17cb\u1793\u17c5\u1796\u17c1\u179b\u1784\u17bc\u178f\u1791\u17b9\u1780\u1793\u17c5\u17a2\u17b6\u1799\u17bb\u1796\u17b8\u179a\u1786\u17d2\u1793\u17b6\u17c6\u17d4",
     earlyQuote: "\"\u1798\u1793\u17bb\u179f\u17d2\u179f\u1797\u17b6\u1782\u1785\u17d2\u179a\u17be\u1793\u1791\u17c5\u179f\u17b6\u1780\u179b\u179c\u17b7\u1791\u17d2\u1799\u17b6\u179b\u17d0\u1799\u179a\u1780\u1783\u17be\u1789\u1793\u1799\u17c4\u1794\u17b6\u1799 \u17ac\u1791\u179f\u17d2\u179f\u1793\u179c\u17b7\u1787\u17d2\u1787\u17b6 \u17ac\u1781\u17d2\u179b\u17bd\u1793\u17a2\u17c2\u1784\u17d4 \u1781\u17d2\u1789\u17bb\u17c6\u179a\u1780\u1783\u17be\u1789\u1791\u17d2\u179a\u17bc\u1784\u1791\u17b8\u17e5\u17d4\"",
     eduTitle: "<em>\u1780\u17b6\u179a\u179f\u17b7\u1780\u17d2\u179f\u17b6</em>",
     eduP1: "Nic \u179f\u17b7\u1780\u17d2\u179f\u17b6\u1782\u17d2\u179a\u1794\u17cb\u1782\u17d2\u179a\u1784\u1787\u17c6\u178e\u17b6\u1789\u1793\u17c5\u179f\u17b6\u1780\u179b\u179c\u17b7\u1791\u17d2\u1799\u17b6\u179b\u17d0\u1799 \u178a\u17c4\u1799\u1794\u17b6\u1793\u1794\u1789\u17d2\u1785\u1794\u17cb\u178a\u17c4\u1799\u17a2\u17d2\u179c\u17b8\u178a\u17c2\u179b\u1782\u17b6\u178f\u17cb\u1796\u17b7\u178f\u1787\u17b6\u1780\u17cb\u179f\u17d2\u178f\u17c2\u1784\u1787\u17b6 \"\u179f\u1789\u17d2\u1789\u17b6\u1794\u178f\u17d2\u179a\u179a\u17b9\u1784\u1798\u17b6\u17c6 \u1793\u17b7\u1784\u179f\u17c6\u178e\u17b6\u1784\u1795\u17d2\u1793\u17c2\u1780\u1780\u17b6\u1799\u178a\u17c2\u179b\u1793\u17c5\u1791\u17b8\u1794\u1789\u17d2\u1785\u1794\u17cb\u1793\u17b9\u1784\u1798\u17b6\u1793\u178f\u1798\u17d2\u179b\u17c3\u179b\u17be\u179f\u1796\u17b8\u179f\u1789\u17d2\u1789\u17b6\u1794\u178f\u17d2\u179a\u17d4\"",
