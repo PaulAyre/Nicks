@@ -18,6 +18,7 @@ import datetime
 import json
 import os
 import re
+import shutil
 import threading
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -75,12 +76,15 @@ _scores_lock = threading.Lock()
 
 
 def load_scores():
-    try:
-        with open(SCORES_FILE) as fh:
-            rows = json.load(fh)
-        return rows if isinstance(rows, list) else []
-    except (OSError, ValueError):
+    # Only a missing file counts as an empty board. A damaged file raises, so a
+    # bad read can never be written back over the real scores.
+    if not os.path.exists(SCORES_FILE):
         return []
+    with open(SCORES_FILE) as fh:
+        rows = json.load(fh)
+    if not isinstance(rows, list):
+        raise ValueError("scores file is not a list")
+    return rows
 
 
 def add_score(entry):
@@ -98,6 +102,13 @@ def add_score(entry):
         rows.sort(key=lambda r: -r["score"])
         rows = rows[:100]
         os.makedirs(os.path.dirname(SCORES_FILE), exist_ok=True)
+        if os.path.exists(SCORES_FILE):
+            # One snapshot per day of the board as it stood before today's first write.
+            bdir = os.path.join(os.path.dirname(SCORES_FILE), "backups")
+            os.makedirs(bdir, exist_ok=True)
+            snap = os.path.join(bdir, "nicattack-scores-%s.json" % row["date"])
+            if not os.path.exists(snap):
+                shutil.copy2(SCORES_FILE, snap)
         tmp = SCORES_FILE + ".tmp"
         with open(tmp, "w") as fh:
             json.dump(rows, fh)
