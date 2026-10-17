@@ -168,6 +168,7 @@ const sfx = {
   dink: () => { beep(1500, .06, 'square', .06); beep(220, .25, 'sawtooth', .06, -120); },
   tick: () => beep(1800, .02, 'square', .02),
   clang: () => beep(2400, .03, 'triangle', .02),
+  nope: () => { beep(140, .14, 'square', .06); setTimeout(() => beep(110, .2, 'square', .06), 150); },
   victory: () => seq([523, 523, 523, 659, 784, 659, 784, 1046], 110),
 };
 
@@ -344,7 +345,7 @@ function newRun(startWave) {
   S = {
     wave: startWave, waveT: 0, banner: 3, b2: 0, b2Text: '', b2Col: '#ffd23f',
     score: 0, combo: 0, weapon: 'single', weaponT: 0, rebuild: 0, gun: startWave > 4 ? 2 : 1, pairs: 0, fireT: 0,
-    hamper: 0, hampers: 0, flash: 0, bestRef: save.best, lastRef: save.last, passed: {},
+    hamper: 0, hampers: 0, flash: 0, bestRef: save.best, lastRef: save.last, passed: {}, cutQ: [], handFlash: 0, toldFull: false,
     iain: { x: W / 2, y: ZONE_BOT - 50, face: 1, inv: 0, walk: 0, shield: 0, rinse: 0 },
     hand: [], baskets: BASKETS.map(b => ({ x: b.x, y: b.y, k: -1, inside: false, pulse: 0 })), zips: [],
     nips: [], socks: [], shots: [], parts: [], texts: [], crates: [], snow: [], hazards: [],
@@ -367,17 +368,19 @@ function addScore(n) { // every point goes through here, so beating your last an
   if (S.bestRef > 0 && S.score > S.bestRef && !S.passed.best) { S.passed.best = 1; banner2('NEW HIGH SCORE!', '#2ecc71', 3); sfx.upgrade(); }
 }
 // A pause in the action while Nic says his piece. Tap to carry on.
-function cutscene(title, sub, text, then) {
-  S.cutData = { title, sub, text, then };
-  S.cut = S.cutMax = clamp(2.2 + text.length / 20, 3, 10);
+function cutscene(title, sub, text, then, o = {}) {
+  const d = Object.assign({ title, sub, text, then, who: 'nic', col: '#ff3b3b' }, o);
+  if (S.cut > 0) { S.cutQ.push(d); return; } // one at a time: never talk over a boss intro
+  playCut(d);
 }
+function playCut(d) { S.cutData = d; S.cut = S.cutMax = d.dur || clamp(2.2 + d.text.length / 20, 3, 10); }
 
 // ===================== SPAWNING =====================
 // Difficulty only ever goes up. There is no last wave.
 const speedMul = () => 1 + .07 * (S.wave - 1);
 const nipEvery = () => Math.max(.16, 1.5 * Math.pow(.89, S.wave - 1)) * (S.boss ? 3 : 1);
 const sockEvery = () => Math.max(.5, 1.4 * Math.pow(.955, S.wave - 1));
-const sockColours = () => S.wave < 4 ? 3 : S.wave < 7 ? 4 : S.wave < 13 ? 5 : S.wave < 19 ? 6 : 7;
+const sockColours = () => S.wave < 3 ? 4 : S.wave < 8 ? 5 : S.wave < 14 ? 6 : 7;
 const floorY = () => rnd(ZONE_TOP + 16, ZONE_BOT - 4);
 
 // Asteroids rules: a big nip splits into two mediums, a medium into two smalls.
@@ -496,7 +499,10 @@ function useBasket(b) {
 // Every power-up is Iain calling on the power of East 17. Each one is a track.
 const EAST17 = { pizza: 'STEAM', blender: 'HOLD MY BODY TIGHT', rinse: 'LET IT RAIN', pud: 'GOLD', crane: 'UP ALL NIGHT' };
 const POWNAME = { pizza: 'EXPLODING PIZZA BOX', blender: 'MELTED BLENDER SHIELD', rinse: 'HIGH PRESSURE RINSE', pud: "NIC'S PATENTED YORKSHIRE PUDS", crane: 'THE BUILDERS ARE IN' };
-function east17(track, what, col) { S.pow = { t: 2.2, track, what, col }; seq([523, 659, 784, 1046, 1318, 1568], 55, 'triangle'); }
+function east17(track, what, col) {
+  seq([523, 659, 784, 1046, 1318, 1568], 55, 'triangle');
+  cutscene('IAIN LOUDON', 'NEVER LOST A SOCK', '"CALL ON THE POWER OF EAST 17!"', null, { who: 'iain', col, big: track + '!', small: what, dur: 3.4 });
+}
 function takeCrate(c) {
   const I = S.iain; sfx.power();
   if (c.kind === 'gun') east17(WEAPONS[c.w].name, WEAPONS[c.w].tag + ' FOR ' + WEAPON_TIME + 's', WEAPONS[c.w].col);
@@ -718,7 +724,7 @@ function update(dt) {
   const I = S.iain;
   if (S.cut > 0) { // cutscene: everything holds still while Nic monologues
     S.cut -= dt;
-    if (S.cut <= 0) { const d = S.cutData; S.cut = 0; S.cutData = null; if (d && d.then) d.then(); }
+    if (S.cut <= 0) { const d = S.cutData; S.cut = 0; S.cutData = null; if (d && d.then) d.then(); if (S.cutQ.length && S.cut <= 0) playCut(S.cutQ.shift()); }
     return;
   }
   // Waves. Every second wave ends with Nic.
@@ -729,7 +735,6 @@ function update(dt) {
   if (S.sack) updateSack(dt);
   if (S.banner > 0) S.banner -= dt;
   if (S.b2 > 0) S.b2 -= dt;
-  if (S.pow && (S.pow.t -= dt) <= 0) S.pow = null;
   if (S.warn > 0) S.warn -= dt;
 
   // Spawns
@@ -747,6 +752,7 @@ function update(dt) {
   if (I.inv > 0) I.inv -= dt;
   if (I.shield > 0) I.shield -= dt;
   if (S.fullT > 0) S.fullT -= dt;
+  if (S.handFlash > 0) S.handFlash -= dt;
   if (S.crane > 0) S.crane -= dt;
   if (I.rinse > 0) { // a column of water straight up from Iain: nips in it are washed away, Nic gets soaked
     I.rinse -= dt;
@@ -786,6 +792,7 @@ function update(dt) {
     if (n.vy < 30) n.vy += 60 * dt; // split fragments get pulled back down
     n.x += n.vx * dt; n.y += n.vy * dt;
     if (n.x < 8 || n.x > W - 8) { n.vx *= -1; n.x = clamp(n.x, 8, W - 8); }
+    if (n.y < 60 && n.vy < 0) n.vy = 10;
     const bx = n.x, by = n.y + n.d.r * .6;
     if (by < GROUND && cellAt(bx, by)) { blowUp(n, bx, by); S.nips.splice(i, 1); continue; }
     if (n.y > ZONE_TOP - 10 && touchesIain(n.x, n.y, n.d.r * .8)) { hurtIain(); burst(n.x, n.y, 8, ['#888', '#ffd23f']); S.nips.splice(i, 1); continue; }
@@ -826,7 +833,7 @@ function update(dt) {
       if ((n.x - b.x) ** 2 + (n.y - b.y) ** 2 < (n.d.r + 5) ** 2) {
         if (b.R) { explode(b); S.shots.splice(i, 1); break; }
         n.hp -= b.dmg; n.hit = .1; b.hits.add(n);
-        if (n.hp <= 0) killNip(j); else beep(300, .04, 'square', .03);
+        if (n.hp <= 0) killNip(j); else { beep(300, .04, 'square', .03); n.vy = Math.min(n.vy, -55); n.vx += b.vx * .15; }
         if (!b.pierce) { S.shots.splice(i, 1); break; }
       }
     }
@@ -845,7 +852,14 @@ function update(dt) {
     }
     if (I.inv < 1.1 && (s.ground || s.y > ZONE_TOP - 30) && grabs(s.x, s.y)) {
       if (canTake(s.k)) { S.socks.splice(i, 1); catchSock(s); }
-      else if (!s.full) { s.full = 1; say(s.x, s.y - 20, 'HANDS FULL! USE A BASKET', '#ff6b6b', 7); beep(160, .12, 'square', .04); }
+      else {
+        if (s.ground) s.ground = s.max; // you got to it: its clock starts again
+        if (!s.full) {
+          s.full = 1; S.handFlash = .8; sfx.nope();
+          say(s.x, s.y - 20, "CAN'T CARRY IT!", '#ff3b3b', 10);
+          if (!S.toldFull) { S.toldFull = true; cutscene('HANDS FULL!', 'IAIN CAN ONLY CARRY 3 SOCKS', "YOU HAVE NO FREE SPOTS FOR SOCKS! STORE ONE IN A BASKET IN THE BOTTOM CORNERS. A SOCK YOU REACH GETS ITS TIMER RESET.", null, { who: 'iain', col: '#ff3b3b' }); }
+        }
+      }
     } else if (s.full && !grabs(s.x, s.y)) s.full = 0;
   }
   function land(s) {
@@ -1002,10 +1016,12 @@ function drawIain() {
   // what he's carrying, above his head where you can see it: the TOP one first, outlined
   const n = S.hand.length, full = n >= HAND, warn = full && Math.floor(performance.now() / 200) % 2;
   for (let i = 0; i < HAND; i++) {
-    const sx = I.x + (i - 1) * 17, sy = I.y - 90;
-    ctx.fillStyle = 'rgba(5,3,15,.65)'; ctx.fillRect(sx - 8, sy - 10, 16, 18);
-    ctx.strokeStyle = i === 0 && n ? '#ffd23f' : warn ? '#ff3b3b' : 'rgba(255,255,255,.25)'; ctx.lineWidth = i === 0 && n ? 2 : 1; ctx.strokeRect(sx - 8, sy - 10, 16, 18);
-    if (i < n) drawSock(sx - 1, sy - 1, S.hand[i], .2, .95);
+    const no = S.handFlash > 0, jig = no ? Math.sin(performance.now() / 25) * 3 : 0;
+    const sx = I.x + (i - 1) * 19 + jig, sy = I.y - 92, k = S.hand[i];
+    if (i < n) { ctx.save(); ctx.shadowColor = SOCKS[k]; ctx.shadowBlur = 10; ctx.fillStyle = SOCKS[k] + '55'; ctx.fillRect(sx - 9, sy - 11, 18, 20); ctx.restore(); }
+    else { ctx.fillStyle = 'rgba(5,3,15,.65)'; ctx.fillRect(sx - 9, sy - 11, 18, 20); }
+    ctx.strokeStyle = no ? '#ff3b3b' : i < n ? SOCKS[k] : warn ? '#ff3b3b' : 'rgba(255,255,255,.25)'; ctx.lineWidth = no || (i === 0 && n) ? 2.5 : 1.5; ctx.strokeRect(sx - 9, sy - 11, 18, 20);
+    if (i < n) drawSock(sx - 1, sy - 1, k, .2, .95);
   }
   if (I.rinse > 0) {
     const top = 30, a = Math.min(1, I.rinse * 2);
@@ -1013,6 +1029,7 @@ function drawIain() {
     ctx.fillStyle = 'rgba(255,255,255,' + (.8 * a) + ')'; ctx.fillRect(I.x - 3, top, 6, I.y - 56 - top);
     for (let i = 0; i < 12; i++) ctx.fillRect(I.x - 12 + Math.random() * 24, top + Math.random() * (I.y - 56 - top), 2, 2);
   }
+  if (S.handFlash > 0) { ctx.font = FONT(7); ctx.textAlign = 'center'; ctx.fillStyle = '#ff3b3b'; ctx.fillText('HANDS FULL!', I.x, I.y - 108); }
   if (I.shield > 0) { ctx.strokeStyle = `rgba(180,108,255,${.4 + .3 * Math.sin(performance.now() / 100)})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(I.x, I.y - 34, 34, 0, 7); ctx.stroke(); }
 }
 function drawShadow(x, y, f, col = 'rgba(255,60,60,') {
@@ -1123,20 +1140,26 @@ function drawCutscene() {
   const d = S.cutData; if (!d) return;
   const el = S.cutMax - S.cut;
   ctx.fillStyle = 'rgba(5,3,15,.6)'; ctx.fillRect(0, 0, W, H);
-  const lines = wrap(d.text, 30), bx = 14, by = 150, bw = W - 28, bh = 96 + lines.length * 13;
+  const lines = wrap(d.text, 30), bx = 14, by = 150, bw = W - 28, bh = 96 + lines.length * 13 + (d.big ? 44 : 0);
+  const face = d.who === 'iain' ? HEAD : NICHEAD;
   ctx.fillStyle = '#0b0820'; ctx.fillRect(bx, by, bw, bh);
-  ctx.strokeStyle = '#ff3b3b'; ctx.lineWidth = 3; ctx.strokeRect(bx, by, bw, bh);
+  ctx.strokeStyle = d.col; ctx.lineWidth = 3; ctx.strokeRect(bx, by, bw, bh);
   const bob = Math.sin(el * 14) * (el * 34 < d.text.length ? 1.5 : 0); // his head bobs while he's talking
   ctx.save(); ctx.beginPath(); ctx.arc(bx + 40, by + 44 + bob, 28, 0, 7); ctx.clip();
-  if (NICHEAD.complete && NICHEAD.naturalWidth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(NICHEAD, bx + 12, by + 16 + bob, 56, 56); ctx.imageSmoothingEnabled = false; }
+  if (face.complete && face.naturalWidth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(face, bx + 12, by + 16 + bob, 56, 56); ctx.imageSmoothingEnabled = false; }
   ctx.restore();
   ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bx + 40, by + 44 + bob, 28, 0, 7); ctx.stroke();
   ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-  ctx.font = FONT(9); ctx.fillStyle = '#ff3b3b'; ctx.fillText(d.title, bx + 80, by + 20);
+  ctx.font = FONT(9); ctx.fillStyle = d.col; ctx.fillText(d.title, bx + 80, by + 20);
   ctx.font = FONT(5); ctx.fillStyle = '#4ff0ff'; wrap(d.sub, 30).forEach((l, i) => ctx.fillText(l, bx + 80, by + 36 + i * 9));
   let left = Math.floor(el * 34);
   ctx.font = FONT(8); ctx.fillStyle = '#fff';
   lines.forEach((l, i) => { if (left > 0) ctx.fillText(l.slice(0, left), bx + 12, by + 84 + i * 13); left -= l.length + 1; });
+  if (d.big && left > 0) { // the track, big, once he's said it
+    const y = by + 92 + lines.length * 13;
+    ctx.font = FONT(d.big.length > 16 ? 9 : 12); ctx.fillStyle = Math.floor(performance.now() / 140) % 2 ? d.col : '#fff'; ctx.fillText(d.big, bx + 12, y);
+    ctx.font = FONT(6); ctx.fillStyle = '#cfc8ff'; ctx.fillText(d.small, bx + 12, y + 20);
+  }
   if (el > .8 && Math.floor(performance.now() / 300) % 2) { ctx.textAlign = 'right'; ctx.font = FONT(6); ctx.fillStyle = '#ffd23f'; ctx.fillText(S.boss && S.boss.phase === 'intro' ? 'TAP TO FIGHT' : 'TAP TO GO ON', bx + bw - 10, by + bh - 14); }
   ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
 }
@@ -1154,10 +1177,10 @@ function drawHUD() {
   const mult = Math.min(8, 1 + Math.floor(S.combo / 10)), sw = ctx.measureText(fmt(S.score)).width;
   if (mult > 1) { ctx.font = FONT(8); ctx.fillStyle = '#4ff0ff'; ctx.fillText('x' + mult, 12 + sw, 8); }
   ctx.textAlign = 'right'; ctx.font = FONT(6);
-  if (S.bestRef > 0 && S.score > S.bestRef) { ctx.fillStyle = blink ? '#2ecc71' : '#ffd23f'; ctx.fillText('NEW BEST!', W - 32, 5); }
-  else { ctx.fillStyle = '#ffd23f'; ctx.fillText('BEST ' + fmt(S.bestRef), W - 32, 5); }
-  ctx.font = FONT(5); ctx.fillStyle = S.lastRef > 0 && S.score > S.lastRef ? '#4ff0ff' : '#8f86c9'; ctx.fillText('LAST ' + fmt(S.lastRef), W - 32, 15);
-  ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.fillRect(W - 27, 3, 22, 20); ctx.fillStyle = '#fff'; ctx.fillRect(W - 20, 8, 3, 10); ctx.fillRect(W - 14, 8, 3, 10);
+  if (S.bestRef > 0 && S.score > S.bestRef) { ctx.fillStyle = blink ? '#2ecc71' : '#ffd23f'; ctx.fillText('NEW BEST!', W - 42, 5); }
+  else { ctx.fillStyle = '#ffd23f'; ctx.fillText('BEST ' + fmt(S.bestRef), W - 42, 5); }
+  ctx.font = FONT(5); ctx.fillStyle = S.lastRef > 0 && S.score > S.lastRef ? '#4ff0ff' : '#8f86c9'; ctx.fillText('LAST ' + fmt(S.lastRef), W - 42, 15);
+  ctx.fillStyle = '#ffd23f'; ctx.fillRect(W - 36, 2, 32, 20); ctx.fillStyle = '#05030f'; ctx.fillRect(W - 27, 6, 4, 12); ctx.fillRect(W - 18, 6, 4, 12);
   // London's health, the thing you are protecting
   const lp = london();
   ctx.textAlign = 'left'; ctx.font = FONT(5); ctx.fillStyle = '#cfc8ff'; ctx.fillText('LONDON', 6, 27);
@@ -1186,7 +1209,7 @@ function drawHUD() {
   ctx.textAlign = 'left'; ctx.font = FONT(5); ctx.fillStyle = '#8f86c9'; ctx.fillText('CARRYING ' + S.hand.length + '/' + HAND, 6, y0 + 6);
   for (let i = 0; i < HAND; i++) {
     const sx = 6 + i * 33, sy = y0 + 15, k = S.hand[i];
-    ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fillRect(sx, sy, 30, 30);
+    ctx.fillStyle = k !== undefined ? SOCKS[k] + '40' : 'rgba(255,255,255,.06)'; ctx.fillRect(sx, sy, 30, 30);
     ctx.strokeStyle = i === 0 && k !== undefined ? '#ffd23f' : 'rgba(255,255,255,.2)'; ctx.lineWidth = i === 0 ? 2 : 1; ctx.strokeRect(sx + .5, sy + .5, 29, 29);
     if (k !== undefined) drawSock(sx + 13, sy + 15, k, .2, 1.4);
   }
@@ -1249,20 +1272,6 @@ function drawHUD() {
       drawSock(ax, ay + 4, s.k, 0, .9);
       ctx.font = FONT(6); ctx.fillStyle = '#fff'; ctx.fillText(Math.ceil(s.ground), ax + 14, ay + 2);
     });
-  }
-  if (S.pow) { // Iain's head, his battle cry, and the track he's calling on
-    const P = S.pow, a = Math.min(1, P.t * 2), y = 226, pop = Math.max(0, P.t - 1.9) * 3;
-    ctx.globalAlpha = a;
-    ctx.fillStyle = 'rgba(5,3,15,.85)'; ctx.fillRect(0, y, W, 56);
-    ctx.fillStyle = P.col; ctx.fillRect(0, y, W, 2); ctx.fillRect(0, y + 54, W, 2);
-    ctx.save(); ctx.beginPath(); ctx.arc(30, y + 28, 20 + pop * 6, 0, 7); ctx.clip();
-    if (HEAD.complete && HEAD.naturalWidth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(HEAD, 10 - pop * 6, y + 8 - pop * 6, 40 + pop * 12, 40 + pop * 12); ctx.imageSmoothingEnabled = false; }
-    ctx.restore();
-    ctx.textAlign = 'left';
-    ctx.font = FONT(6); ctx.fillStyle = '#fff'; ctx.fillText('"CALL ON THE POWER OF EAST 17!"', 58, y + 8);
-    ctx.font = FONT(P.track.length > 14 ? 8 : 10); ctx.fillStyle = Math.floor(performance.now() / 120) % 2 ? P.col : '#fff'; ctx.fillText(P.track + '!', 58, y + 22);
-    ctx.font = FONT(5); ctx.fillStyle = '#cfc8ff'; ctx.fillText(P.what, 58, y + 40);
-    ctx.textAlign = 'center'; ctx.globalAlpha = 1;
   }
   if (S.b2 > 0) {
     ctx.globalAlpha = Math.min(1, S.b2);
@@ -1443,7 +1452,7 @@ cv.addEventListener('pointerdown', e => {
   e.preventDefault();
   const p = toGame(e);
   if (S.cut > 0) { if (S.cutMax - S.cut > .8) S.cut = .001; return; }
-  if (p.x > W - 30 && p.y < 26) return pause();
+  if (p.x > W - 48 && p.y < 26) return pause();
   pid = e.pointerId; lastP = p; cv.setPointerCapture(e.pointerId);
 });
 cv.addEventListener('pointermove', e => {
