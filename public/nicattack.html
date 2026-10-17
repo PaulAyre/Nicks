@@ -60,7 +60,7 @@ p b{color:#ffd23f;font-weight:400}
       <div><i>1</i><span><b>Drag anywhere</b> to move. Iain throws by himself. <b>Shadows</b> show where things land.</span></div>
       <div><i>2</i><span>Iain carries <b>3 socks</b>. Catch a match and it folds into a <b>pair</b>. Hands full? Walk onto a <b>BASKET</b>: it takes your top sock, swaps it, or folds it with the one waiting there.</span></div>
       <div><i>3</i><span>Pairs fill the <b>HAMPER</b>. Full hamper = <b>DRYER BLAST + GUN UPGRADE</b>. Get hit and you drop a gun level and spill what you're carrying. A sock left on the floor too long is <b>lost</b>.</span></div>
-      <div><i>4</i><span>Crates swap your weapon. Fill the <b>wave bar</b> and <b>Dr. RobotNic</b> attacks. Eight hits and he runs.</span></div>
+      <div><i>4</i><span>Crates lend you a weapon for 15 seconds. Cranes, puds, basket matches and cleared waves <b>rebuild London</b>. Fill the <b>wave bar</b> and <b>Dr. RobotNic</b> attacks. Eight hits and he runs.</span></div>
     </div>
     <button class="btn" id="new-btn">NEW GAME</button>
     <button class="btn alt" id="cont-btn" style="display:none"></button>
@@ -282,15 +282,29 @@ function updateCollapse(dt) {
     if (!found) S.collapse.splice(k, 1);
   }
 }
-function repairCity(frac) { // the Yorkshire pudding / the dryer / a beaten boss put a little back
-  let need = Math.round(cityTotal * frac);
-  for (let r = ROWS - 1; r >= 0 && need > 0; r--) for (let c = 0; c < COLS && need > 0; c++) {
+// Repairs don't snap back: the blocks go up one by one, bottom first, with a
+// sparkle each, so you can watch London being put back together.
+function repairCity(frac, label) {
+  S.rebuild += Math.round(cityTotal * frac);
+  if (label) { say(W / 2, 200, label, '#2ecc71', 8); say(W / 2, 216, 'LONDON +' + Math.round(frac * 100) + '%', '#2ecc71', 10); }
+}
+function updateRebuild(dt) {
+  if (S.rebuild <= 0) return;
+  let n = Math.min(S.rebuild, Math.max(1, Math.ceil(dt * 90)));
+  S.rebuild -= n;
+  for (let r = ROWS - 1; r >= 0 && n > 0; r--) for (let c = 0; c < COLS && n > 0; c++) {
     const i = r * COLS + c, v = cityFull[i];
-    if (v && !city[i] && (r === ROWS - 1 || city[i + COLS] || !cityFull[i + COLS])) { city[i] = v; scorch[i] = 0; need--; cityLeft++; bLeft[v - 1]++; }
+    if (v && !city[i] && (r === ROWS - 1 || city[i + COLS] || !cityFull[i + COLS])) {
+      city[i] = v; scorch[i] = 0; n--; cityLeft++; bLeft[v - 1]++;
+      if (Math.random() < .35) S.parts.push({ x: c * CELL + 3, y: TOPY + r * CELL + 3, vx: rnd(-10, 10), vy: rnd(-40, -10), life: .6, col: Math.random() < .5 ? '#2ecc71' : '#fff', s: 2 });
+      const col = clamp(c, 0, COLS - 1); S.rubble[col] = Math.max(0, S.rubble[col] - 1);
+    }
   }
-  BUILDINGS.forEach((b, i) => { if (bLeft[i] >= bTotal[i] * .4) bFallen[i] = false; });
-  S.rubble.fill(0);
+  if (n > 0) S.rebuild = 0; // nothing left to rebuild
+  BUILDINGS.forEach((b, i) => { if (bFallen[i] && bLeft[i] >= bTotal[i] * .6) { bFallen[i] = false; say(W / 2, 180, b.name + ' IS BACK!', '#2ecc71', 8); } });
+  S.fires = S.fires.filter(f => cellAt(f.x, f.y + 3) || Math.random() < .98);
   cityDirty = true;
+  if (Math.random() < .25) beep(1400 + Math.random() * 600, .03, 'triangle', .015);
 }
 // London's health: 100% untouched, 0% when three quarters of it is rubble.
 const london = () => Math.max(0, Math.round((cityLeft / cityTotal - .25) / .75 * 100));
@@ -311,7 +325,7 @@ const WEAPONS = {
   thunder: { name: 'THUNDER',           tag: 'BOMBS',  col: '#ff9f1c', lv: [{ rate: .8, R: 26 }, { rate: .7, R: 30 }, { rate: .62, R: 34 }, { rate: .54, R: 38 }] },
   love:    { name: 'HOUSE OF LOVE',     tag: 'HOMING', col: '#ff6fb5', lv: [{ rate: .42, n: 1 }, { rate: .36, n: 1 }, { rate: .4, n: 2 }, { rate: .34, n: 2 }] },
 };
-const MAXLV = 4;
+const MAXLV = 4, WEAPON_TIME = 15; // crate weapons are a loan, not a gift
 const gunName = () => WEAPONS[S.weapon].name;
 const gunRate = () => WEAPONS[S.weapon].lv[S.gun - 1].rate;
 const hamperNeed = n => Math.min(10, 5 + n); // each hamper is a pair bigger than the last
@@ -328,7 +342,7 @@ function newRun(startWave) {
   buildCity();
   S = {
     wave: startWave, waveT: 0, banner: 3, b2: 0, b2Text: '', b2Col: '#ffd23f',
-    score: 0, combo: 0, weapon: 'single', gun: startWave > 4 ? 2 : 1, pairs: 0, fireT: 0,
+    score: 0, combo: 0, weapon: 'single', weaponT: 0, rebuild: 0, gun: startWave > 4 ? 2 : 1, pairs: 0, fireT: 0,
     hamper: 0, hampers: 0, flash: 0, bestRef: save.best, lastRef: save.last, passed: {},
     iain: { x: W / 2, y: ZONE_BOT - 50, face: 1, inv: 0, walk: 0, shield: 0 },
     hand: [], baskets: BASKETS.map(b => ({ x: b.x, y: b.y, k: -1, inside: false, pulse: 0 })), zips: [],
@@ -399,10 +413,12 @@ const CRATES = {
   pizza:   { label: 'PIZZA', col: '#d9a35b' },
   blender: { label: 'SHIELD', col: '#b46cff' },
   pud:     { label: 'YORKSHIRE', col: '#f2c14e' },
+  crane:   { label: 'CRANE', col: '#ffb347' },
 };
 function spawnCrate() {
   const pool = ['gun', 'gun', 'pizza', 'blender'];
-  if (london() < 85) pool.push('pud');
+  if (london() < 85) pool.push('pud', 'crane');
+  if (london() < 50) pool.push('crane', 'pud', 'crane');
   const kind = pool[Math.floor(Math.random() * pool.length)];
   const others = Object.keys(WEAPONS).filter(w => w !== S.weapon);
   S.crates.push({ kind, w: others[Math.floor(Math.random() * others.length)], x: rnd(30, W - 30), y: 40, vy: 52, t: 0, ground: 0, landY: floorY() });
@@ -463,14 +479,14 @@ function foldPair(k, x, y) {
 function canTake(k) { return S.hand.includes(k) || S.hand.length < HAND; }
 function catchSock(s) {
   const at = S.hand.indexOf(s.k);
-  if (at >= 0) { S.hand.splice(at, 1); foldPair(s.k, S.iain.x, S.iain.y - 80); }
+  if (at >= 0) { S.hand.splice(at, 1); foldPair(s.k, S.iain.x, S.iain.y - 112); }
   else { S.hand.push(s.k); sfx.catch(); }
 }
 // A basket holds one single. Walk onto it: a match folds, an empty basket takes
 // your top sock, a full one swaps its sock for your top one.
 function useBasket(b) {
   const at = b.k >= 0 ? S.hand.indexOf(b.k) : -1;
-  if (at >= 0) { S.hand.splice(at, 1); foldPair(b.k, b.x, b.y - 30); b.k = -1; b.pulse = .5; }
+  if (at >= 0) { S.hand.splice(at, 1); foldPair(b.k, b.x, b.y - 30); b.k = -1; b.pulse = .5; if (london() < 100) { repairCity(.02); say(b.x, b.y - 46, 'LONDON +2%', '#2ecc71', 7); } }
   else if (b.k < 0 && S.hand.length) { b.k = S.hand.shift(); sfx.catch(); b.pulse = .3; }
   else if (b.k >= 0 && S.hand.length) { const old = b.k; b.k = S.hand.shift(); S.hand.push(old); beep(520, .06, 'square', .035); beep(780, .06, 'square', .03); b.pulse = .3; say(b.x, b.y - 30, 'SWAP', '#cfc8ff', 7); }
   else if (b.k >= 0) { S.hand.push(b.k); b.k = -1; sfx.catch(); }
@@ -478,15 +494,17 @@ function useBasket(b) {
 function takeCrate(c) {
   const I = S.iain; sfx.power();
   if (c.kind === 'gun') {
-    S.weapon = c.w; banner2('NEW WEAPON: ' + gunName(), WEAPONS[c.w].col);
+    S.weapon = c.w; S.weaponT = WEAPON_TIME; banner2(gunName() + ' FOR ' + WEAPON_TIME + 's', WEAPONS[c.w].col);
   } else if (c.kind === 'pizza') { // reheated in the box. It goes the way it went.
-    say(I.x, I.y - 90, 'PIZZA BOX COMBUSTS!', '#ff6b35', 8);
+    say(I.x, I.y - 112, 'PIZZA BOX COMBUSTS!', '#ff6b35', 8);
     burst(I.x, I.y - 40, 30, ['#ff6b35', '#ffd23f', '#d9a35b']); shake = .5; freeze = .08;
     for (let i = S.nips.length - 1; i >= 0; i--) if (Math.hypot(S.nips[i].x - I.x, S.nips[i].y - I.y) < 130) killNip(i, true);
   } else if (c.kind === 'blender') {
-    I.shield = 6; say(I.x, I.y - 90, 'OVEN-BAKED SHIELD', '#b46cff', 8);
+    I.shield = 4; say(I.x, I.y - 112, 'OVEN-BAKED SHIELD', '#b46cff', 8);
   } else if (c.kind === 'pud') {
-    repairCity(.06); say(W / 2, 300, 'BEST YORKSHIRE PUD EVER', '#f2c14e', 8); say(W / 2, 318, 'LONDON +6%', '#2ecc71', 8);
+    repairCity(.06, 'BEST YORKSHIRE PUD EVER');
+  } else if (c.kind === 'crane') {
+    repairCity(.15, 'THE BUILDERS ARE IN'); S.crane = 4;
   }
 }
 // Sonic rules: what you carry are your rings. A hit spills them across the
@@ -494,14 +512,14 @@ function takeCrate(c) {
 function hurtIain(why) {
   const I = S.iain;
   if (I.inv > 0) return;
-  if (I.shield > 0) { say(I.x, I.y - 80, 'BLENDER SAYS NO', '#b46cff', 7); I.inv = .5; return; }
+  if (I.shield > 0) { say(I.x, I.y - 112, 'BLENDER SAYS NO', '#b46cff', 7); I.inv = .5; return; }
   I.inv = 1.6; sfx.hurt(); shake = .35; freeze = .07; S.combo = 0;
-  say(I.x, I.y - 90, why || 'NIPPED!', '#ff6b6b', 9);
+  say(I.x, I.y - 112, why || 'NIPPED!', '#ff6b6b', 9);
   if (S.hand.length) {
     sfx.spill();
     S.hand.forEach((k, i) => {
-      const a = -Math.PI / 2 + (i - (S.hand.length - 1) / 2) * .8;
-      S.socks.push({ k, x: I.x, y: I.y - 30, vx: Math.cos(a) * 120, vy: Math.sin(a) * 160, t: 0, ground: 0, max: 0, landY: clamp(I.y + rnd(-50, 10), ZONE_TOP + 16, ZONE_BOT - 4), spilt: true });
+      const a = -Math.PI / 2 + (i - (S.hand.length - 1) / 2) * .9;
+      S.socks.push({ k, x: I.x, y: I.y - 70, vx: Math.cos(a) * 150, vy: Math.sin(a) * 210, t: 0, ground: 0, max: 0, landY: clamp(I.y + rnd(-50, 10), ZONE_TOP + 16, ZONE_BOT - 4), spilt: true });
     });
     S.hand = [];
   }
@@ -665,6 +683,7 @@ function updateHazards(dt) {
 function nextWave() {
   S.waveT = 0; S.wave++; S.banner = 2.6; sfx.wave(); noteTrack();
   addScore(100 * S.wave); say(W / 2, 170, 'WAVE CLEAR +' + fmt(100 * S.wave), '#ffd23f', 9);
+  if (S.wave > S.startWave) repairCity(.04, 'LONDON REBUILDS');
   if (S.wave % 4 === 1 && S.wave > save.checkpoint) { save.checkpoint = S.wave; banner2('CHECKPOINT SAVED', '#4ff0ff'); }
   if (S.wave > save.bestWave) save.bestWave = S.wave;
   writeSave();
@@ -703,6 +722,9 @@ function update(dt) {
   if (I.inv > 0) I.inv -= dt;
   if (I.shield > 0) I.shield -= dt;
   if (S.fullT > 0) S.fullT -= dt;
+  if (S.crane > 0) S.crane -= dt;
+  if (S.weaponT > 0) { S.weaponT -= dt; if (S.weaponT <= 0) { S.weapon = 'single'; banner2('BACK TO ' + gunName(), '#cfc8ff', 1.6); sfx.down(); } }
+  updateRebuild(dt);
   S.fireT -= dt; if (S.fireT <= 0) { fire(); S.fireT = gunRate(); } // he throws by himself. Always.
   // baskets fire once each time Iain steps onto one
   S.baskets.forEach(b => {
@@ -787,7 +809,7 @@ function update(dt) {
       s.ground -= dt;
       if (s.ground <= 0) { endRun('sock', s); return; }
     } else {
-      if (s.spilt) { s.vy += 380 * dt; s.x += s.vx * dt; s.y += s.vy * dt; s.x = clamp(s.x, 10, W - 10); if (s.vy > 0 && s.y >= s.landY) land(s); }
+      if (s.spilt) { s.vy += 380 * dt; s.x += s.vx * dt; s.y += s.vy * dt; s.x = clamp(s.x, 10, W - 10); if (s.vy > 0 && s.y >= s.landY) { if (!s.bounced) { s.bounced = 1; s.y = s.landY; s.vy *= -.45; s.vx *= .6; beep(1600, .04, 'triangle', .02); } else land(s); } }
       else { s.vy = Math.min(s.vy + 30 * dt, 120); s.y += s.vy * dt; s.x = clamp(s.x + Math.sin(s.t * 3) * 22 * dt, 10, W - 10); if (s.y >= s.landY) land(s); }
     }
     if (I.inv < 1.1 && (s.ground || s.y > ZONE_TOP - 30) && grabs(s.x, s.y)) {
@@ -946,6 +968,14 @@ function drawIainAt(x, y, face, alpha) {
 function drawIain() {
   const I = S.iain;
   if (!(I.inv > 0 && Math.floor(I.inv * 14) % 2)) drawIainAt(I.x, I.y, I.face, 1);
+  // what he's carrying, above his head where you can see it: the TOP one first, outlined
+  const n = S.hand.length, full = n >= HAND, warn = full && Math.floor(performance.now() / 200) % 2;
+  for (let i = 0; i < HAND; i++) {
+    const sx = I.x + (i - 1) * 17, sy = I.y - 90;
+    ctx.fillStyle = 'rgba(5,3,15,.65)'; ctx.fillRect(sx - 8, sy - 10, 16, 18);
+    ctx.strokeStyle = i === 0 && n ? '#ffd23f' : warn ? '#ff3b3b' : 'rgba(255,255,255,.25)'; ctx.lineWidth = i === 0 && n ? 2 : 1; ctx.strokeRect(sx - 8, sy - 10, 16, 18);
+    if (i < n) drawSock(sx - 1, sy - 1, S.hand[i], .2, .95);
+  }
   if (I.shield > 0) { ctx.strokeStyle = `rgba(180,108,255,${.4 + .3 * Math.sin(performance.now() / 100)})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(I.x, I.y - 34, 34, 0, 7); ctx.stroke(); }
 }
 function drawShadow(x, y, f, col = 'rgba(255,60,60,') {
@@ -1131,7 +1161,8 @@ function drawHUD() {
   ctx.font = FONT(6); ctx.fillStyle = WP.col; ctx.fillText(WP.name, 112, y0 + 17);
   ctx.font = FONT(5); ctx.fillStyle = '#cfc8ff'; ctx.fillText('LV', 112, y0 + 31);
   for (let i = 0; i < MAXLV; i++) { ctx.fillStyle = i < S.gun ? WP.col : 'rgba(255,255,255,.12)'; ctx.fillRect(126 + i * 16, y0 + 29, 13, 9); }
-  if (S.iain.shield > 0) { ctx.fillStyle = '#b46cff'; ctx.fillText('SHIELD ' + Math.ceil(S.iain.shield), 112, y0 + 44); }
+  if (S.weaponT > 0) { bar(112, y0 + 42, 120, 4, S.weaponT / WEAPON_TIME, S.weaponT < 4 && blink ? '#ff3b3b' : WP.col); ctx.fillStyle = '#cfc8ff'; ctx.fillText(Math.ceil(S.weaponT) + 's', 236, y0 + 41); }
+  if (S.iain.shield > 0) { ctx.fillStyle = '#b46cff'; ctx.fillText('SHIELD ' + Math.ceil(S.iain.shield), 112, y0 + 50); }
   // hint line
   ctx.textAlign = 'left';
   if (S.hand.length >= HAND && blink) { ctx.fillStyle = '#ff6b6b'; ctx.fillText('HANDS FULL: DROP ONE IN A BASKET', 6, y0 + 66); }
@@ -1189,6 +1220,14 @@ function drawHUD() {
   }
   if (S.cut > 0) drawCutscene();
 }
+function drawCrane() { // a tower crane swinging over the skyline while London goes back up
+  const t = performance.now() / 600, x = 200 + Math.sin(t / 2) * 80, top = TOPY - 10;
+  ctx.strokeStyle = '#ffb347'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x, GROUND); ctx.lineTo(x, top); ctx.stroke();
+  ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - 30, top); ctx.lineTo(x + 70, top); ctx.stroke();
+  const hx = x + 30 + Math.sin(t) * 30; ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(hx, top); ctx.lineTo(hx, top + 40 + Math.sin(t * 1.3) * 10); ctx.stroke();
+  ctx.fillStyle = '#9c8452'; ctx.fillRect(hx - 6, top + 40 + Math.sin(t * 1.3) * 10, 12, 8);
+  ctx.font = FONT(5); ctx.textAlign = 'center'; ctx.fillStyle = '#2ecc71'; ctx.fillText('REBUILDING', x + 20, top - 6);
+}
 function drawBaskets() {
   const I = S.iain;
   S.baskets.forEach(b => {
@@ -1225,6 +1264,7 @@ function draw() {
   // landing shadows for anything heading into the zone: the dodge telegraph
   S.nips.forEach(n => { if (n.y > GROUND - 160) drawShadow(n.x, n.landY, clamp(1 - (n.landY - n.y) / 220, 0, 1)); });
   S.socks.forEach(s => { if (!s.ground && s.y > GROUND - 140) drawShadow(s.x, s.landY, clamp(1 - (s.landY - s.y) / 200, 0, 1), 'rgba(79,240,255,'); });
+  if (S.rebuild > 0 || S.crane > 0) drawCrane();
   drawBaskets();
   drawJeep();
   S.crates.forEach(drawCrate);
@@ -1377,6 +1417,7 @@ if (TEST) window.__nicattack = {
   hit(n) { bossDamage(n); },
   hurt() { S.iain.inv = 0; hurtIain(); },
   skip() { if (S.cut > 0) S.cut = .001; },
+  lp() { return [london(), cityLeft, cityTotal]; },
 };
 if (hasTicket()) openMenu(); else show('gate');
 requestAnimationFrame(loop);
