@@ -286,7 +286,8 @@ function updateCollapse(dt) {
 // sparkle each, so you can watch London being put back together.
 function repairCity(frac, label) {
   S.rebuild += Math.round(cityTotal * frac);
-  if (label) { say(W / 2, 200, label, '#2ecc71', 8); say(W / 2, 216, 'LONDON +' + Math.round(frac * 100) + '%', '#2ecc71', 10); }
+  if (label === 'LONDON REBUILDS') say(W / 2, 200, label, '#2ecc71', 8);
+  if (label) say(W / 2, 216, 'LONDON +' + Math.round(frac * 100) + '%', '#2ecc71', 10);
 }
 function updateRebuild(dt) {
   if (S.rebuild <= 0) return;
@@ -492,22 +493,27 @@ function useBasket(b) {
   else if (b.k >= 0 && S.hand.length) { const old = b.k; b.k = S.hand.shift(); S.hand.push(old); beep(520, .06, 'square', .035); beep(780, .06, 'square', .03); b.pulse = .3; say(b.x, b.y - 30, 'SWAP', '#cfc8ff', 7); }
   else if (b.k >= 0) { S.hand.push(b.k); b.k = -1; sfx.catch(); }
 }
+// Every power-up is Iain calling on the power of East 17. Each one is a track.
+const EAST17 = { pizza: 'STEAM', blender: 'HOLD MY BODY TIGHT', rinse: 'LET IT RAIN', pud: 'GOLD', crane: 'UP ALL NIGHT' };
+const POWNAME = { pizza: 'EXPLODING PIZZA BOX', blender: 'MELTED BLENDER SHIELD', rinse: 'HIGH PRESSURE RINSE', pud: "NIC'S PATENTED YORKSHIRE PUDS", crane: 'THE BUILDERS ARE IN' };
+function east17(track, what, col) { S.pow = { t: 2.2, track, what, col }; seq([523, 659, 784, 1046, 1318, 1568], 55, 'triangle'); }
 function takeCrate(c) {
   const I = S.iain; sfx.power();
+  if (c.kind === 'gun') east17(WEAPONS[c.w].name, WEAPONS[c.w].tag + ' FOR ' + WEAPON_TIME + 's', WEAPONS[c.w].col);
+  else east17(EAST17[c.kind], POWNAME[c.kind], CRATES[c.kind].col);
   if (c.kind === 'gun') {
-    S.weapon = c.w; S.weaponT = WEAPON_TIME; banner2(gunName() + ' FOR ' + WEAPON_TIME + 's', WEAPONS[c.w].col);
+    S.weapon = c.w; S.weaponT = WEAPON_TIME;
   } else if (c.kind === 'pizza') { // reheated in the box. It goes the way it went.
-    say(I.x, I.y - 112, 'PIZZA HEATED IN ITS BOX: IT EXPLODES!', '#ff6b35', 7);
     burst(I.x, I.y - 40, 30, ['#ff6b35', '#ffd23f', '#d9a35b']); shake = .5; freeze = .08;
     for (let i = S.nips.length - 1; i >= 0; i--) if (Math.hypot(S.nips[i].x - I.x, S.nips[i].y - I.y) < 130) killNip(i, true);
   } else if (c.kind === 'blender') {
-    I.shield = 4; say(I.x, I.y - 112, 'MELTED BLENDER SHIELD', '#b46cff', 8);
+    I.shield = 4;
   } else if (c.kind === 'pud') {
-    repairCity(.06, "NIC'S PATENTED YORKSHIRE PUDS");
+    repairCity(.06, 'PUDS');
   } else if (c.kind === 'rinse') { // the dishwasher's high pressure rinse, pointed at the sky for once
-    I.rinse = 3.5; S.rinseAcc = 0; say(I.x, I.y - 112, 'HIGH PRESSURE RINSE!', '#4ff0ff', 9);
+    I.rinse = 3.5; S.rinseAcc = 0;
   } else if (c.kind === 'crane') {
-    repairCity(.15, 'THE BUILDERS ARE IN'); S.crane = 4;
+    repairCity(.15, 'CRANE'); S.crane = 4;
   }
 }
 // Sonic rules: what you carry are your rings. A hit spills them across the
@@ -545,16 +551,16 @@ const BOSSES = [
     pinch: "THIS PIZZA ISN'T ON FIRE, IAIN. IT'S JUST CRISPY!",
     flee: 'MY DINNER! MY OVEN! MY DREAMS OF GOING ON MASTERCHEF!' },
   { kind: 'drill', name: 'THE UNSTOPPABLE DRILL',
-    intro: 'IN TANZANIA I SAID NOTHING COULD STOP OUR JEEP, AND WE GOT A FLAT TYRE IN LION COUNTRY. THIS TIME I MEAN IT. NOTHING CAN STOP THIS DRILL!',
-    pinch: "WAIT... IS THAT A FLAT TYRE? ON A DRILL? NOT AGAIN!",
-    flee: 'NOTHING CAN STOP THIS... OH. OH NO.' },
+    intro: 'IF YOU THINK NOTHING CAN STOP A JEEP IN TANZANIA, WAIT TILL YOU SEE HOW UNSTOPPABLE THIS DRILL IS!',
+    pinch: 'YOU GAVE ME A FLAT TYRE! ON A FLYING MACHINE! HOW IS THIS HAPPENING?!',
+    flee: "THANK GOD WE'RE NOT IN LION COUNTRY!" },
   { kind: 'orbit', name: 'THE MELTED BLENDERS',
-    intro: 'I KEPT THESE BLENDERS IN THE OVEN TO STOP THEM GETTING DUSTY. THEN I TURNED THE OVEN ON. THEY MAY BE MELTED, IAIN, BUT THEY ARE DUST FREE!',
+    intro: 'I KEPT THESE BLENDERS IN THE OVEN TO STOP THEM GETTING DUSTY. WERE THEY NOT DUST FREE?!',
     pinch: 'WHERE ELSE DO YOU KEEP A BLENDER, IAIN, IF NOT IN AN OVEN?!',
     flee: "MY SISTER AND SALLY'S SISTER APPROVED THAT SPEECH?! TRAITORS!" },
   { kind: 'dish',  name: 'THE DISHWASHER',
-    intro: "HAVING FIVE NIPPLES IS SOMETHING I'D RATHER NOT BE PUBLIC KNOWLEDGE, IAIN! TAKE THE WEBSITE DOWN!",
-    pinch: 'I PUT MY GLASSES THROUGH THIS FOR A STREAK-FREE CLEAN AND NOW THEY ARE RUINED! WHO COULD HAVE THOUGHT?!',
+    intro: "THERE ARE THINGS I'D RATHER NOT BE PUBLIC KNOWLEDGE.",
+    pinch: 'I NEEDED MY GLASSES STREAK-FREE AND THEY WERE RUINED! SEE HOW YOU FEEL WHEN I RUIN YOUR WINNING STREAK!',
     flee: 'I JUST WANTED CLEAN GLASSES!' },
 ];
 function startBoss() {
@@ -723,6 +729,7 @@ function update(dt) {
   if (S.sack) updateSack(dt);
   if (S.banner > 0) S.banner -= dt;
   if (S.b2 > 0) S.b2 -= dt;
+  if (S.pow && (S.pow.t -= dt) <= 0) S.pow = null;
   if (S.warn > 0) S.warn -= dt;
 
   // Spawns
@@ -1242,6 +1249,20 @@ function drawHUD() {
       drawSock(ax, ay + 4, s.k, 0, .9);
       ctx.font = FONT(6); ctx.fillStyle = '#fff'; ctx.fillText(Math.ceil(s.ground), ax + 14, ay + 2);
     });
+  }
+  if (S.pow) { // Iain's head, his battle cry, and the track he's calling on
+    const P = S.pow, a = Math.min(1, P.t * 2), y = 226, pop = Math.max(0, P.t - 1.9) * 3;
+    ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(5,3,15,.85)'; ctx.fillRect(0, y, W, 56);
+    ctx.fillStyle = P.col; ctx.fillRect(0, y, W, 2); ctx.fillRect(0, y + 54, W, 2);
+    ctx.save(); ctx.beginPath(); ctx.arc(30, y + 28, 20 + pop * 6, 0, 7); ctx.clip();
+    if (HEAD.complete && HEAD.naturalWidth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(HEAD, 10 - pop * 6, y + 8 - pop * 6, 40 + pop * 12, 40 + pop * 12); ctx.imageSmoothingEnabled = false; }
+    ctx.restore();
+    ctx.textAlign = 'left';
+    ctx.font = FONT(6); ctx.fillStyle = '#fff'; ctx.fillText('"CALL ON THE POWER OF EAST 17!"', 58, y + 8);
+    ctx.font = FONT(P.track.length > 14 ? 8 : 10); ctx.fillStyle = Math.floor(performance.now() / 120) % 2 ? P.col : '#fff'; ctx.fillText(P.track + '!', 58, y + 22);
+    ctx.font = FONT(5); ctx.fillStyle = '#cfc8ff'; ctx.fillText(P.what, 58, y + 40);
+    ctx.textAlign = 'center'; ctx.globalAlpha = 1;
   }
   if (S.b2 > 0) {
     ctx.globalAlpha = Math.min(1, S.b2);
