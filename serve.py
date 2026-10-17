@@ -15,7 +15,10 @@ itself with nobody at a keyboard. Anything missing or malformed = locked.
 """
 import base64
 import datetime
+import json
 import os
+import re
+import threading
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
@@ -64,7 +67,55 @@ def open_house():
     return bool(until) and datetime.datetime.now() < until
 
 
+# NicAttack's shared high score board: one JSON file, outside public/, so
+# Iain, Nic and Paul all see the same table. Only reachable behind the login.
+SCORES_FILE = os.environ.get("SCORES_FILE", os.path.join(HERE, "data", "nicattack-scores.json"))
+SCORES_PATH = "/api/nicattack/scores"
+_scores_lock = threading.Lock()
+
+
+def load_scores():
+    try:
+        with open(SCORES_FILE) as fh:
+            rows = json.load(fh)
+        return rows if isinstance(rows, list) else []
+    except (OSError, ValueError):
+        return []
+
+
+def add_score(entry):
+    """Validate, insert, keep the best 100, write atomically. Returns (rows, rank)."""
+    name = re.sub(r"[^A-Z0-9 .!'-]", "", str(entry.get("name", "")).upper()).strip()[:10]
+    score, wave, start = entry.get("score"), entry.get("wave"), entry.get("start", 1)
+    if not name or not all(isinstance(v, int) and not isinstance(v, bool) for v in (score, wave, start)):
+        raise ValueError("bad entry")
+    if not (0 < score < 100000000 and 0 < wave < 1000 and 0 < start <= wave):
+        raise ValueError("out of range")
+    row = {"name": name, "score": score, "wave": wave, "start": start,
+           "date": datetime.date.today().isoformat()}
+    with _scores_lock:
+        rows = load_scores() + [row]
+        rows.sort(key=lambda r: -r["score"])
+        rows = rows[:100]
+        os.makedirs(os.path.dirname(SCORES_FILE), exist_ok=True)
+        tmp = SCORES_FILE + ".tmp"
+        with open(tmp, "w") as fh:
+            json.dump(rows, fh)
+        os.replace(tmp, SCORES_FILE)
+    rank = next((i + 1 for i, r in enumerate(rows) if r is row), None)
+    return rows, rank
+
+
 class AuthHandler(SimpleHTTPRequestHandler):
+    def _json(self, code, body):
+        data = json.dumps(body).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     def _challenge(self):
         self.send_response(401)
         self.send_header("WWW-Authenticate", f'Basic realm="{REALM}"')
@@ -80,7 +131,23 @@ class AuthHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         if not self._authed():
             return self._challenge()
+        if self.path.split("?")[0] == SCORES_PATH:
+            return self._json(200, {"scores": load_scores()[:20]})
         return super().do_GET()
+
+    def do_POST(self):
+        if not self._authed():
+            return self._challenge()
+        if self.path.split("?")[0] != SCORES_PATH:
+            return self._json(404, {"error": "not found"})
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            if not 0 < length <= 1024:
+                raise ValueError("bad length")
+            rows, rank = add_score(json.loads(self.rfile.read(length)))
+        except (ValueError, TypeError, AttributeError) as exc:
+            return self._json(400, {"error": str(exc)})
+        return self._json(200, {"scores": rows[:20], "rank": rank})
 
     def do_HEAD(self):
         if not self._authed():

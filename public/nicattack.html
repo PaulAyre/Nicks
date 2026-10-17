@@ -37,6 +37,18 @@ p b{color:#ffd23f;font-weight:400}
 .cmp .k{color:#8f86c9}.cmp .up{color:#2ecc71}.cmp .dn{color:#ff6b6b}
 .newbest{font-size:12px;color:#2ecc71;text-shadow:2px 2px 0 #05030f;animation:nb .5s steps(2) infinite}
 @keyframes nb{50%{color:#ffd23f}}
+.wavegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;width:100%;max-width:330px}
+.wavegrid button{font-family:inherit;font-size:9px;line-height:1.6;padding:9px 4px;border:2px solid #4b3d8f;border-radius:4px;background:#130e2c;color:#fff;cursor:pointer}
+.wavegrid button small{display:block;font-size:6px;color:#4ff0ff}
+.wavegrid button.boss{border-color:#ff3b3b}.wavegrid button.boss small{color:#ff6b6b}
+.board{display:grid;grid-template-columns:auto 1fr auto auto;gap:5px 10px;font-size:8px;line-height:1.5;width:100%;max-width:320px;text-align:left}
+.board .r{color:#8f86c9}.board .w{color:#8f86c9;font-size:7px}.board .me{color:#2ecc71}.board .s{text-align:right}
+.board .msg{grid-column:1/5;text-align:center;color:#8f86c9}
+.entry{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center}
+.entry label{font-size:8px;color:#8f86c9}
+.entry input{font-family:inherit;font-size:12px;width:150px;padding:10px;background:#130e2c;color:#ffd23f;border:2px solid #ffd23f;border-radius:4px;text-transform:uppercase}
+.entry .btn{min-width:0}
+.entry[hidden]{display:none}
 .fine{font-size:7px;color:#6b62a3;line-height:1.9;max-width:300px}
 </style>
 </head>
@@ -63,9 +75,22 @@ p b{color:#ffd23f;font-weight:400}
       <div><i>4</i><span>Crates lend you a weapon for 15 seconds. Cranes, puds, basket matches and cleared waves <b>rebuild London</b>. Fill the <b>wave bar</b> and <b>Dr. RobotNic</b> attacks. Eight hits and he runs.</span></div>
     </div>
     <button class="btn" id="new-btn">NEW GAME</button>
-    <button class="btn alt" id="cont-btn" style="display:none"></button>
+    <button class="btn alt" id="cont-btn" style="display:none">CHOOSE A WAVE</button>
+    <button class="btn ghost" id="board-btn">HIGH SCORES</button>
     <div class="stats" id="menu-stats"></div>
     <div class="fine">Nic gave Iain a strict 10 minute limit for his best man's speech. Iain believes time limits are for cowards. So does this game: it never ends.<br>Like the speech, this content was approved by Nic's sister Jane and Sally's sister Emily. Please take any concerns up with them.</div>
+  </div>
+
+  <div class="screen" id="waves">
+    <h1>CHOOSE<br>A WAVE<small>ANY WAVE YOU'VE REACHED</small></h1>
+    <div class="wavegrid" id="wave-grid"></div>
+    <button class="btn ghost" id="waves-back">BACK</button>
+  </div>
+
+  <div class="screen" id="scores">
+    <h1>HIGH<br>SCORES<small>IAIN VS NIC VS EVERYONE</small></h1>
+    <div class="board" id="board-menu"></div>
+    <button class="btn ghost" id="scores-back">BACK</button>
   </div>
 
   <div class="screen" id="paused">
@@ -80,6 +105,9 @@ p b{color:#ffd23f;font-weight:400}
     <p id="over-why"></p>
     <div class="big" id="over-score">0</div>
     <div class="cmp" id="over-cmp"></div>
+    <form class="entry" id="entry"><label for="entry-name">NAME</label><input id="entry-name" maxlength="10" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="btn" id="entry-go" type="submit">POST SCORE</button></form>
+    <div class="stats">HIGH SCORES</div>
+    <div class="board" id="board-over"></div>
     <div class="stats" id="over-stats"></div>
     <a class="btn" id="over-again" href="game.html">PIN THE NIPS TO GO AGAIN</a>
     <button class="btn ghost" id="over-menu" style="display:none">BACK TO MENU</button>
@@ -109,6 +137,30 @@ function loadSave() {
 }
 let save = loadSave();
 function writeSave() { try { localStorage.setItem(SAVE, JSON.stringify(save)); } catch (e) {} }
+
+// ===================== HIGH SCORES =====================
+// One shared board on the server, so Iain and Nic can see each other's scores.
+// &noscore keeps test runs off it.
+const BOARD_URL = 'api/nicattack/scores';
+const NOSCORE = new URLSearchParams(location.search).has('noscore');
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function renderBoard(el, rows, mine) {
+  if (!rows) { el.innerHTML = '<span class="msg">THE BOARD IS OFFLINE. YOUR BEST HERE: ' + (save.best || 0).toLocaleString('en-GB') + '</span>'; return; }
+  if (!rows.length) { el.innerHTML = '<span class="msg">NO SCORES YET. BE THE FIRST.</span>'; return; }
+  el.innerHTML = rows.slice(0, 10).map((r, i) => {
+    const me = mine && i + 1 === mine ? ' me' : '';
+    return '<span class="r' + me + '">' + (i + 1) + '</span><span class="' + me + '">' + esc(r.name) + '</span><span class="w' + me + '">W' + r.wave + (r.start > 1 ? ' (FROM ' + r.start + ')' : '') + '</span><span class="s' + me + '">' + Number(r.score).toLocaleString('en-GB') + '</span>';
+  }).join('') + (mine > 10 ? '<span class="msg me">YOU CAME ' + mine + 'TH</span>' : '');
+}
+async function fetchBoard() {
+  try { const r = await fetch(BOARD_URL, { cache: 'no-store' }); if (!r.ok) throw new Error(r.status); return (await r.json()).scores; }
+  catch (e) { console.warn('[nicattack] board fetch failed', e); return null; }
+}
+async function postScore(entry) {
+  const r = await fetch(BOARD_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry) });
+  if (!r.ok) throw new Error('board said ' + r.status + ' ' + (await r.text()));
+  return r.json();
+}
 
 // ===================== LAYOUT =====================
 // Top to bottom: HUD, sky, London, the Embankment, Iain's laundry zone, the
@@ -338,6 +390,7 @@ const SOCKNAME = ['red', 'blue', 'green', 'white', 'orange', 'purple', 'pink'];
 const WAVE_LEN = 30, HAND = 3;
 let S = null, mode = 'menu', last = 0, keys = {}, shake = 0, freeze = 0;
 // Two laundry baskets in the bottom corners: somewhere to park a single.
+const PAUSE = { x: 196, y: HUD_BOT + 52, w: 44, h: 30 };
 const BASKETS = [{ x: 38, y: ZONE_BOT - 14 }, { x: W - 38, y: ZONE_BOT - 14 }];
 
 function newRun(startWave) {
@@ -714,8 +767,7 @@ function nextWave() {
   S.waveT = 0; S.wave++; S.banner = 2.6; sfx.wave(); noteTrack();
   addScore(100 * S.wave); say(W / 2, 170, 'WAVE CLEAR +' + fmt(100 * S.wave), '#ffd23f', 9);
   if (S.wave > S.startWave) repairCity(.04, 'LONDON REBUILDS');
-  if (S.wave % 4 === 1 && S.wave > save.checkpoint) { save.checkpoint = S.wave; banner2('CHECKPOINT SAVED', '#4ff0ff'); }
-  if (S.wave > save.bestWave) save.bestWave = S.wave;
+  if (S.wave > save.bestWave) { save.bestWave = S.wave; banner2('WAVE ' + S.wave + ' UNLOCKED', '#4ff0ff'); }
   writeSave();
 }
 
@@ -1177,10 +1229,9 @@ function drawHUD() {
   const mult = Math.min(8, 1 + Math.floor(S.combo / 10)), sw = ctx.measureText(fmt(S.score)).width;
   if (mult > 1) { ctx.font = FONT(8); ctx.fillStyle = '#4ff0ff'; ctx.fillText('x' + mult, 12 + sw, 8); }
   ctx.textAlign = 'right'; ctx.font = FONT(6);
-  if (S.bestRef > 0 && S.score > S.bestRef) { ctx.fillStyle = blink ? '#2ecc71' : '#ffd23f'; ctx.fillText('NEW BEST!', W - 42, 5); }
-  else { ctx.fillStyle = '#ffd23f'; ctx.fillText('BEST ' + fmt(S.bestRef), W - 42, 5); }
-  ctx.font = FONT(5); ctx.fillStyle = S.lastRef > 0 && S.score > S.lastRef ? '#4ff0ff' : '#8f86c9'; ctx.fillText('LAST ' + fmt(S.lastRef), W - 42, 15);
-  ctx.fillStyle = '#ffd23f'; ctx.fillRect(W - 36, 2, 32, 20); ctx.fillStyle = '#05030f'; ctx.fillRect(W - 27, 6, 4, 12); ctx.fillRect(W - 18, 6, 4, 12);
+  if (S.bestRef > 0 && S.score > S.bestRef) { ctx.fillStyle = blink ? '#2ecc71' : '#ffd23f'; ctx.fillText('NEW BEST!', W - 6, 5); }
+  else { ctx.fillStyle = '#ffd23f'; ctx.fillText('BEST ' + fmt(S.bestRef), W - 6, 5); }
+  ctx.font = FONT(5); ctx.fillStyle = S.lastRef > 0 && S.score > S.lastRef ? '#4ff0ff' : '#8f86c9'; ctx.fillText('LAST ' + fmt(S.lastRef), W - 6, 15);
   // London's health, the thing you are protecting
   const lp = london();
   ctx.textAlign = 'left'; ctx.font = FONT(5); ctx.fillStyle = '#cfc8ff'; ctx.fillText('LONDON', 6, 27);
@@ -1224,6 +1275,10 @@ function drawHUD() {
   if (S.weaponT > 0) { bar(112, y0 + 42, 120, 4, S.weaponT / WEAPON_TIME, S.weaponT < 4 && blink ? '#ff3b3b' : WP.col); ctx.fillStyle = '#cfc8ff'; ctx.fillText(Math.ceil(S.weaponT) + 's', 236, y0 + 41); }
   if (S.iain.shield > 0) { ctx.fillStyle = '#b46cff'; ctx.fillText('SHIELD ' + Math.ceil(S.iain.shield), 112, y0 + 50); }
   else if (S.iain.rinse > 0) { ctx.fillStyle = '#4ff0ff'; ctx.fillText('RINSE ' + Math.ceil(S.iain.rinse), 112, y0 + 50); }
+  // pause, down here where your thumb already is
+  ctx.fillStyle = '#ffd23f'; ctx.fillRect(PAUSE.x, PAUSE.y, PAUSE.w, PAUSE.h);
+  ctx.fillStyle = '#05030f'; ctx.fillRect(PAUSE.x + 15, PAUSE.y + 5, 4, 12); ctx.fillRect(PAUSE.x + 25, PAUSE.y + 5, 4, 12);
+  ctx.font = FONT(5); ctx.textAlign = 'center'; ctx.fillText('PAUSE', PAUSE.x + PAUSE.w / 2, PAUSE.y + 21);
   // hint line
   ctx.textAlign = 'left';
   if (S.hand.length >= HAND && blink) { ctx.fillStyle = '#ff6b6b'; ctx.fillText('HANDS FULL: DROP ONE IN A BASKET', 6, y0 + 66); }
@@ -1406,7 +1461,21 @@ function endRun(why, sock) {
   $('over-stats').innerHTML = 'WAVE ' + S.wave + ' &middot; ' + S.pairs + ' PAIRS FOLDED &middot; ' + gunName() + ' LV' + S.gun +
     '<br>FURTHEST WAVE ' + save.bestWave + ' &middot; ROBOTNICS BEATEN ' + save.bosses +
     '<br>EAST 17 TRACKS SPOTTED ' + save.tracks.length + '/17' +
-    (save.checkpoint > 1 ? '<br>CHECKPOINT SAVED: WAVE ' + save.checkpoint : '');
+    (save.bestWave > 1 ? '<br>WAVES 1 TO ' + save.bestWave + ' UNLOCKED IN THE MENU' : '');
+  // the shared board: post this run under a name, then show where it landed
+  const form = $('entry'), nameEl = $('entry-name'), run = { score: S.score, wave: S.wave, start: S.startWave };
+  try { nameEl.value = localStorage.getItem('nicattack.name') || ''; } catch (e) {}
+  form.hidden = !(S.score > 0) || NOSCORE; $('entry-go').disabled = false; $('entry-go').textContent = 'POST SCORE';
+  fetchBoard().then(rows => renderBoard($('board-over'), rows));
+  form.onsubmit = async ev => {
+    ev.preventDefault();
+    const name = nameEl.value.trim().toUpperCase();
+    if (!name) { nameEl.focus(); return; }
+    try { localStorage.setItem('nicattack.name', name); } catch (e) {}
+    $('entry-go').disabled = true; $('entry-go').textContent = 'POSTING...';
+    try { const res = await postScore(Object.assign({ name }, run)); form.hidden = true; renderBoard($('board-over'), res.scores, res.rank); }
+    catch (e) { console.error('[nicattack] score post failed', e); $('entry-go').disabled = false; $('entry-go').textContent = "DIDN'T SEND. TRY AGAIN"; }
+  };
   $('over-again').style.display = TEST ? 'none' : '';
   $('over-menu').style.display = TEST ? '' : 'none';
   show('over');
@@ -1416,15 +1485,28 @@ function openMenu() {
   mode = 'menu'; S = null; idleDraw.done = false;
   save = loadSave();
   const cb = $('cont-btn');
-  if (save.checkpoint > 1) { cb.style.display = ''; cb.textContent = 'STAY ANOTHER DAY: WAVE ' + save.checkpoint; }
-  else cb.style.display = 'none';
+  cb.style.display = save.bestWave > 1 ? '' : 'none';
   $('menu-stats').innerHTML = save.runs ? 'BEST ' + fmt(save.best) + ' &middot; LAST ' + fmt(save.last) + '<br>' + ' &middot; FURTHEST WAVE ' + save.bestWave + '<br>PAIRS FOLDED ' + save.pairs + ' &middot; ROBOTNICS BEATEN ' + save.bosses + ' &middot; EAST 17 ' + save.tracks.length + '/17' : 'NO SOCK HAS EVER BEEN LOST';
   show('menu');
 }
 function start(wave) { newRun(wave); mode = 'play'; show(null); }
 
 $('new-btn').onclick = () => start(1);
-$('cont-btn').onclick = () => start(save.checkpoint);
+// Every wave you've reached is a place you can start from. Even waves end with Nic.
+$('cont-btn').onclick = () => {
+  const g = $('wave-grid'); g.innerHTML = '';
+  for (let w = 1; w <= save.bestWave; w++) {
+    const b = document.createElement('button'), boss = w % 2 === 0;
+    b.className = boss ? 'boss' : '';
+    b.innerHTML = 'WAVE ' + w + '<small>' + esc(trackFor(w)) + '</small>' + (boss ? '<small>+ ' + esc(BOSSES[Math.floor((w - 1) / 2) % BOSSES.length].name) + '</small>' : '');
+    b.onclick = () => start(w);
+    g.appendChild(b);
+  }
+  show('waves');
+};
+$('waves-back').onclick = () => show('menu');
+$('board-btn').onclick = () => { $('board-menu').innerHTML = '<span class="msg">LOADING...</span>'; show('scores'); fetchBoard().then(rows => renderBoard($('board-menu'), rows)); };
+$('scores-back').onclick = () => show('menu');
 $('resume-btn').onclick = () => { mode = 'play'; show(null); last = performance.now(); };
 $('quit-btn').onclick = () => { if (S) { if (S.score > save.best) save.best = S.score; writeSave(); } openMenu(); };
 $('over-menu').onclick = openMenu;
@@ -1436,6 +1518,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) pause
 // far as your finger does, as fast as it does, and your finger never covers him.
 // Mouse: Iain simply follows the pointer around the laundry zone.
 addEventListener('keydown', e => {
+  if (e.target && e.target.tagName === 'INPUT') return; // typing your name for the board
   const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
   keys[k] = true;
   if (k === ' ' || k.startsWith('Arrow')) e.preventDefault();
@@ -1452,7 +1535,7 @@ cv.addEventListener('pointerdown', e => {
   e.preventDefault();
   const p = toGame(e);
   if (S.cut > 0) { if (S.cutMax - S.cut > .8) S.cut = .001; return; }
-  if (p.x > W - 48 && p.y < 26) return pause();
+  tapAt = inPause(p) ? { t: performance.now(), x: p.x, y: p.y } : null;
   pid = e.pointerId; lastP = p; cv.setPointerCapture(e.pointerId);
 });
 cv.addEventListener('pointermove', e => {
@@ -1462,7 +1545,14 @@ cv.addEventListener('pointermove', e => {
   if (e.pointerId !== pid || !lastP) return;
   moveIain(p.x - lastP.x, p.y - lastP.y); lastP = p;
 });
-const up = e => { if (e.pointerId === pid) { pid = null; lastP = null; } };
+// The pause button only fires on a quick tap, so a thumb resting there to steer never pauses the game.
+const inPause = p => p.x >= PAUSE.x - 6 && p.x <= PAUSE.x + PAUSE.w + 6 && p.y >= PAUSE.y - 6;
+let tapAt = null;
+const up = e => {
+  if (tapAt && mode === 'play') { const p = toGame(e); if (inPause(p) && performance.now() - tapAt.t < 350 && Math.hypot(p.x - tapAt.x, p.y - tapAt.y) < 12) pause(); }
+  tapAt = null;
+  if (e.pointerId === pid) { pid = null; lastP = null; }
+};
 cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
 
 // ===================== BOOT =====================
