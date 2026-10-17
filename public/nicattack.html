@@ -65,7 +65,7 @@ p b{color:#ffd23f;font-weight:400}
     <button class="btn" id="new-btn">NEW GAME</button>
     <button class="btn alt" id="cont-btn" style="display:none"></button>
     <div class="stats" id="menu-stats"></div>
-    <div class="fine">Iain was given a strict 10 minute limit. Time limits are for cowards. This game does not end.<br>Content approved by Jane and Emily. Please take any concerns up with them.</div>
+    <div class="fine">Nic gave Iain a strict 10 minute limit for his best man's speech. Iain believes time limits are for cowards. So does this game: it never ends.<br>Like the speech, this content was approved by Nic's sister Jane and Sally's sister Emily. Please take any concerns up with them.</div>
   </div>
 
   <div class="screen" id="paused">
@@ -344,7 +344,7 @@ function newRun(startWave) {
     wave: startWave, waveT: 0, banner: 3, b2: 0, b2Text: '', b2Col: '#ffd23f',
     score: 0, combo: 0, weapon: 'single', weaponT: 0, rebuild: 0, gun: startWave > 4 ? 2 : 1, pairs: 0, fireT: 0,
     hamper: 0, hampers: 0, flash: 0, bestRef: save.best, lastRef: save.last, passed: {},
-    iain: { x: W / 2, y: ZONE_BOT - 50, face: 1, inv: 0, walk: 0, shield: 0 },
+    iain: { x: W / 2, y: ZONE_BOT - 50, face: 1, inv: 0, walk: 0, shield: 0, rinse: 0 },
     hand: [], baskets: BASKETS.map(b => ({ x: b.x, y: b.y, k: -1, inside: false, pulse: 0 })), zips: [],
     nips: [], socks: [], shots: [], parts: [], texts: [], crates: [], snow: [], hazards: [],
     nipT: 1.2, sockT: .5, crateT: 12, jeepT: 70, jeep: null, lion: null, dryerAnim: 0, startWave, fullT: 0,
@@ -368,7 +368,7 @@ function addScore(n) { // every point goes through here, so beating your last an
 // A pause in the action while Nic says his piece. Tap to carry on.
 function cutscene(title, sub, text, then) {
   S.cutData = { title, sub, text, then };
-  S.cut = S.cutMax = clamp(1.6 + text.length / 22, 3, 7);
+  S.cut = S.cutMax = clamp(2.2 + text.length / 20, 3, 10);
 }
 
 // ===================== SPAWNING =====================
@@ -412,11 +412,12 @@ const CRATES = {
   gun:     { label: 'WEAPON', col: '#ffd23f' },
   pizza:   { label: 'PIZZA', col: '#d9a35b' },
   blender: { label: 'SHIELD', col: '#b46cff' },
-  pud:     { label: 'YORKSHIRE', col: '#f2c14e' },
+  pud:     { label: 'PUDS', col: '#f2c14e' },
+  rinse:   { label: 'RINSE', col: '#4ff0ff' },
   crane:   { label: 'CRANE', col: '#ffb347' },
 };
 function spawnCrate() {
-  const pool = ['gun', 'gun', 'pizza', 'blender'];
+  const pool = ['gun', 'gun', 'pizza', 'blender', 'rinse'];
   if (london() < 85) pool.push('pud', 'crane');
   if (london() < 50) pool.push('crane', 'pud', 'crane');
   const kind = pool[Math.floor(Math.random() * pool.length)];
@@ -496,13 +497,15 @@ function takeCrate(c) {
   if (c.kind === 'gun') {
     S.weapon = c.w; S.weaponT = WEAPON_TIME; banner2(gunName() + ' FOR ' + WEAPON_TIME + 's', WEAPONS[c.w].col);
   } else if (c.kind === 'pizza') { // reheated in the box. It goes the way it went.
-    say(I.x, I.y - 112, 'PIZZA BOX COMBUSTS!', '#ff6b35', 8);
+    say(I.x, I.y - 112, 'PIZZA HEATED IN ITS BOX: IT EXPLODES!', '#ff6b35', 7);
     burst(I.x, I.y - 40, 30, ['#ff6b35', '#ffd23f', '#d9a35b']); shake = .5; freeze = .08;
     for (let i = S.nips.length - 1; i >= 0; i--) if (Math.hypot(S.nips[i].x - I.x, S.nips[i].y - I.y) < 130) killNip(i, true);
   } else if (c.kind === 'blender') {
-    I.shield = 4; say(I.x, I.y - 112, 'OVEN-BAKED SHIELD', '#b46cff', 8);
+    I.shield = 4; say(I.x, I.y - 112, 'MELTED BLENDER SHIELD', '#b46cff', 8);
   } else if (c.kind === 'pud') {
-    repairCity(.06, 'BEST YORKSHIRE PUD EVER');
+    repairCity(.06, "NIC'S PATENTED YORKSHIRE PUDS");
+  } else if (c.kind === 'rinse') { // the dishwasher's high pressure rinse, pointed at the sky for once
+    I.rinse = 3.5; S.rinseAcc = 0; say(I.x, I.y - 112, 'HIGH PRESSURE RINSE!', '#4ff0ff', 9);
   } else if (c.kind === 'crane') {
     repairCity(.15, 'THE BUILDERS ARE IN'); S.crane = 4;
   }
@@ -533,11 +536,26 @@ function hurtIain(why) {
 // He talks three times a fight (arrival, half way, defeat) and the game stops
 // to let him.
 const BOSSES = [
-  { kind: 'ball',  name: 'THE WRECKING BALL', intro: "SERIOUSLY IAIN, I'D RATHER NOT.", pinch: 'TEN MINUTES, IAIN! I SAID TEN MINUTES!', flee: 'CURSE YOU, IAIN LOUDON!' },
-  { kind: 'oven',  name: 'THE PIZZA OVEN', intro: "THE PIZZA STAYS IN THE BOX, IAIN. THAT'S HOW YOU REHEAT IT.", pinch: "IT'S NOT ON FIRE. IT'S CRISPY.", flee: "THIS IS GOING ON THE WEBSITE, ISN'T IT?" },
-  { kind: 'drill', name: 'THE DRILL-MOBILE', intro: 'THIS THING IS A TANK. NOTHING CAN STOP THIS DRILL.', pinch: 'PERFECT AMBUSH DISTANCE, IAIN. PERFECT.', flee: "I'LL BE BACK AFTER THE FIRST DANCE!" },
-  { kind: 'orbit', name: 'THE BLENDERS', intro: 'IT WAS DUST FREE, IAIN. DUST FREE.', pinch: 'OF COURSE IT WENT IN THE OVEN. WHERE ELSE DOES A BLENDER GO?', flee: 'JANE AND EMILY APPROVED THIS?!' },
-  { kind: 'dish',  name: 'THE DISHWASHER', intro: "THERE ARE THINGS I'D RATHER NOT BE PUBLIC KNOWLEDGE.", pinch: "TIME LIMITS ARE FOR COWARDS? I'LL SHOW YOU A TIME LIMIT!", flee: 'SLOW IT DOWN! SLOW IT DOWN!' },
+  { kind: 'ball',  name: 'THE WRECKING BALL',
+    intro: "I ASKED FOR A TEN MINUTE BEST MAN'S SPEECH, IAIN. YOU WENT ON FOR AN HOUR. PREPARE TO BE WRECKED!",
+    pinch: "TEN MINUTES, IAIN! TEN! WHY DOES NOBODY RESPECT A TIME LIMIT?!",
+    flee: "CURSE YOU, IAIN LOUDON, YOU UNREASONABLY HANDSOME MAN I'M VERY FOND OF!!" },
+  { kind: 'oven',  name: 'THE PIZZA OVEN',
+    intro: 'THIS IS WHY YOU WARM PIZZA UP IN ITS CARDBOARD BOX, IAIN. SAVES ON WASHING UP! BWAHAHA!',
+    pinch: "THIS PIZZA ISN'T ON FIRE, IAIN. IT'S JUST CRISPY!",
+    flee: 'MY DINNER! MY OVEN! MY DREAMS OF GOING ON MASTERCHEF!' },
+  { kind: 'drill', name: 'THE UNSTOPPABLE DRILL',
+    intro: 'IN TANZANIA I SAID NOTHING COULD STOP OUR JEEP, AND WE GOT A FLAT TYRE IN LION COUNTRY. THIS TIME I MEAN IT. NOTHING CAN STOP THIS DRILL!',
+    pinch: "WAIT... IS THAT A FLAT TYRE? ON A DRILL? NOT AGAIN!",
+    flee: 'NOTHING CAN STOP THIS... OH. OH NO.' },
+  { kind: 'orbit', name: 'THE MELTED BLENDERS',
+    intro: 'I KEPT THESE BLENDERS IN THE OVEN TO STOP THEM GETTING DUSTY. THEN I TURNED THE OVEN ON. THEY MAY BE MELTED, IAIN, BUT THEY ARE DUST FREE!',
+    pinch: 'WHERE ELSE DO YOU KEEP A BLENDER, IAIN, IF NOT IN AN OVEN?!',
+    flee: "MY SISTER AND SALLY'S SISTER APPROVED THAT SPEECH?! TRAITORS!" },
+  { kind: 'dish',  name: 'THE DISHWASHER',
+    intro: "HAVING FIVE NIPPLES IS SOMETHING I'D RATHER NOT BE PUBLIC KNOWLEDGE, IAIN! TAKE THE WEBSITE DOWN!",
+    pinch: 'I PUT MY GLASSES THROUGH THIS FOR A STREAK-FREE CLEAN AND NOW THEY ARE RUINED! WHO COULD HAVE THOUGHT?!',
+    flee: 'I JUST WANTED CLEAN GLASSES!' },
 ];
 function startBoss() {
   const def = BOSSES[S.bossNo % BOSSES.length], loop = Math.floor(S.bossNo / BOSSES.length);
@@ -675,7 +693,7 @@ function updateHazards(dt) {
       if (touchesIain(h.tx, h.ty - 8, 24)) hurtIain('PIZZA BOX FIRE!');
       if (h.t > 1.1) S.hazards.splice(i, 1);
     } else if (h.type === 'jet') {
-      if (h.t > h.warn && h.t < h.warn + h.dur && Math.abs(S.iain.x - h.x) < 15) hurtIain('HIGH PRESSURE RINSE!');
+      if (h.t > h.warn && h.t < h.warn + h.dur && Math.abs(S.iain.x - h.x) < 15) hurtIain('SOAKED BY THE DISHWASHER!');
       if (h.t > h.warn + h.dur) S.hazards.splice(i, 1);
     }
   }
@@ -723,6 +741,12 @@ function update(dt) {
   if (I.shield > 0) I.shield -= dt;
   if (S.fullT > 0) S.fullT -= dt;
   if (S.crane > 0) S.crane -= dt;
+  if (I.rinse > 0) { // a column of water straight up from Iain: nips in it are washed away, Nic gets soaked
+    I.rinse -= dt;
+    for (let j = S.nips.length - 1; j >= 0; j--) { const n = S.nips[j]; if (Math.abs(n.x - I.x) < 14 + n.d.r * .5 && n.y < I.y - 50) killNip(j); }
+    const Bs = S.boss;
+    if (Bs && Bs.phase === 'fight' && Math.abs(Bs.x - I.x) < 34) { S.rinseAcc += dt * 10; if (S.rinseAcc >= 1) { S.rinseAcc -= 1; bossDamage(1); } }
+  }
   if (S.weaponT > 0) { S.weaponT -= dt; if (S.weaponT <= 0) { S.weapon = 'single'; banner2('BACK TO ' + gunName(), '#cfc8ff', 1.6); sfx.down(); } }
   updateRebuild(dt);
   S.fireT -= dt; if (S.fireT <= 0) { fire(); S.fireT = gunRate(); } // he throws by himself. Always.
@@ -883,15 +907,15 @@ function blowUp(n, x, y) {
 // The Singida jeep. "This thing is a tank, nothing can stop this jeep."
 function startJeep() {
   S.jeep = { x: -70, y: rnd(ZONE_TOP + 70, ZONE_BOT - 10), phase: 'drive', t: 0 }; sfx.horn();
-  say(W / 2, 200, 'NOTHING CAN STOP THIS JEEP', '#ffd23f', 8);
+  banner2('NIC: "NOTHING CAN STOP THIS JEEP!"', '#ffd23f', 2.4);
 }
 function updateJeep(dt) {
   const J = S.jeep, I = S.iain;
   if (J) {
     J.t += dt;
-    if (J.phase === 'drive') { J.x += 110 * dt; if (J.x >= W / 2 - 30) { J.phase = 'flat'; J.t = 0; beep(80, .6, 'sawtooth', .05, -40); say(J.x + 30, J.y - 50, 'FLAT TYRE', '#ff6b6b', 8); } }
+    if (J.phase === 'drive') { J.x += 110 * dt; if (J.x >= W / 2 - 30) { J.phase = 'flat'; J.t = 0; beep(80, .6, 'sawtooth', .05, -40); banner2('...FLAT TYRE. IN LION COUNTRY.', '#ff6b6b', 2.2); } }
     else if (J.phase === 'flat') {
-      if (J.t > 1.6 && !S.lion) { S.lion = { x: W + 30, y: J.y, leapt: false }; sfx.roar(); say(W / 2, 220, 'HOLD THE JACK!', '#ffd23f', 11); say(W / 2, 238, 'STAND BY THE JEEP', '#cfc8ff', 7); }
+      if (J.t > 1.6 && !S.lion) { S.lion = { x: W + 30, y: J.y, leapt: false }; sfx.roar(); say(W / 2, 220, 'LION! HOLD THE JACK!', '#ffd23f', 11); say(W / 2, 238, 'STAND BY THE JEEP TO SCARE IT OFF', '#cfc8ff', 7); }
       if (J.t > 6) J.phase = 'leave';
     } else { J.x += 140 * dt; if (J.x > W + 80) S.jeep = null; }
   }
@@ -901,8 +925,8 @@ function updateJeep(dt) {
     const atJack = J && Math.abs(I.x - (J.x + 30)) < 30 && Math.abs(I.y - J.y) < 26;
     if (!L.leapt && Math.abs(L.x - I.x) < 22 && Math.abs(L.y - I.y) < 30) {
       L.leapt = true;
-      if (atJack) { addScore(500); say(I.x, I.y - 100, 'JUST REALLY HOPE FOR THE BEST', '#2ecc71', 6); say(I.x, I.y - 86, '+500', '#ffd23f', 9); sfx.power(); }
-      else hurtIain('PERFECT AMBUSH DISTANCE');
+      if (atJack) { addScore(500); say(I.x, I.y - 100, 'IAIN HELD THE JACK! LION SCARED OFF', '#2ecc71', 6); say(I.x, I.y - 86, '+500', '#ffd23f', 9); sfx.power(); }
+      else hurtIain('AMBUSHED BY A LION!');
     }
     if (L.x < -40) S.lion = null;
   }
@@ -975,6 +999,12 @@ function drawIain() {
     ctx.fillStyle = 'rgba(5,3,15,.65)'; ctx.fillRect(sx - 8, sy - 10, 16, 18);
     ctx.strokeStyle = i === 0 && n ? '#ffd23f' : warn ? '#ff3b3b' : 'rgba(255,255,255,.25)'; ctx.lineWidth = i === 0 && n ? 2 : 1; ctx.strokeRect(sx - 8, sy - 10, 16, 18);
     if (i < n) drawSock(sx - 1, sy - 1, S.hand[i], .2, .95);
+  }
+  if (I.rinse > 0) {
+    const top = 30, a = Math.min(1, I.rinse * 2);
+    ctx.fillStyle = 'rgba(120,200,255,' + (.55 * a) + ')'; ctx.fillRect(I.x - 9, top, 18, I.y - 56 - top);
+    ctx.fillStyle = 'rgba(255,255,255,' + (.8 * a) + ')'; ctx.fillRect(I.x - 3, top, 6, I.y - 56 - top);
+    for (let i = 0; i < 12; i++) ctx.fillRect(I.x - 12 + Math.random() * 24, top + Math.random() * (I.y - 56 - top), 2, 2);
   }
   if (I.shield > 0) { ctx.strokeStyle = `rgba(180,108,255,${.4 + .3 * Math.sin(performance.now() / 100)})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(I.x, I.y - 34, 34, 0, 7); ctx.stroke(); }
 }
@@ -1163,6 +1193,7 @@ function drawHUD() {
   for (let i = 0; i < MAXLV; i++) { ctx.fillStyle = i < S.gun ? WP.col : 'rgba(255,255,255,.12)'; ctx.fillRect(126 + i * 16, y0 + 29, 13, 9); }
   if (S.weaponT > 0) { bar(112, y0 + 42, 120, 4, S.weaponT / WEAPON_TIME, S.weaponT < 4 && blink ? '#ff3b3b' : WP.col); ctx.fillStyle = '#cfc8ff'; ctx.fillText(Math.ceil(S.weaponT) + 's', 236, y0 + 41); }
   if (S.iain.shield > 0) { ctx.fillStyle = '#b46cff'; ctx.fillText('SHIELD ' + Math.ceil(S.iain.shield), 112, y0 + 50); }
+  else if (S.iain.rinse > 0) { ctx.fillStyle = '#4ff0ff'; ctx.fillText('RINSE ' + Math.ceil(S.iain.rinse), 112, y0 + 50); }
   // hint line
   ctx.textAlign = 'left';
   if (S.hand.length >= HAND && blink) { ctx.fillStyle = '#ff6b6b'; ctx.fillText('HANDS FULL: DROP ONE IN A BASKET', 6, y0 + 66); }
