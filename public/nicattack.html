@@ -33,6 +33,10 @@ p b{color:#ffd23f;font-weight:400}
 .how div{display:flex;gap:10px;align-items:flex-start;font-size:8px;line-height:1.8;color:#cfc8ff;background:rgba(79,240,255,.06);border:1px solid rgba(79,240,255,.2);border-radius:4px;padding:7px 8px}
 .how i{font-style:normal;color:#05030f;background:#ffd23f;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:2px;font-size:9px}
 .how b{color:#ffd23f;font-weight:400}
+.cmp{display:grid;grid-template-columns:auto auto;gap:6px 14px;font-size:9px;line-height:1.4;text-align:left}
+.cmp .k{color:#8f86c9}.cmp .up{color:#2ecc71}.cmp .dn{color:#ff6b6b}
+.newbest{font-size:12px;color:#2ecc71;text-shadow:2px 2px 0 #05030f;animation:nb .5s steps(2) infinite}
+@keyframes nb{50%{color:#ffd23f}}
 .fine{font-size:7px;color:#6b62a3;line-height:1.9;max-width:300px}
 </style>
 </head>
@@ -53,10 +57,10 @@ p b{color:#ffd23f;font-weight:400}
     <h1>NICATTACK<br>LDN<small>IAIN VS DR. ROBOTNIC</small></h1>
     <p>Nic has found the website. He is not happy. He has built the <b>Nic-Mobile</b>, he is raining nips on London, and for twenty years he has secretly been behind the world's missing socks. Only one man has <b>never lost a sock</b>.</p>
     <div class="how">
-      <div><i>1</i><span><b>Drag anywhere</b>: Iain moves exactly with your finger, anywhere in the laundry zone. He throws by himself. Watch for the <b>shadows</b>: that is where a nip will land.</span></div>
-      <div><i>2</i><span>Grab every sock. Singles wait in your <b>sock drawer</b> (no limit). Two the same = a <b>folded pair</b>. Pairs <b>upgrade your gun</b> and charge the <b>DRYER</b>.</span></div>
-      <div><i>3</i><span>Get hit and your singles <b>spill out</b> like rings. Grab them before the countdown ends. <b>Iain does not lose socks.</b></span></div>
-      <div><i>4</i><span>Every minute, <b>Dr. RobotNic</b> attacks. Eight hits and he runs, dropping his sack of stolen socks.</span></div>
+      <div><i>1</i><span><b>Drag anywhere</b> to move. Iain throws by himself. <b>Shadows</b> show where things land.</span></div>
+      <div><i>2</i><span>Iain carries <b>3 socks</b>. Catch a match and it folds into a <b>pair</b>. Hands full? Walk onto a <b>BASKET</b>: it takes your top sock, swaps it, or folds it with the one waiting there.</span></div>
+      <div><i>3</i><span>Pairs fill the <b>HAMPER</b>. Full hamper = <b>DRYER BLAST + GUN UPGRADE</b>. Get hit and you drop a gun level and spill what you're carrying. A sock left on the floor too long is <b>lost</b>.</span></div>
+      <div><i>4</i><span>Crates swap your weapon. Fill the <b>wave bar</b> and <b>Dr. RobotNic</b> attacks. Eight hits and he runs.</span></div>
     </div>
     <button class="btn" id="new-btn">NEW GAME</button>
     <button class="btn alt" id="cont-btn" style="display:none"></button>
@@ -75,6 +79,7 @@ p b{color:#ffd23f;font-weight:400}
     <h1 id="over-title">GAME<br>OVER</h1>
     <p id="over-why"></p>
     <div class="big" id="over-score">0</div>
+    <div class="cmp" id="over-cmp"></div>
     <div class="stats" id="over-stats"></div>
     <a class="btn" id="over-again" href="game.html">PIN THE NIPS TO GO AGAIN</a>
     <button class="btn ghost" id="over-menu" style="display:none">BACK TO MENU</button>
@@ -98,7 +103,7 @@ function hasTicket() { return TEST || ss(s => s.getItem(TICKET)) === '1'; }
 function spendTicket() { if (!TEST) ss(s => s.removeItem(TICKET)); }
 
 function loadSave() {
-  const base = { best: 0, bestWave: 0, checkpoint: 1, pairs: 0, runs: 0, tracks: [], bestGun: 1, bosses: 0 };
+  const base = { best: 0, last: 0, bestWave: 0, checkpoint: 1, pairs: 0, runs: 0, tracks: [], bestGun: 1, bosses: 0 };
   try { return Object.assign(base, JSON.parse(localStorage.getItem(SAVE) || '{}')); }
   catch (e) { return base; }
 }
@@ -297,37 +302,40 @@ const TRACKS = ['HOUSE OF LOVE', 'DEEP', 'STEAM', 'THUNDER', 'LET IT RAIN', 'ARO
 const trackFor = w => TRACKS[(w - 1) % 17] + (w > 17 ? ' (' + ['REMIX', 'DARK MIX', 'LIVERPOOL MIX', 'PAWS ON THE FLOOR'][Math.floor((w - 18) / 17) % 4] + ')' : '');
 
 // ===================== THE GUN =====================
-const GUNS = [
-  null,
-  { name: 'SINGLE PAIR', rate: .3, n: 1 },
-  { name: 'GOLD', rate: .21, n: 1 },
-  { name: 'DOUBLE KNIT', rate: .21, n: 2 },
-  { name: 'AROUND THE WORLD', rate: .2, n: 3 },
-  { name: 'MAN IN THE MIRROR', rate: .2, n: 3, mirror: 1 },
-  { name: "AIN'T NO STOPPIN'", rate: .18, n: 3, mirror: 1, pierce: 1 },
-];
-const gun = l => l < GUNS.length ? GUNS[l] : { name: 'M.F. POWER ' + (l - GUNS.length + 2), rate: Math.max(.08, .18 - (l - GUNS.length + 1) * .02), n: 3 + Math.min(2, Math.floor((l - GUNS.length + 1) / 2)), mirror: 1, pierce: 1 };
-const pairsToNext = l => 3 + l;
-const gunDps = l => { const g = gun(l); return g.n * (g.mirror ? 2 : 1) / g.rate; };
+// The weapon comes from crates; its level (1 to 4, no higher) comes from the
+// hamper. A hit knocks a level off, so power has to be kept, not just earned.
+const WEAPONS = {
+  single:  { name: 'SINGLE PAIR',       tag: 'SINGLE', col: '#ffd23f', lv: [{ rate: .32, n: 1 }, { rate: .26, n: 1 }, { rate: .27, n: 2 }, { rate: .22, n: 2 }] },
+  spread:  { name: 'AROUND THE WORLD',  tag: 'SPREAD', col: '#2ecc71', lv: [{ rate: .44, n: 3 }, { rate: .38, n: 3 }, { rate: .42, n: 5 }, { rate: .36, n: 5 }] },
+  pierce:  { name: "AIN'T NO STOPPIN'", tag: 'PIERCE', col: '#4ff0ff', lv: [{ rate: .5 }, { rate: .43 }, { rate: .37 }, { rate: .31 }] },
+  thunder: { name: 'THUNDER',           tag: 'BOMBS',  col: '#ff9f1c', lv: [{ rate: .8, R: 26 }, { rate: .7, R: 30 }, { rate: .62, R: 34 }, { rate: .54, R: 38 }] },
+  love:    { name: 'HOUSE OF LOVE',     tag: 'HOMING', col: '#ff6fb5', lv: [{ rate: .42, n: 1 }, { rate: .36, n: 1 }, { rate: .4, n: 2 }, { rate: .34, n: 2 }] },
+};
+const MAXLV = 4;
+const gunName = () => WEAPONS[S.weapon].name;
+const gunRate = () => WEAPONS[S.weapon].lv[S.gun - 1].rate;
+const hamperNeed = n => Math.min(10, 5 + n); // each hamper is a pair bigger than the last
 
 // ===================== STATE =====================
 const SOCKS = ['#e2264d', '#2f7bff', '#2ecc71', '#ffffff', '#ff9f1c', '#b46cff', '#ff6fb5'];
 const SOCKNAME = ['red', 'blue', 'green', 'white', 'orange', 'purple', 'pink'];
-const WAVE_LEN = 30, DRYER_FULL = 8;
+const WAVE_LEN = 30, HAND = 3;
 let S = null, mode = 'menu', last = 0, keys = {}, shake = 0, freeze = 0;
+// Two laundry baskets in the bottom corners: somewhere to park a single.
+const BASKETS = [{ x: 38, y: ZONE_BOT - 14 }, { x: W - 38, y: ZONE_BOT - 14 }];
 
 function newRun(startWave) {
   buildCity();
-  const lvl = Math.min(4, 1 + Math.floor((startWave - 1) / 4));
   S = {
     wave: startWave, waveT: 0, banner: 3, b2: 0, b2Text: '', b2Col: '#ffd23f',
-    score: 0, combo: 0, gun: lvl, gunPairs: 0, dryer: 0, pairs: 0, fireT: 0,
-    iain: { x: W / 2, y: ZONE_BOT - 20, face: 1, inv: 0, walk: 0, shield: 0, homing: 0 },
-    drawer: SOCKS.map(() => 0), zips: [],
-    nips: [], socks: [], shots: [], parts: [], texts: [], crates: [], inks: [], snow: [], hazards: [],
-    nipT: 1.2, sockT: .5, crateT: 14, jeepT: 34, jeep: null, lion: null, dryerAnim: 0, startWave,
+    score: 0, combo: 0, weapon: 'single', gun: startWave > 4 ? 2 : 1, pairs: 0, fireT: 0,
+    hamper: 0, hampers: 0, flash: 0, bestRef: save.best, lastRef: save.last, passed: {},
+    iain: { x: W / 2, y: ZONE_BOT - 50, face: 1, inv: 0, walk: 0, shield: 0 },
+    hand: [], baskets: BASKETS.map(b => ({ x: b.x, y: b.y, k: -1, inside: false, pulse: 0 })), zips: [],
+    nips: [], socks: [], shots: [], parts: [], texts: [], crates: [], snow: [], hazards: [],
+    nipT: 1.2, sockT: .5, crateT: 12, jeepT: 70, jeep: null, lion: null, dryerAnim: 0, startWave, fullT: 0,
     boss: null, bossNo: Math.floor((startWave - 1) / 2), sack: null,
-    fires: [], smoke: [], rubble: new Float32Array(COLS), collapse: [], barHit: 0, alarmT: 0, cut: 0, cutMax: 1,
+    fires: [], smoke: [], rubble: new Float32Array(COLS), collapse: [], barHit: 0, alarmT: 0, cut: 0, cutMax: 1, cutData: null,
   };
   save.runs++; noteTrack(); writeSave();
   sfx.wave();
@@ -337,13 +345,24 @@ function noteTrack() {
   if (!save.tracks.includes(t)) save.tracks.push(t);
 }
 function banner2(t, col = '#ffd23f', dur = 2.4) { S.b2 = dur; S.b2Text = t; S.b2Col = col; }
+const fmt = n => Math.round(n).toLocaleString('en-GB');
+function addScore(n) { // every point goes through here, so beating your last and your best gets its moment
+  S.score += n;
+  if (S.lastRef > 0 && S.score > S.lastRef && !S.passed.last && S.lastRef < S.bestRef) { S.passed.last = 1; banner2('BEAT YOUR LAST SCORE!', '#4ff0ff'); }
+  if (S.bestRef > 0 && S.score > S.bestRef && !S.passed.best) { S.passed.best = 1; banner2('NEW HIGH SCORE!', '#2ecc71', 3); sfx.upgrade(); }
+}
+// A pause in the action while Nic says his piece. Tap to carry on.
+function cutscene(title, sub, text, then) {
+  S.cutData = { title, sub, text, then };
+  S.cut = S.cutMax = clamp(1.6 + text.length / 22, 3, 7);
+}
 
 // ===================== SPAWNING =====================
 // Difficulty only ever goes up. There is no last wave.
 const speedMul = () => 1 + .07 * (S.wave - 1);
 const nipEvery = () => Math.max(.16, 1.5 * Math.pow(.89, S.wave - 1)) * (S.boss ? 3 : 1);
 const sockEvery = () => Math.max(.5, 1.4 * Math.pow(.955, S.wave - 1));
-const sockColours = () => Math.min(SOCKS.length, 3 + Math.floor((S.wave - 1) / 3));
+const sockColours = () => S.wave < 4 ? 3 : S.wave < 7 ? 4 : S.wave < 13 ? 5 : S.wave < 19 ? 6 : 7;
 const floorY = () => rnd(ZONE_TOP + 16, ZONE_BOT - 4);
 
 // Asteroids rules: a big nip splits into two mediums, a medium into two smalls.
@@ -353,14 +372,12 @@ const NIPDEF = {
   small: { img: 1, r: 7,  hp: 1, v: 58, pts: 10, R: 8 },
   nurse: { img: 3, r: 10, hp: 1, v: 40, pts: 30, R: 10, dive: 1 },
   wild:  { img: 4, r: 13, hp: 2, v: 42, pts: 30, R: 11, wobble: 1, into: 'small' },
-  pen:   { pen: 1, r: 8, hp: 1, v: 66, pts: 40, R: 6, ink: 1 },
 };
 function spawnNip() {
   const w = S.wave, pool = [['small', 4], ['mid', 2 + w * .2]];
   if (w >= 2) pool.push(['big', .8 + w * .15]);
   if (w >= 3) pool.push(['wild', 1.5]);
   if (w >= 4) pool.push(['nurse', 1.6]);
-  if (w >= 6) pool.push(['pen', 1.2]);
   let t = Math.random() * pool.reduce((a, p) => a + p[1], 0), type = 'small';
   for (const [k, wt] of pool) { if ((t -= wt) <= 0) { type = k; break; } }
   addNip(type, rnd(22, W - 22), 40, rnd(-15, 15));
@@ -370,31 +387,31 @@ function addNip(type, x, y, vx = 0, vy = null) {
   S.nips.push({ type, d, x, y, vx, vy: vy ?? d.v * speedMul() * rnd(.85, 1.15), hp: d.hp + (S.wave >= 14 && d.hp > 1 ? 1 : 0), t: rnd(0, 6), spin: rnd(-2, 2), a: 0, hit: 0, dived: false, landY: floorY() });
 }
 function spawnSock(x, y, vx = 0, vy = null) {
-  const k = Math.floor(Math.random() * sockColours());
+  // More than half the time the sky sends a match for something you're holding,
+  // so a full pair of hands is a puzzle, not bad luck.
+  const held = [...S.hand, ...S.baskets.map(b => b.k).filter(k => k >= 0)];
+  const k = held.length && Math.random() < .55 ? held[Math.floor(Math.random() * held.length)] : Math.floor(Math.random() * sockColours());
   S.socks.push({ k, x: x ?? rnd(18, W - 18), y: y ?? 40, vx, vy: vy ?? rnd(40, 58) + S.wave * 1.2, t: rnd(0, 6), ground: 0, max: 0, landY: floorY() });
 }
 // Things from the speech, delivered from the sky.
 const CRATES = {
+  gun:     { label: 'WEAPON', col: '#ffd23f' },
   pizza:   { label: 'PIZZA', col: '#d9a35b' },
-  specs:   { label: 'SPECS', col: '#4ff0ff' },
-  blender: { label: 'BLENDER', col: '#b46cff' },
+  blender: { label: 'SHIELD', col: '#b46cff' },
   pud:     { label: 'YORKSHIRE', col: '#f2c14e' },
 };
 function spawnCrate() {
-  const pool = ['pizza', 'specs', 'blender'];
-  if (london() < 85) pool.push('pud', 'pud');
+  const pool = ['gun', 'gun', 'pizza', 'blender'];
+  if (london() < 85) pool.push('pud');
   const kind = pool[Math.floor(Math.random() * pool.length)];
-  S.crates.push({ kind, x: rnd(30, W - 30), y: 40, vy: 52, t: 0, ground: 0, landY: floorY() });
+  const others = Object.keys(WEAPONS).filter(w => w !== S.weapon);
+  S.crates.push({ kind, w: others[Math.floor(Math.random() * others.length)], x: rnd(30, W - 30), y: 40, vy: 52, t: 0, ground: 0, landY: floorY() });
 }
 
 // ===================== FX =====================
 function debris(x, y, col, rub) { if (S && S.parts.length < 400) S.parts.push({ x, y, vx: rnd(-80, 80), vy: -Math.random() * 160, life: rub ? 3 : rnd(.8, 1.3), col, s: rnd(2, 5), rub }); }
 function burst(x, y, n, cols) { for (let i = 0; i < n; i++) debris(x, y, cols[i % cols.length]); }
-function say(x, y, txt, col = '#ffd23f', size = 9) { if (S.texts.length < 16) S.texts.push({ x: clamp(x, 44, W - 44), y, txt, col, size, life: 1.2 }); }
-function inkBlot(x, y) { // Rorschach, courtesy of 2005's unsupervised pen distribution
-  const blobs = Array.from({ length: 7 }, () => ({ dx: Math.random() * 34, dy: rnd(-30, 30), r: rnd(6, 22) }));
-  S.inks.push({ x: clamp(x, 60, W - 60), y: clamp(y, 120, 470), blobs, life: 3.4 });
-}
+function say(x, y, txt, col = '#ffd23f', size = 9) { if (S.texts.length < 14) S.texts.push({ x: clamp(x, 44, W - 44), y, txt, col, size, life: 1.2 }); }
 
 // ===================== IAIN =====================
 const iainHit = () => ({ x: S.iain.x, y: S.iain.y - 26 });
@@ -408,96 +425,110 @@ function moveIain(dx, dy) {
   I.y = clamp(I.y + dy, IAIN_MIN_Y, ZONE_BOT);
 }
 function fire() {
-  const I = S.iain, g = gun(S.gun);
-  const origins = [I.x]; if (g.mirror) origins.push(W - I.x);
-  origins.forEach(ox => {
-    for (let i = 0; i < g.n; i++) {
-      const spread = g.n === 1 ? 0 : (i - (g.n - 1) / 2);
-      const vx = g.n >= 3 ? spread * 70 : 0, off = g.n === 2 ? spread * 10 : 0;
-      S.shots.push({ x: ox + off, y: I.y - 56, vx, vy: -520, k: Math.floor(Math.random() * SOCKS.length), pierce: !!g.pierce, hits: new Set(), home: I.homing > 0 });
-    }
-  });
+  const I = S.iain, W8 = WEAPONS[S.weapon], L = W8.lv[S.gun - 1], ox = I.x, oy = I.y - 56;
+  const shot = o => S.shots.push(Object.assign({ x: ox, y: oy, vx: 0, vy: -520, kind: S.weapon, dmg: 1, hits: new Set(), k: Math.floor(Math.random() * SOCKS.length) }, o));
+  if (S.weapon === 'single') for (let i = 0; i < L.n; i++) shot({ x: ox + (L.n > 1 ? (i - .5) * 12 : 0) });
+  if (S.weapon === 'spread') for (let i = 0; i < L.n; i++) { const a = (i - (L.n - 1) / 2) * (L.n > 3 ? .2 : .26); shot({ vx: Math.sin(a) * 480, vy: -Math.cos(a) * 480 }); }
+  if (S.weapon === 'pierce') shot({ vy: -780, pierce: true, dmg: 2 });
+  if (S.weapon === 'thunder') shot({ vy: -330, R: L.R, dmg: 2 });
+  if (S.weapon === 'love') for (let i = 0; i < L.n; i++) shot({ x: ox + (L.n > 1 ? (i - .5) * 14 : 0), vx: L.n > 1 ? (i - .5) * 120 : 0, vy: -400, home: true });
   sfx.shot();
 }
-function fireDryer() {
-  if (mode !== 'play' || S.dryer < DRYER_FULL || S.dryerAnim > 0) return;
-  S.dryer = 0; S.dryerAnim = 1.4; shake = .6; sfx.dryer();
-  say(W / 2, 250, 'TUMBLE DRY!', '#4ff0ff', 14);
+// The dryer: no button. A full hamper loads it and it goes off by itself.
+function dryerBlast() {
+  S.dryerAnim = 1.4; shake = .6; sfx.dryer();
+  say(W / 2, 250, 'HAMPER FULL! TUMBLE DRY!', '#4ff0ff', 10);
   if (S.boss && S.boss.phase === 'fight') bossDamage(S.boss.subMax * 2, true); // the dryer hurts Nic too
 }
 function addPairs(n, silent) {
   for (let i = 0; i < n; i++) {
-    S.pairs++; save.pairs++; S.score += 20;
-    S.dryer = Math.min(DRYER_FULL, S.dryer + 1);
-    if (++S.gunPairs >= pairsToNext(S.gun)) {
-      S.gun++; S.gunPairs = 0; sfx.upgrade();
-      if (S.gun > save.bestGun) save.bestGun = S.gun;
-      banner2('UPGRADE: ' + gun(S.gun).name, '#4ff0ff');
+    S.pairs++; save.pairs++; addScore(100);
+    if (++S.hamper >= hamperNeed(S.hampers)) {
+      S.hamper = 0; S.hampers++; S.fullT = 1.2;
+      if (S.gun < MAXLV) {
+        S.gun++; sfx.upgrade();
+        if (S.gun > save.bestGun) save.bestGun = S.gun;
+        banner2(gunName() + ' LEVEL ' + S.gun, '#4ff0ff');
+      } else { addScore(1000); banner2('MAX POWER: +1,000', '#4ff0ff'); }
+      if (!S.dryerAnim) dryerBlast();
     }
   }
-  if (!silent && S.dryer === DRYER_FULL) say(W / 2, 300, 'DRYER READY: TAP IT', '#4ff0ff', 9);
 }
-// Singles wait in the drawer, one slot per colour, no limit. The match folds itself.
+function foldPair(k, x, y) {
+  S.zips.push({ k, t: .6 }); sfx.pair();
+  say(x, y, Math.random() < .2 ? "IT'S ALRIGHT +100" : 'PAIR! +100', SOCKS[k] === '#ffffff' ? '#ffd23f' : SOCKS[k], 9);
+  addPairs(1);
+}
+// Iain carries three. A match in his hands folds on the spot.
+function canTake(k) { return S.hand.includes(k) || S.hand.length < HAND; }
 function catchSock(s) {
-  if (S.drawer[s.k]) {
-    S.drawer[s.k] = 0; S.zips.push({ k: s.k, t: .6 });
-    sfx.pair(); say(S.iain.x, S.iain.y - 80, Math.random() < .2 ? "IT'S ALRIGHT" : 'PAIR FOLDED', SOCKS[s.k] === '#ffffff' ? '#ffd23f' : SOCKS[s.k], 7);
-    addPairs(1);
-  } else { S.drawer[s.k] = 1; sfx.catch(); }
+  const at = S.hand.indexOf(s.k);
+  if (at >= 0) { S.hand.splice(at, 1); foldPair(s.k, S.iain.x, S.iain.y - 80); }
+  else { S.hand.push(s.k); sfx.catch(); }
+}
+// A basket holds one single. Walk onto it: a match folds, an empty basket takes
+// your top sock, a full one swaps its sock for your top one.
+function useBasket(b) {
+  const at = b.k >= 0 ? S.hand.indexOf(b.k) : -1;
+  if (at >= 0) { S.hand.splice(at, 1); foldPair(b.k, b.x, b.y - 30); b.k = -1; b.pulse = .5; }
+  else if (b.k < 0 && S.hand.length) { b.k = S.hand.shift(); sfx.catch(); b.pulse = .3; }
+  else if (b.k >= 0 && S.hand.length) { const old = b.k; b.k = S.hand.shift(); S.hand.push(old); beep(520, .06, 'square', .035); beep(780, .06, 'square', .03); b.pulse = .3; say(b.x, b.y - 30, 'SWAP', '#cfc8ff', 7); }
+  else if (b.k >= 0) { S.hand.push(b.k); b.k = -1; sfx.catch(); }
 }
 function takeCrate(c) {
   const I = S.iain; sfx.power();
-  if (c.kind === 'pizza') { // reheated in the box. It goes the way it went.
+  if (c.kind === 'gun') {
+    S.weapon = c.w; banner2('NEW WEAPON: ' + gunName(), WEAPONS[c.w].col);
+  } else if (c.kind === 'pizza') { // reheated in the box. It goes the way it went.
     say(I.x, I.y - 90, 'PIZZA BOX COMBUSTS!', '#ff6b35', 8);
     burst(I.x, I.y - 40, 30, ['#ff6b35', '#ffd23f', '#d9a35b']); shake = .5; freeze = .08;
-    for (let i = S.nips.length - 1; i >= 0; i--) if (Math.hypot(S.nips[i].x - I.x, S.nips[i].y - I.y) < 220) killNip(i, true);
-  } else if (c.kind === 'specs') {
-    I.homing = 10; say(I.x, I.y - 90, 'STREAK-FREE AIM', '#4ff0ff', 8);
+    for (let i = S.nips.length - 1; i >= 0; i--) if (Math.hypot(S.nips[i].x - I.x, S.nips[i].y - I.y) < 130) killNip(i, true);
   } else if (c.kind === 'blender') {
-    I.shield = 12; say(I.x, I.y - 90, 'OVEN-BAKED SHIELD', '#b46cff', 8);
+    I.shield = 6; say(I.x, I.y - 90, 'OVEN-BAKED SHIELD', '#b46cff', 8);
   } else if (c.kind === 'pud') {
-    repairCity(.1); say(W / 2, 300, 'BEST YORKSHIRE PUD EVER', '#f2c14e', 8); say(W / 2, 318, 'LONDON +10%', '#2ecc71', 8);
+    repairCity(.06); say(W / 2, 300, 'BEST YORKSHIRE PUD EVER', '#f2c14e', 8); say(W / 2, 318, 'LONDON +6%', '#2ecc71', 8);
   }
 }
-// Sonic rules: singles are your rings. A hit spills them across the floor.
+// Sonic rules: what you carry are your rings. A hit spills them across the
+// floor and knocks your gun down a level. Baskets keep theirs.
 function hurtIain(why) {
   const I = S.iain;
   if (I.inv > 0) return;
   if (I.shield > 0) { say(I.x, I.y - 80, 'BLENDER SAYS NO', '#b46cff', 7); I.inv = .5; return; }
   I.inv = 1.6; sfx.hurt(); shake = .35; freeze = .07; S.combo = 0;
-  const singles = S.drawer.map((v, k) => v ? k : -1).filter(k => k >= 0);
-  if (singles.length) {
+  say(I.x, I.y - 90, why || 'NIPPED!', '#ff6b6b', 9);
+  if (S.hand.length) {
     sfx.spill();
-    singles.forEach((k, i) => {
-      S.drawer[k] = 0;
-      const a = -Math.PI / 2 + (i - (singles.length - 1) / 2) * .7;
+    S.hand.forEach((k, i) => {
+      const a = -Math.PI / 2 + (i - (S.hand.length - 1) / 2) * .8;
       S.socks.push({ k, x: I.x, y: I.y - 30, vx: Math.cos(a) * 120, vy: Math.sin(a) * 160, t: 0, ground: 0, max: 0, landY: clamp(I.y + rnd(-50, 10), ZONE_TOP + 16, ZONE_BOT - 4), spilt: true });
     });
-    say(I.x, I.y - 90, why || 'SOCKS EVERYWHERE!', '#ff6b6b', 8);
-  } else if (S.gun > 1) {
-    S.gun--; S.gunPairs = 0; sfx.down();
-    banner2('DOWNGRADED: ' + gun(S.gun).name, '#ff6b6b', 1.8);
-    say(I.x, I.y - 90, why || 'NIPPED!', '#ff6b6b', 9);
-  } else say(I.x, I.y - 90, why || 'NIPPED!', '#ff6b6b', 9);
+    S.hand = [];
+  }
+  if (S.gun > 1) { S.gun--; sfx.down(); banner2(gunName() + ' DOWN TO LEVEL ' + S.gun, '#ff6b6b', 1.8); }
 }
 
 // ===================== DR. ROBOTNIC =====================
 // Robotnik rules: eight big hits, a flash and a clang on each, a moment of
 // invincibility after, faster when he's nearly done, then he runs for it and
 // the sack of stolen socks he's been hoarding for twenty years bursts open.
+// He talks three times a fight (arrival, half way, defeat) and the game stops
+// to let him.
 const BOSSES = [
-  { kind: 'oven',    name: 'THE PIZZA OVEN', line: "SERIOUSLY IAIN, I'D RATHER NOT." },
-  { kind: 'dish',    name: 'THE DISHWASHER', line: "THERE ARE THINGS I'D RATHER NOT BE PUBLIC KNOWLEDGE." },
-  { kind: 'blender', name: 'THE BLENDER',    line: 'IT WAS DUST FREE, IAIN. DUST FREE.' },
+  { kind: 'ball',  name: 'THE WRECKING BALL', intro: "SERIOUSLY IAIN, I'D RATHER NOT.", pinch: 'TEN MINUTES, IAIN! I SAID TEN MINUTES!', flee: 'CURSE YOU, IAIN LOUDON!' },
+  { kind: 'oven',  name: 'THE PIZZA OVEN', intro: "THE PIZZA STAYS IN THE BOX, IAIN. THAT'S HOW YOU REHEAT IT.", pinch: "IT'S NOT ON FIRE. IT'S CRISPY.", flee: "THIS IS GOING ON THE WEBSITE, ISN'T IT?" },
+  { kind: 'drill', name: 'THE DRILL-MOBILE', intro: 'THIS THING IS A TANK. NOTHING CAN STOP THIS DRILL.', pinch: 'PERFECT AMBUSH DISTANCE, IAIN. PERFECT.', flee: "I'LL BE BACK AFTER THE FIRST DANCE!" },
+  { kind: 'orbit', name: 'THE BLENDERS', intro: 'IT WAS DUST FREE, IAIN. DUST FREE.', pinch: 'OF COURSE IT WENT IN THE OVEN. WHERE ELSE DOES A BLENDER GO?', flee: 'JANE AND EMILY APPROVED THIS?!' },
+  { kind: 'dish',  name: 'THE DISHWASHER', intro: "THERE ARE THINGS I'D RATHER NOT BE PUBLIC KNOWLEDGE.", pinch: "TIME LIMITS ARE FOR COWARDS? I'LL SHOW YOU A TIME LIMIT!", flee: 'SLOW IT DOWN! SLOW IT DOWN!' },
 ];
-const FLEE = ['CURSE YOU, IAIN LOUDON!', "THIS IS GOING ON THE WEBSITE, ISN'T IT", "I'LL BE BACK AFTER THE FIRST DANCE!"];
 function startBoss() {
-  const def = BOSSES[S.bossNo % 3], loop = Math.floor(S.bossNo / 3);
-  const subMax = Math.max(5, Math.round((4 + 2 * loop) * gunDps(S.gun) / 3.3));
-  S.boss = { def, loop, x: W / 2, y: -50, tx: W / 2, hp: 8, sub: 0, subMax, inv: 0, t: 0, phase: 'enter', atkT: 2.4, pinch: false, flash: 0, swing: 0, talk: 3.5, line: def.line };
+  const def = BOSSES[S.bossNo % BOSSES.length], loop = Math.floor(S.bossNo / BOSSES.length);
+  const subMax = Math.max(5, Math.round((4 + 2 * loop) * (1 + .45 * (S.gun - 1))));
+  S.boss = { def, loop, x: W / 2, y: -50, tx: W / 2, hp: 8, sub: 0, subMax, inv: 0, t: 0, phase: 'enter', atkT: 2.4, pinch: false, flash: 0, swing: 0, st: 'hover', st_t: 0, cy: 0,
+    orbs: def.kind === 'orbit' ? [0, 1, 2].map(() => ({ hp: 3, gone: 0 })) : [] };
   S.warn = 2.2; S.banner = 0; sfx.klaxon();
 }
-const bossBox = B => ({ x: B.x, y: B.y, rx: 32, ry: 24 });
+const orbPos = (B, i) => { const a = B.t * 1.6 + i * Math.PI * 2 / B.orbs.length; return { x: B.x + Math.cos(a) * 52, y: B.y + Math.sin(a) * 30 }; };
 function bossDamage(n, big) {
   const B = S.boss;
   if (!B || B.phase !== 'fight' || B.inv > 0) { if (B && B.inv > 0) sfx.clang(); return; }
@@ -506,51 +537,90 @@ function bossDamage(n, big) {
     B.sub -= B.subMax; B.hp--; B.inv = big ? .4 : 1.0; B.flash = .25;
     freeze = .09; shake = .4; sfx.dink();
     burst(B.x, B.y, 14, ['#fff', '#ffd23f', '#ff6b35']);
-    say(B.x, B.y + 36, 'HIT ' + (8 - B.hp) + '/8', '#fff', 9);
-    S.score += 150 * (B.loop + 1);
-    if (B.hp <= 3 && !B.pinch) { B.pinch = true; B.line = 'TEN MINUTES, IAIN! I SAID TEN MINUTES!'; B.talk = 2.5; }
+    const pts = 150 * (B.loop + 1); addScore(pts);
+    say(B.x, B.y + 40, 'HIT ' + (8 - B.hp) + '/8  +' + pts, '#fff', 9);
     if (B.hp <= 0) { B.phase = 'die'; B.t = 0; B.sub = 0; freeze = .2; sfx.boom(); break; }
+    if (B.hp <= 4 && !B.pinch) {
+      B.pinch = true;
+      if (B.def.kind === 'orbit') B.orbs.push({ hp: 3, gone: 0 });
+      cutscene('DR. ROBOTNIC', 'HALF DESTROYED: ' + B.def.name, '"' + B.def.pinch + '"');
+    }
   }
 }
 function updateBoss(dt) {
   const B = S.boss, I = S.iain;
-  B.t += dt; if (B.inv > 0) B.inv -= dt; if (B.flash > 0) B.flash -= dt; if (B.talk > 0) B.talk -= dt;
-  const sp = (B.pinch ? 1.6 : 1) * (1 + B.loop * .25);
+  B.t += dt; if (B.inv > 0) B.inv -= dt; if (B.flash > 0) B.flash -= dt;
+  const sp = (B.pinch ? 1.5 : 1) * (1 + B.loop * .25);
   if (B.phase === 'enter') {
     B.y += 60 * dt;
-    if (B.y >= 104) { B.y = 104; B.phase = 'intro'; B.talk = 0; S.cut = S.cutMax = S.bossNo === 0 ? 5.5 : 4.2; }
+    if (B.y >= 104) {
+      B.y = 104; B.phase = 'intro';
+      cutscene('DR. ROBOTNIC', 'PILOTING: ' + B.def.name, (S.bossNo === 0 ? 'NIC HAS FOUND THE WEBSITE. HE IS NOT HAPPY. ' : '') + '"' + B.def.intro + '"', () => { B.phase = 'fight'; B.inv = 0; });
+    }
     return;
   }
   if (B.phase === 'fight') {
-    // drift towards a new spot every so often, Robotnik's lazy hover
-    if (Math.abs(B.tx - B.x) < 4) B.tx = clamp(B.def.kind === 'blender' ? I.x + rnd(-40, 40) : rnd(50, W - 50), 46, W - 46);
-    B.x += Math.sign(B.tx - B.x) * Math.min(Math.abs(B.tx - B.x), (B.def.kind === 'blender' ? 34 : 70) * sp * dt);
-    B.y = 104 + Math.sin(B.t * 2) * 6;
-    B.atkT -= dt * sp;
-    if (B.def.kind === 'oven' && B.atkT <= 0) {
+    const k = B.def.kind;
+    if (k !== 'drill' || B.st === 'hover') {
+      // drift towards a new spot every so often, Robotnik's lazy hover
+      if (Math.abs(B.tx - B.x) < 4) B.tx = clamp(k === 'ball' ? I.x + rnd(-40, 40) : rnd(50, W - 50), 46, W - 46);
+      B.x += Math.sign(B.tx - B.x) * Math.min(Math.abs(B.tx - B.x), (k === 'ball' ? 34 : 70) * sp * dt);
+      B.y = 104 + Math.sin(B.t * 2) * 6;
+      B.atkT -= dt * sp;
+    }
+    if (k === 'ball') { // Green Hill Zone, 1991: the checkered wrecking ball
+      B.swing += dt * (1.5 + (B.pinch ? .7 : 0) + B.loop * .2);
+      const a = Math.sin(B.swing) * .55, L = 378 + (B.pinch ? 34 : 0);
+      B.ball = { x: B.x + Math.sin(a) * L, y: B.y + Math.cos(a) * L };
+      if (touchesIain(B.ball.x, B.ball.y, 16)) hurtIain('WRECKED!');
+    }
+    if (k === 'oven' && B.atkT <= 0) { // Marble Zone: fire dropped where you stand
       B.atkT = 2.1;
       const n = B.pinch ? 2 : 1;
       for (let i = 0; i < n; i++) {
         const tx = clamp(I.x + (i ? rnd(-90, 90) : rnd(-20, 20)), 20, W - 20), ty = clamp(I.y - 10 + rnd(-30, 30), ZONE_TOP + 20, ZONE_BOT - 6);
-        S.hazards.push({ type: 'pizza', x: B.x, y: B.y + 20, sx: B.x, sy: B.y + 20, tx, ty, t: 0, dur: 1.15 / Math.min(1.6, sp) });
+        S.hazards.push({ type: 'lob', art: 'pizza', fire: true, x: B.x, y: B.y + 20, sx: B.x, sy: B.y + 20, tx, ty, t: 0, dur: 1.15 / Math.min(1.6, sp) });
       }
-      say(B.x, B.y + 44, 'HOT!', '#ff6b35', 7);
     }
-    if (B.def.kind === 'dish' && B.atkT <= 0) {
+    if (k === 'drill') { // Spring Yard / Emerald Hill: lines up, then drills straight down through London
+      if (B.st === 'hover' && B.atkT <= 0) { B.st = 'aim'; B.st_t = 0; B.tx = clamp(I.x, 40, W - 40); say(B.tx, 150, '!', '#ff3b3b', 14); beep(900, .2, 'square', .04); }
+      else if (B.st === 'aim') {
+        B.st_t += dt; B.x += Math.sign(B.tx - B.x) * Math.min(Math.abs(B.tx - B.x), 200 * dt);
+        if (B.st_t > 1 / Math.min(1.5, sp)) { B.st = 'down'; B.st_t = 0; B.cy = B.y; }
+      } else if (B.st === 'down') {
+        B.y += 480 * dt;
+        if (B.y + 24 > TOPY && B.y < GROUND && B.y - B.cy > 22) { B.cy = B.y; if (cellAt(B.x, B.y + 24)) { crater(B.x, B.y + 24, 7); sfx.boom(); } }
+        if (B.y >= ZONE_BOT - 44) { B.y = ZONE_BOT - 44; B.st = 'low'; B.st_t = 0; shake = .5; burst(B.x, B.y + 34, 16, ['#888', '#ffd23f', '#fff']); sfx.boom(); }
+      } else if (B.st === 'low') { B.st_t += dt; if (B.st_t > .6) B.st = 'up'; }
+      else if (B.st === 'up') { B.y -= 220 * dt; if (B.y <= 104) { B.y = 104; B.st = 'hover'; B.atkT = 2.8; } }
+      if ((B.st === 'down' || B.st === 'low') && touchesIain(B.x, B.y + 22, 24)) hurtIain('DRILLED!');
+    }
+    if (k === 'orbit') { // Metropolis: a ring of shields, and he throws them at you
+      B.orbs.forEach(o => { if (o.gone > 0) { o.gone -= dt; if (o.gone <= 0) o.hp = 3; } });
+      if (B.atkT <= 0) {
+        B.atkT = 2.4;
+        const live = B.orbs.map((o, i) => o.gone > 0 ? -1 : i).filter(i => i >= 0);
+        if (live.length) {
+          const i = live[Math.floor(Math.random() * live.length)], p = orbPos(B, i);
+          B.orbs[i].gone = 3.2;
+          const tx = clamp(I.x + rnd(-24, 24), 20, W - 20), ty = clamp(I.y - 10 + rnd(-20, 20), ZONE_TOP + 20, ZONE_BOT - 6);
+          S.hazards.push({ type: 'lob', art: 'jug', x: p.x, y: p.y, sx: p.x, sy: p.y, tx, ty, t: 0, dur: 1.1 / Math.min(1.5, sp) });
+        }
+      }
+    }
+    if (k === 'dish' && B.atkT <= 0) { // Chemical Plant: telegraphed rinse jets
       B.atkT = 2.4;
       const xs = [I.x]; if (B.pinch) xs.push(clamp(I.x + (Math.random() < .5 ? -1 : 1) * rnd(60, 120), 20, W - 20));
       xs.forEach(x => S.hazards.push({ type: 'jet', x, t: 0, warn: .9 / Math.min(1.5, sp), dur: .5 }));
     }
-    if (B.def.kind === 'blender') {
-      B.swing += dt * (1.5 + (B.pinch ? .9 : 0) + B.loop * .2);
-      const a = Math.sin(B.swing) * .75, L = 352;
-      B.ball = { x: B.x + Math.sin(a) * L, y: B.y + Math.cos(a) * L };
-      if (touchesIain(B.ball.x, B.ball.y, 16)) hurtIain('BLENDED!');
-    }
   } else if (B.phase === 'die') {
+    if (B.y > 104) B.y -= 120 * dt;
     if (Math.random() < .5) { burst(B.x + rnd(-30, 30), B.y + rnd(-20, 20), 6, ['#fff', '#ff6b35', '#ffd23f']); if (Math.random() < .3) sfx.boom(); }
     shake = Math.max(shake, .2);
-    if (B.t > 1.8) { B.phase = 'flee'; B.t = 0; B.line = FLEE[S.bossNo % FLEE.length]; B.talk = 3; sfx.victory(); dropSack(B.x, B.y); }
+    if (B.t > 1.8) {
+      B.phase = 'beaten';
+      cutscene('DR. ROBOTNIC', 'DEFEATED: ' + B.def.name, '"' + B.def.flee + '"', () => { B.phase = 'flee'; B.t = 0; sfx.victory(); dropSack(B.x, B.y); });
+    }
   } else if (B.phase === 'flee') {
     B.x += 120 * dt; B.y -= 70 * dt;
     if (Math.random() < .4) S.parts.push({ x: B.x - 20, y: B.y + 10, vx: rnd(-20, 0), vy: rnd(-30, -10), life: 1, col: '#666', s: 5 });
@@ -564,21 +634,25 @@ function dropSack(x, y) {
 function updateSack(dt) {
   const k = S.sack; k.vy += 300 * dt; k.y += k.vy * dt;
   if (k.y >= k.landY) {
-    const n = 4 + Math.floor(S.bossNo / 3) * 2;
-    say(k.x, k.landY - 30, "NIC'S STOLEN SOCKS!", '#ffd23f', 8); say(k.x, k.landY - 14, '+' + n + ' PAIRS', '#2ecc71', 9);
+    const n = 3 + Math.floor(S.bossNo / BOSSES.length), pts = 1000 * (Math.floor(S.bossNo / BOSSES.length) + 1);
+    say(k.x, k.landY - 30, "NIC'S STOLEN SOCKS! +" + n + ' PAIRS', '#2ecc71', 8); say(k.x, k.landY - 12, '+' + fmt(pts), '#ffd23f', 12);
     for (let i = 0; i < n * 2; i++) burst(k.x, k.landY, 2, [SOCKS[i % SOCKS.length]]);
-    addPairs(n, true); repairCity(.06);
-    S.score += 1000 * (Math.floor(S.bossNo / 3) + 1); freeze = .1; shake = .5;
+    addScore(pts); addPairs(n, true); repairCity(.06);
+    freeze = .1; shake = .5;
     S.sack = null;
   }
 }
 function updateHazards(dt) {
   for (let i = S.hazards.length - 1; i >= 0; i--) {
     const h = S.hazards[i]; h.t += dt;
-    if (h.type === 'pizza') {
+    if (h.type === 'lob') {
       const f = Math.min(1, h.t / h.dur);
       h.x = h.sx + (h.tx - h.sx) * f; h.y = h.sy + (h.ty - h.sy) * f - Math.sin(f * Math.PI) * 50;
-      if (f >= 1) { h.type = 'fire'; h.t = 0; burst(h.tx, h.ty, 12, ['#ff6b35', '#ffd23f']); sfx.boom(); }
+      if (f >= 1) {
+        burst(h.tx, h.ty, 12, h.fire ? ['#ff6b35', '#ffd23f'] : ['#b46cff', '#fff', '#333']); sfx.boom();
+        if (h.fire) { h.type = 'fire'; h.t = 0; }
+        else { if (touchesIain(h.tx, h.ty - 8, 22)) hurtIain('BLENDED!'); S.hazards.splice(i, 1); }
+      }
     } else if (h.type === 'fire') {
       if (touchesIain(h.tx, h.ty - 8, 24)) hurtIain('PIZZA BOX FIRE!');
       if (h.t > 1.1) S.hazards.splice(i, 1);
@@ -590,7 +664,7 @@ function updateHazards(dt) {
 }
 function nextWave() {
   S.waveT = 0; S.wave++; S.banner = 2.6; sfx.wave(); noteTrack();
-  S.score += 100 * S.wave;
+  addScore(100 * S.wave); say(W / 2, 170, 'WAVE CLEAR +' + fmt(100 * S.wave), '#ffd23f', 9);
   if (S.wave % 4 === 1 && S.wave > save.checkpoint) { save.checkpoint = S.wave; banner2('CHECKPOINT SAVED', '#4ff0ff'); }
   if (S.wave > save.bestWave) save.bestWave = S.wave;
   writeSave();
@@ -601,7 +675,7 @@ function update(dt) {
   const I = S.iain;
   if (S.cut > 0) { // cutscene: everything holds still while Nic monologues
     S.cut -= dt;
-    if (S.cut <= 0 && S.boss) { S.boss.phase = 'fight'; S.boss.inv = 0; }
+    if (S.cut <= 0) { const d = S.cutData; S.cut = 0; S.cutData = null; if (d && d.then) d.then(); }
     return;
   }
   // Waves. Every second wave ends with Nic.
@@ -618,7 +692,7 @@ function update(dt) {
   S.nipT -= dt; if (S.nipT <= 0) { spawnNip(); S.nipT = nipEvery() * rnd(.6, 1.4); }
   S.sockT -= dt; if (S.sockT <= 0) { spawnSock(); S.sockT = sockEvery() * rnd(.6, 1.4); }
   S.crateT -= dt; if (S.crateT <= 0) { spawnCrate(); S.crateT = rnd(16, 26); }
-  if (S.wave >= 3 && !S.boss) { S.jeepT -= dt; if (S.jeepT <= 0 && !S.jeep && !S.lion) { startJeep(); S.jeepT = rnd(50, 80); } }
+  if (S.wave >= 3 && !S.boss) { S.jeepT -= dt; if (S.jeepT <= 0 && !S.jeep && !S.lion) { startJeep(); S.jeepT = rnd(90, 140); } }
   if ((S.wave - 1) % 17 === 16 && Math.random() < .5) S.snow.push({ x: Math.random() * W, y: 40, v: rnd(20, 50) }); // Stay Another Day: it snows
 
   // Iain: keyboard moves him; a finger moves him 1:1 in the pointer handlers
@@ -628,8 +702,15 @@ function update(dt) {
   if (kx || ky) moveIain(kx * 280 * dt, ky * 280 * dt);
   if (I.inv > 0) I.inv -= dt;
   if (I.shield > 0) I.shield -= dt;
-  if (I.homing > 0) I.homing -= dt;
-  S.fireT -= dt; if (S.fireT <= 0) { fire(); S.fireT = gun(S.gun).rate; } // he throws by himself. Always.
+  if (S.fullT > 0) S.fullT -= dt;
+  S.fireT -= dt; if (S.fireT <= 0) { fire(); S.fireT = gunRate(); } // he throws by himself. Always.
+  // baskets fire once each time Iain steps onto one
+  S.baskets.forEach(b => {
+    if (b.pulse > 0) b.pulse -= dt;
+    const on = Math.abs(I.x - b.x) < 24 && Math.abs(I.y - b.y) < 22;
+    if (on && !b.inside) useBasket(b);
+    b.inside = on;
+  });
   for (let i = S.zips.length - 1; i >= 0; i--) { S.zips[i].t -= dt; if (S.zips[i].t <= 0) S.zips.splice(i, 1); }
 
   // Dryer: every nip on screen gets sucked into the drum
@@ -637,8 +718,8 @@ function update(dt) {
     S.dryerAnim -= dt;
     S.nips.forEach(n => { n.x += (W / 2 - n.x) * dt * 3; n.y += (250 - n.y) * dt * 3; n.spin = 18; });
     if (S.dryerAnim <= 0) {
-      S.nips.forEach(n => { S.score += n.d.pts; burst(n.x, n.y, 5, ['#4ff0ff', '#fff', '#ffd23f']); });
-      S.nips = []; repairCity(.05); say(W / 2, 270, 'LONDON +5%', '#2ecc71', 9);
+      let pts = 0; S.nips.forEach(n => { pts += n.d.pts; burst(n.x, n.y, 5, ['#4ff0ff', '#fff', '#ffd23f']); });
+      addScore(pts); S.nips = []; repairCity(.05); say(W / 2, 270, 'LONDON +5%  +' + fmt(pts), '#2ecc71', 9);
     }
   }
 
@@ -656,7 +737,6 @@ function update(dt) {
     if (by < GROUND && cellAt(bx, by)) { blowUp(n, bx, by); S.nips.splice(i, 1); continue; }
     if (n.y > ZONE_TOP - 10 && touchesIain(n.x, n.y, n.d.r * .8)) { hurtIain(); burst(n.x, n.y, 8, ['#888', '#ffd23f']); S.nips.splice(i, 1); continue; }
     if (n.y >= n.landY) {
-      if (n.d.ink) inkBlot(n.x, 380);
       if (touchesIain(n.x, n.landY - 10, n.d.r + 8)) hurtIain();
       burst(n.x, n.landY, 8, ['#888', '#555', '#ffd23f']); sfx.boom(); shake = Math.max(shake, .12);
       S.nips.splice(i, 1);
@@ -664,25 +744,35 @@ function update(dt) {
   }
 
   // Sock balls
-  const B = S.boss;
+  const B = S.boss, bossHit = B && B.phase === 'fight';
   for (let i = S.shots.length - 1; i >= 0; i--) {
     const b = S.shots[i];
-    if (b.home && S.nips.length) {
+    if (b.home) { // House of Love: it finds someone
       let best = null, bd = 1e9;
       S.nips.forEach(n => { const d = (n.x - b.x) ** 2 + (n.y - b.y) ** 2; if (n.y < b.y && d < bd) { bd = d; best = n; } });
+      if (!best && bossHit) best = B;
       if (best) b.vx += Math.sign(best.x - b.x) * 900 * dt;
       b.vx = clamp(b.vx, -260, 260);
     }
     b.x += b.vx * dt; b.y += b.vy * dt;
+    if (b.R && b.y < 60) { explode(b); S.shots.splice(i, 1); continue; }
     if (b.y < 30 || b.x < -20 || b.x > W + 20) { S.shots.splice(i, 1); continue; }
-    if (B && (B.phase === 'fight') && ((b.x - B.x) / 34) ** 2 + ((b.y - B.y) / 26) ** 2 < 1) {
-      bossDamage(1); burst(b.x, b.y, 2, ['#fff']); S.shots.splice(i, 1); continue;
+    if (bossHit && !b.pierce) { // Metropolis shields soak up shots
+      let blocked = false;
+      B.orbs.forEach((o, oi) => { if (blocked || o.gone > 0) return; const p = orbPos(B, oi); if ((p.x - b.x) ** 2 + (p.y - b.y) ** 2 < 13 ** 2) { blocked = true; o.hp -= b.dmg; sfx.clang(); if (o.hp <= 0) { o.gone = 4; burst(p.x, p.y, 10, ['#b46cff', '#fff']); sfx.pop(); addScore(50); } } });
+      if (blocked) { if (b.R) explode(b); S.shots.splice(i, 1); continue; }
+    }
+    if (bossHit && ((b.x - B.x) / 34) ** 2 + ((b.y - B.y) / 26) ** 2 < 1 && !b.hits.has(B)) {
+      if (b.R) { explode(b); S.shots.splice(i, 1); continue; }
+      bossDamage(b.dmg); burst(b.x, b.y, 2, ['#fff']); b.hits.add(B);
+      if (!b.pierce) { S.shots.splice(i, 1); continue; }
     }
     for (let j = S.nips.length - 1; j >= 0; j--) {
       const n = S.nips[j];
       if (b.hits.has(n)) continue;
       if ((n.x - b.x) ** 2 + (n.y - b.y) ** 2 < (n.d.r + 5) ** 2) {
-        n.hp--; n.hit = .1; b.hits.add(n);
+        if (b.R) { explode(b); S.shots.splice(i, 1); break; }
+        n.hp -= b.dmg; n.hit = .1; b.hits.add(n);
         if (n.hp <= 0) killNip(j); else beep(300, .04, 'square', .03);
         if (!b.pierce) { S.shots.splice(i, 1); break; }
       }
@@ -700,7 +790,10 @@ function update(dt) {
       if (s.spilt) { s.vy += 380 * dt; s.x += s.vx * dt; s.y += s.vy * dt; s.x = clamp(s.x, 10, W - 10); if (s.vy > 0 && s.y >= s.landY) land(s); }
       else { s.vy = Math.min(s.vy + 30 * dt, 120); s.y += s.vy * dt; s.x = clamp(s.x + Math.sin(s.t * 3) * 22 * dt, 10, W - 10); if (s.y >= s.landY) land(s); }
     }
-    if (I.inv < 1.1 && (s.ground || s.y > ZONE_TOP - 30) && grabs(s.x, s.y)) { S.socks.splice(i, 1); catchSock(s); }
+    if (I.inv < 1.1 && (s.ground || s.y > ZONE_TOP - 30) && grabs(s.x, s.y)) {
+      if (canTake(s.k)) { S.socks.splice(i, 1); catchSock(s); }
+      else if (!s.full) { s.full = 1; say(s.x, s.y - 20, 'HANDS FULL! USE A BASKET', '#ff6b6b', 7); beep(160, .12, 'square', .04); }
+    } else if (s.full && !grabs(s.x, s.y)) s.full = 0;
   }
   function land(s) {
     s.y = s.landY; s.ground = s.max = s.spilt ? Math.max(4, 6.5 - S.wave * .1) : Math.max(4, 8 - S.wave * .2);
@@ -720,7 +813,7 @@ function update(dt) {
 
   // Particles / text / ink / snow
   for (let i = S.parts.length - 1; i >= 0; i--) {
-    const p = S.parts[i]; p.vy += 420 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
+    const p = S.parts[i]; if (p.col !== 'ring') p.vy += 420 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
     if (p.rub && p.vy > 0 && p.y >= GROUND - S.rubble[clamp(Math.floor(p.x / CELL), 0, COLS - 1)]) { const c = clamp(Math.floor(p.x / CELL), 0, COLS - 1); S.rubble[c] = Math.min(16, S.rubble[c] + .5); S.parts.splice(i, 1); continue; }
     if (p.life <= 0 || p.y > H) S.parts.splice(i, 1);
   }
@@ -736,19 +829,25 @@ function update(dt) {
   const crit = S.socks.some(s => s.ground && s.ground / s.max < .35);
   S.alarmT -= dt; if (crit && S.alarmT <= 0) { beep(1250, .09, 'square', .045); S.alarmT = .35; }
   for (let i = S.texts.length - 1; i >= 0; i--) { const t = S.texts[i]; t.y -= 24 * dt; t.life -= dt; if (t.life <= 0) S.texts.splice(i, 1); }
-  for (let i = S.inks.length - 1; i >= 0; i--) { S.inks[i].life -= dt; if (S.inks[i].life <= 0) S.inks.splice(i, 1); }
   for (let i = S.snow.length - 1; i >= 0; i--) { const f = S.snow[i]; f.y += f.v * dt; f.x += Math.sin(f.y / 20) * .4; if (f.y > ZONE_BOT) S.snow.splice(i, 1); }
   if (shake > 0) shake -= dt;
 
   if (london() <= 0) endRun('city');
 }
+// Thunder: a sock bomb that goes off on whatever it touches, or at the top of the sky
+function explode(b) {
+  burst(b.x, b.y, 14, ['#ff9f1c', '#ffd23f', '#fff']); sfx.boom(); shake = Math.max(shake, .12);
+  S.parts.push({ x: b.x, y: b.y, vx: 0, vy: 0, life: .25, col: 'ring', s: b.R });
+  for (let j = S.nips.length - 1; j >= 0; j--) { const n = S.nips[j]; if (Math.hypot(n.x - b.x, n.y - b.y) < b.R + n.d.r) { n.hp -= b.dmg; n.hit = .1; if (n.hp <= 0) killNip(j); } }
+  const B = S.boss; if (B && B.phase === 'fight' && Math.hypot(B.x - b.x, B.y - b.y) < b.R + 30) bossDamage(b.dmg);
+}
 function killNip(j, quiet) {
   const n = S.nips[j];
   S.combo++;
-  const mult = Math.min(8, 1 + Math.floor(S.combo / 10));
-  S.score += n.d.pts * mult * (1 + Math.floor(S.wave / 5)); sfx.pop();
+  const mult = Math.min(8, 1 + Math.floor(S.combo / 10)), pts = n.d.pts * mult * (1 + Math.floor(S.wave / 5));
+  addScore(pts); sfx.pop();
   burst(n.x, n.y, 8, ['#f4b6a6', '#c97b6a', '#fff']);
-  if (!quiet) say(n.x, n.y, '+' + n.d.pts * mult, mult > 1 ? '#4ff0ff' : '#ffd23f', 7);
+  if (!quiet) say(n.x, n.y, '+' + pts, mult > 1 ? '#4ff0ff' : '#ffd23f', pts >= 100 ? 10 : 8);
   if (S.combo % 10 === 0 && mult > 1) say(W / 2, 140, 'COMBO x' + mult, '#4ff0ff', 10);
   if (n.d.into) { addNip(n.d.into, n.x, n.y, -80, -40); addNip(n.d.into, n.x, n.y, 80, -40); }
   S.nips.splice(j, 1);
@@ -756,7 +855,6 @@ function killNip(j, quiet) {
 function blowUp(n, x, y) {
   crater(x, y, n.d.R * (1 + Math.min(.6, S.wave * .02)));
   burst(x, y, 10, ['#ff6b35', '#ffd23f', '#fff']);
-  if (n.d.ink) { inkBlot(x, y); say(x, y - 10, 'INK!', '#6b62ff', 9); }
   sfx.boom(); shake = Math.max(shake, n.type === 'big' ? .3 : .14);
 }
 
@@ -781,7 +879,7 @@ function updateJeep(dt) {
     const atJack = J && Math.abs(I.x - (J.x + 30)) < 30 && Math.abs(I.y - J.y) < 26;
     if (!L.leapt && Math.abs(L.x - I.x) < 22 && Math.abs(L.y - I.y) < 30) {
       L.leapt = true;
-      if (atJack) { S.score += 500; say(I.x, I.y - 100, 'JUST REALLY HOPE FOR THE BEST', '#2ecc71', 6); say(I.x, I.y - 86, '+500', '#ffd23f', 9); sfx.power(); }
+      if (atJack) { addScore(500); say(I.x, I.y - 100, 'JUST REALLY HOPE FOR THE BEST', '#2ecc71', 6); say(I.x, I.y - 86, '+500', '#ffd23f', 9); sfx.power(); }
       else hurtIain('PERFECT AMBUSH DISTANCE');
     }
     if (L.x < -40) S.lion = null;
@@ -836,7 +934,7 @@ function drawIainAt(x, y, face, alpha) {
   ctx.strokeStyle = '#7fdcb5'; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.arc(x, y - 33, 5, 0, 7);   // peace sign
   ctx.moveTo(x, y - 38); ctx.lineTo(x, y - 28); ctx.moveTo(x, y - 33); ctx.lineTo(x - 3.5, y - 29.5); ctx.moveTo(x, y - 33); ctx.lineTo(x + 3.5, y - 29.5); ctx.stroke();
   ctx.fillStyle = '#e9b9a0';
-  const arm = S.fireT > gun(S.gun).rate * .6 ? -16 : 0;
+  const arm = S.fireT > gunRate() * .6 ? -16 : 0;
   ctx.fillRect(x - 14, y - 42, 4, 17); ctx.fillRect(x + 10, y - 42 + arm, 4, 17);
   ctx.save(); ctx.translate(x, y - 56);
   if (face < 0) ctx.scale(-1, 1);
@@ -847,10 +945,8 @@ function drawIainAt(x, y, face, alpha) {
 }
 function drawIain() {
   const I = S.iain;
-  if (gun(S.gun).mirror) drawIainAt(W - I.x, I.y, -I.face, .4); // Man In The Mirror
   if (!(I.inv > 0 && Math.floor(I.inv * 14) % 2)) drawIainAt(I.x, I.y, I.face, 1);
   if (I.shield > 0) { ctx.strokeStyle = `rgba(180,108,255,${.4 + .3 * Math.sin(performance.now() / 100)})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(I.x, I.y - 34, 34, 0, 7); ctx.stroke(); }
-  if (I.homing > 0) { ctx.strokeStyle = '#4ff0ff'; ctx.lineWidth = 1.3; ctx.strokeRect(I.x - 10, I.y - 61, 8, 5); ctx.strokeRect(I.x + 2, I.y - 61, 8, 5); }
 }
 function drawShadow(x, y, f, col = 'rgba(255,60,60,') {
   ctx.fillStyle = col + (.15 + .45 * f) + ')';
@@ -860,19 +956,15 @@ function drawNip(n) {
   ctx.save(); ctx.translate(n.x, n.y);
   if (n.vy > 0) { ctx.fillStyle = n.d.dive && n.dived ? 'rgba(255,60,60,.6)' : 'rgba(255,120,40,.5)'; ctx.fillRect(-n.d.r * .4, -n.d.r * 2.2, n.d.r * .8, n.d.r * 1.4); }
   ctx.rotate(n.a);
-  if (n.d.pen) { // a biro, as handed to an entire primary school in 2005
-    ctx.fillStyle = '#2f7bff'; ctx.fillRect(-2, -11, 4, 18); ctx.fillStyle = '#fff'; ctx.fillRect(-2, -11, 4, 4); ctx.fillStyle = '#111'; ctx.fillRect(-1, 7, 2, 4);
-  } else {
-    const im = NIPIMG[n.d.img];
-    if (im.complete && im.naturalWidth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(im, -n.d.r, -n.d.r, n.d.r * 2, n.d.r * 2); ctx.imageSmoothingEnabled = false; }
-    else { ctx.fillStyle = '#c97b6a'; ctx.beginPath(); ctx.arc(0, 0, n.d.r, 0, 7); ctx.fill(); }
-  }
+  const im = NIPIMG[n.d.img];
+  if (im.complete && im.naturalWidth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(im, -n.d.r, -n.d.r, n.d.r * 2, n.d.r * 2); ctx.imageSmoothingEnabled = false; }
+  else { ctx.fillStyle = '#c97b6a'; ctx.beginPath(); ctx.arc(0, 0, n.d.r, 0, 7); ctx.fill(); }
   if (n.hit > 0) { ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(0, 0, n.d.r, 0, 7); ctx.fill(); }
   ctx.restore();
   if (n.hp > 1) { ctx.fillStyle = '#ff6b6b'; for (let i = 0; i < n.hp; i++) ctx.fillRect(n.x - n.d.r + i * 5, n.y - n.d.r - 6, 3, 3); }
 }
 function drawCrate(c) {
-  const d = CRATES[c.kind];
+  const d = c.kind === 'gun' ? { label: WEAPONS[c.w].tag, col: WEAPONS[c.w].col } : CRATES[c.kind];
   if (c.ground && c.ground < 1.5 && Math.floor(performance.now() / 120) % 2) return;
   const bob = c.ground ? 0 : Math.sin(c.t * 4) * 2;
   if (!c.ground) { ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.moveTo(c.x - 12, c.y - 10 + bob); ctx.quadraticCurveTo(c.x, c.y - 30 + bob, c.x + 12, c.y - 10 + bob); ctx.fill(); }
@@ -903,10 +995,10 @@ function drawJeep() {
 }
 function drawHazards() {
   S.hazards.forEach(h => {
-    if (h.type === 'pizza') {
+    if (h.type === 'lob') {
       drawShadow(h.tx, h.ty, Math.min(1, h.t / h.dur));
       ctx.save(); ctx.translate(h.x, h.y); ctx.rotate(h.t * 8);
-      ctx.fillStyle = '#d9a35b'; ctx.fillRect(-9, -9, 18, 18); ctx.fillStyle = '#ff6b35'; ctx.fillRect(-9, -13, 18, 5); ctx.fillStyle = '#ffd23f'; ctx.fillRect(-5, -15, 4, 4);
+      if (h.art === 'jug') drawJug(); else { ctx.fillStyle = '#d9a35b'; ctx.fillRect(-9, -9, 18, 18); ctx.fillStyle = '#ff6b35'; ctx.fillRect(-9, -13, 18, 5); ctx.fillStyle = '#ffd23f'; ctx.fillRect(-5, -15, 4, 4); }
       ctx.restore();
     } else if (h.type === 'fire') {
       for (let i = 0; i < 6; i++) { ctx.fillStyle = i % 2 ? '#ffd23f' : '#ff6b35'; const fx = h.tx + Math.sin(h.t * 20 + i) * 14, fh = 10 + Math.random() * 18; ctx.fillRect(fx - 3, h.ty - fh, 6, fh); }
@@ -918,19 +1010,32 @@ function drawHazards() {
     }
   });
 }
+function drawJug() { // a blender jug, slightly melted from its time in the oven
+  ctx.fillStyle = '#b46cff'; ctx.beginPath(); ctx.moveTo(-9, -11); ctx.lineTo(9, -11); ctx.lineTo(7, 7); ctx.quadraticCurveTo(0, 13, -7, 7); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#333'; ctx.fillRect(-8, 7, 16, 6); ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(-5, -8, 3, 12);
+}
 function drawBoss() {
   const B = S.boss; if (!B) return;
-  const x = B.x, y = B.y, hurt = B.flash > 0 || (B.inv > 0 && Math.floor(B.inv * 16) % 2);
-  if (B.def.kind === 'blender' && B.ball && B.phase === 'fight') { // Green Hill wrecking ball, but it's the blender
+  const x = B.x, y = B.y, hurt = B.flash > 0 || (B.inv > 0 && Math.floor(B.inv * 16) % 2), k = B.def.kind;
+  if (k === 'ball' && B.ball && B.phase === 'fight') { // the Green Hill checkered wrecking ball
     ctx.strokeStyle = '#bbb'; ctx.lineWidth = 2; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(x, y + 16); ctx.lineTo(B.ball.x, B.ball.y); ctx.stroke(); ctx.setLineDash([]);
-    ctx.save(); ctx.translate(B.ball.x, B.ball.y); ctx.rotate(Math.sin(B.swing) * -.4);
-    ctx.fillStyle = '#b46cff'; ctx.beginPath(); ctx.moveTo(-12, -14); ctx.lineTo(12, -14); ctx.lineTo(9, 10); ctx.quadraticCurveTo(0, 18, -9, 10); ctx.closePath(); ctx.fill(); // melted jug
-    ctx.fillStyle = '#333'; ctx.fillRect(-10, 10, 20, 8); ctx.fillStyle = '#ffd23f'; ctx.fillRect(-3, -6, 6, 10);
+    ctx.save(); ctx.translate(B.ball.x, B.ball.y); ctx.rotate(B.swing * 2);
+    ctx.beginPath(); ctx.arc(0, 0, 16, 0, 7); ctx.clip();
+    for (let i = -2; i < 2; i++) for (let j = -2; j < 2; j++) { ctx.fillStyle = (i + j) & 1 ? '#111' : '#f4f4f4'; ctx.fillRect(i * 8, j * 8, 8, 8); }
     ctx.restore();
+    ctx.strokeStyle = '#111'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(B.ball.x, B.ball.y, 16, 0, 7); ctx.stroke();
+  }
+  if (k === 'drill' && B.st === 'aim') { // the column he's about to come down
+    ctx.fillStyle = Math.floor(B.st_t * 10) % 2 ? 'rgba(255,60,60,.28)' : 'rgba(255,255,255,.1)'; ctx.fillRect(B.tx - 18, B.y + 20, 36, ZONE_BOT - B.y - 20);
   }
   // the gadget hanging under the pod
-  if (B.def.kind === 'oven') { ctx.fillStyle = '#555'; ctx.fillRect(x - 16, y + 14, 32, 18); ctx.fillStyle = '#ff6b35'; ctx.fillRect(x - 11, y + 18, 22, 9); }
-  if (B.def.kind === 'dish') { ctx.fillStyle = '#9aa'; ctx.fillRect(x - 14, y + 14, 28, 14); ctx.fillStyle = '#4ff0ff'; ctx.fillRect(x - 3, y + 28, 6, 6); }
+  if (k === 'oven') { ctx.fillStyle = '#555'; ctx.fillRect(x - 16, y + 14, 32, 18); ctx.fillStyle = '#ff6b35'; ctx.fillRect(x - 11, y + 18, 22, 9); }
+  if (k === 'dish') { ctx.fillStyle = '#9aa'; ctx.fillRect(x - 14, y + 14, 28, 14); ctx.fillStyle = '#4ff0ff'; ctx.fillRect(x - 3, y + 28, 6, 6); }
+  if (k === 'drill') {
+    const sp = B.st === 'down' || B.st === 'low' ? performance.now() / 30 : performance.now() / 120;
+    ctx.fillStyle = '#9aa'; ctx.beginPath(); ctx.moveTo(x - 14, y + 14); ctx.lineTo(x + 14, y + 14); ctx.lineTo(x, y + 44); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#556'; ctx.lineWidth = 2; for (let i = 0; i < 3; i++) { const o = ((sp + i * 9) % 27); ctx.beginPath(); ctx.moveTo(x - 14 + o * .5, y + 14 + o); ctx.lineTo(x + 14 - o * .5, y + 14 + o + 4); ctx.stroke(); }
+  }
   // the Nic-Mobile
   ctx.fillStyle = 'rgba(255,140,40,.8)'; ctx.fillRect(x - 6, y + 14, 12, 4 + Math.random() * 6);
   ctx.fillStyle = hurt ? '#fff' : '#d8d8e0'; ctx.beginPath(); ctx.ellipse(x, y + 4, 34, 15, 0, 0, Math.PI); ctx.fill();
@@ -940,102 +1045,113 @@ function drawBoss() {
   if (B.pinch) { ctx.fillStyle = 'rgba(255,0,0,.25)'; ctx.fillRect(x - 17, y - 22, 34, 26); }
   ctx.restore();
   ctx.strokeStyle = 'rgba(180,230,255,.8)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y - 4, 17, Math.PI, 0); ctx.stroke();
+  if (k === 'orbit' && (B.phase === 'fight' || B.phase === 'intro')) B.orbs.forEach((o, i) => {
+    if (o.gone > 0) return;
+    const p = orbPos(B, i); ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(B.t * 3 + i); drawJug(); ctx.restore();
+    for (let h = 0; h < o.hp; h++) { ctx.fillStyle = '#fff'; ctx.fillRect(p.x - 6 + h * 4, p.y - 18, 3, 2); }
+  });
   if (B.pinch && Math.random() < .3) S.parts.push({ x: x + rnd(-20, 20), y: y, vx: rnd(-10, 10), vy: rnd(-40, -20), life: .8, col: '#777', s: 4 });
-  if (B.talk > 0) {
-    ctx.font = FONT(5); ctx.textAlign = 'center';
-    const lines = wrap(B.line, 26), bw = 150, bh = 8 + lines.length * 9, bx = clamp(x, 80, W - 80), byy = y + 40;
-    ctx.fillStyle = '#fff'; ctx.fillRect(bx - bw / 2, byy, bw, bh); ctx.fillStyle = '#05030f';
-    lines.forEach((l, i) => ctx.fillText(l, bx, byy + 11 + i * 9));
-  }
 }
-function drawCutscene(B) {
+function drawCutscene() {
+  const d = S.cutData; if (!d) return;
   const el = S.cutMax - S.cut;
-  ctx.fillStyle = 'rgba(5,3,15,.55)'; ctx.fillRect(0, 0, W, H);
-  const bx = 14, by = 150, bw = W - 28, bh = 128;
+  ctx.fillStyle = 'rgba(5,3,15,.6)'; ctx.fillRect(0, 0, W, H);
+  const lines = wrap(d.text, 30), bx = 14, by = 150, bw = W - 28, bh = 96 + lines.length * 13;
   ctx.fillStyle = '#0b0820'; ctx.fillRect(bx, by, bw, bh);
   ctx.strokeStyle = '#ff3b3b'; ctx.lineWidth = 3; ctx.strokeRect(bx, by, bw, bh);
-  ctx.save(); ctx.beginPath(); ctx.arc(bx + 40, by + 44, 28, 0, 7); ctx.clip();
-  if (NICHEAD.complete && NICHEAD.naturalWidth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(NICHEAD, bx + 12, by + 16, 56, 56); ctx.imageSmoothingEnabled = false; }
+  const bob = Math.sin(el * 14) * (el * 34 < d.text.length ? 1.5 : 0); // his head bobs while he's talking
+  ctx.save(); ctx.beginPath(); ctx.arc(bx + 40, by + 44 + bob, 28, 0, 7); ctx.clip();
+  if (NICHEAD.complete && NICHEAD.naturalWidth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(NICHEAD, bx + 12, by + 16 + bob, 56, 56); ctx.imageSmoothingEnabled = false; }
   ctx.restore();
-  ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bx + 40, by + 44, 28, 0, 7); ctx.stroke();
+  ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bx + 40, by + 44 + bob, 28, 0, 7); ctx.stroke();
   ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-  ctx.font = FONT(9); ctx.fillStyle = '#ff3b3b'; ctx.fillText('DR. ROBOTNIC', bx + 80, by + 18);
-  ctx.font = FONT(6); ctx.fillStyle = '#4ff0ff'; ctx.fillText('PILOTING: ' + B.def.name, bx + 80, by + 34);
-  const story = S.bossNo === 0 ? 'NIC HAS FOUND THE WEBSITE. HE IS NOT HAPPY. ' : '';
-  const full = story + '"' + B.def.line + '"';
-  const shown = full.slice(0, Math.floor(el * 34));
-  ctx.font = FONT(7); ctx.fillStyle = '#fff';
-  wrap(shown, 34).forEach((l, i) => ctx.fillText(l, bx + 12, by + 80 + i * 12));
-  if (el > .8 && Math.floor(performance.now() / 300) % 2) { ctx.textAlign = 'right'; ctx.font = FONT(6); ctx.fillStyle = '#ffd23f'; ctx.fillText('TAP TO FIGHT', bx + bw - 10, by + bh - 14); }
-  ctx.textAlign = 'center';
+  ctx.font = FONT(9); ctx.fillStyle = '#ff3b3b'; ctx.fillText(d.title, bx + 80, by + 20);
+  ctx.font = FONT(5); ctx.fillStyle = '#4ff0ff'; wrap(d.sub, 30).forEach((l, i) => ctx.fillText(l, bx + 80, by + 36 + i * 9));
+  let left = Math.floor(el * 34);
+  ctx.font = FONT(8); ctx.fillStyle = '#fff';
+  lines.forEach((l, i) => { if (left > 0) ctx.fillText(l.slice(0, left), bx + 12, by + 84 + i * 13); left -= l.length + 1; });
+  if (el > .8 && Math.floor(performance.now() / 300) % 2) { ctx.textAlign = 'right'; ctx.font = FONT(6); ctx.fillStyle = '#ffd23f'; ctx.fillText(S.boss && S.boss.phase === 'intro' ? 'TAP TO FIGHT' : 'TAP TO GO ON', bx + bw - 10, by + bh - 14); }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
 }
 function wrap(t, n) { const out = []; let cur = ''; t.split(' ').forEach(w => { if ((cur + ' ' + w).trim().length > n) { out.push(cur.trim()); cur = w; } else cur += ' ' + w; }); if (cur.trim()) out.push(cur.trim()); return out; }
-function drawInk() {
-  S.inks.forEach(k => {
-    ctx.globalAlpha = Math.min(.9, k.life);
-    ctx.fillStyle = '#120a3a';
-    k.blobs.forEach(b => { [1, -1].forEach(s => { ctx.beginPath(); ctx.arc(k.x + s * b.dx, k.y + b.dy, b.r, 0, 7); ctx.fill(); }); });
-  });
-  ctx.globalAlpha = 1;
-}
 function bar(x, y, w, h, frac, col) {
   ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(x, y, w, h);
   ctx.fillStyle = col; ctx.fillRect(x, y, w * clamp(frac, 0, 1), h);
 }
 function drawHUD() {
+  const now = performance.now(), blink = Math.floor(now / 250) % 2;
   ctx.textBaseline = 'top';
-  ctx.fillStyle = 'rgba(5,3,15,.7)'; ctx.fillRect(0, 0, W, 40);
-  ctx.font = FONT(8); ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.fillText(String(S.score).padStart(6, '0'), 6, 5);
-  const mult = Math.min(8, 1 + Math.floor(S.combo / 10));
-  if (mult > 1) { ctx.fillStyle = '#4ff0ff'; ctx.fillText('x' + mult, 62, 5); }
-  ctx.fillStyle = '#ffd23f'; ctx.font = FONT(5); ctx.fillText('WAVE ' + S.wave + ': ' + trackFor(S.wave), 6, 17);
-  ctx.textAlign = 'right'; ctx.fillStyle = '#8f86c9'; ctx.fillText('BEST ' + Math.max(save.best, S.score), W - 32, 6);
+  ctx.fillStyle = 'rgba(5,3,15,.78)'; ctx.fillRect(0, 0, W, 54);
+  // the score, big, and what it has to beat
+  ctx.font = FONT(12); ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.fillText(fmt(S.score), 6, 5);
+  const mult = Math.min(8, 1 + Math.floor(S.combo / 10)), sw = ctx.measureText(fmt(S.score)).width;
+  if (mult > 1) { ctx.font = FONT(8); ctx.fillStyle = '#4ff0ff'; ctx.fillText('x' + mult, 12 + sw, 8); }
+  ctx.textAlign = 'right'; ctx.font = FONT(6);
+  if (S.bestRef > 0 && S.score > S.bestRef) { ctx.fillStyle = blink ? '#2ecc71' : '#ffd23f'; ctx.fillText('NEW BEST!', W - 32, 5); }
+  else { ctx.fillStyle = '#ffd23f'; ctx.fillText('BEST ' + fmt(S.bestRef), W - 32, 5); }
+  ctx.font = FONT(5); ctx.fillStyle = S.lastRef > 0 && S.score > S.lastRef ? '#4ff0ff' : '#8f86c9'; ctx.fillText('LAST ' + fmt(S.lastRef), W - 32, 15);
   ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.fillRect(W - 27, 3, 22, 20); ctx.fillStyle = '#fff'; ctx.fillRect(W - 20, 8, 3, 10); ctx.fillRect(W - 14, 8, 3, 10);
   // London's health, the thing you are protecting
   const lp = london();
-  ctx.textAlign = 'left'; ctx.fillStyle = '#cfc8ff'; ctx.fillText('LONDON', 6, 28);
-  if (S.barHit > 0) { ctx.fillStyle = Math.floor(S.barHit * 12) % 2 ? '#ff3b3b' : '#fff'; ctx.fillRect(44, 25, 244, 11); }
-  bar(46, 27, 240, 7, lp / 100, lp > 55 ? '#2ecc71' : lp > 25 ? '#ffb347' : (Math.floor(performance.now() / 200) % 2 ? '#ff3b3b' : '#7a1020'));
-  ctx.textAlign = 'right'; ctx.fillStyle = '#fff'; ctx.fillText(lp + '%', W - 6, 28);
-  // boss bar: eight pips, like it's 1991
+  ctx.textAlign = 'left'; ctx.font = FONT(5); ctx.fillStyle = '#cfc8ff'; ctx.fillText('LONDON', 6, 27);
+  if (S.barHit > 0) { ctx.fillStyle = Math.floor(S.barHit * 12) % 2 ? '#ff3b3b' : '#fff'; ctx.fillRect(44, 24, W - 82, 11); }
+  bar(46, 26, W - 86, 7, lp / 100, lp > 55 ? '#2ecc71' : lp > 25 ? '#ffb347' : (Math.floor(now / 200) % 2 ? '#ff3b3b' : '#7a1020'));
+  ctx.textAlign = 'right'; ctx.fillStyle = '#fff'; ctx.fillText(lp + '%', W - 6, 27);
+  // the wave bar: how far to the next wave, or to Nic
   const B = S.boss;
+  ctx.textAlign = 'left'; ctx.fillStyle = '#ffd23f'; ctx.fillText('WAVE ' + S.wave + ': ' + trackFor(S.wave), 6, 38);
   if (B && B.phase !== 'enter') {
-    ctx.fillStyle = 'rgba(5,3,15,.7)'; ctx.fillRect(0, 40, W, 16);
-    ctx.textAlign = 'left'; ctx.fillStyle = '#ff6b6b'; ctx.font = FONT(5); ctx.fillText('DR. ROBOTNIC', 6, 45);
-    for (let i = 0; i < 8; i++) { ctx.fillStyle = i < B.hp ? (B.pinch ? '#ff3b3b' : '#ffd23f') : 'rgba(255,255,255,.12)'; ctx.fillRect(84 + i * 22, 43, 19, 8); }
-    if (B.hp > 0) { ctx.fillStyle = '#fff'; ctx.fillRect(84 + (B.hp - 1) * 22, 51, 19 * (1 - B.sub / B.subMax), 2); }
-  } else { ctx.textAlign = 'center'; ctx.fillStyle = '#7fdcb5'; ctx.font = FONT(5); ctx.fillText('SOCKS IAIN HAS EVER LOST: 0', W / 2, 44); }
+    ctx.fillStyle = 'rgba(40,0,10,.85)'; ctx.fillRect(0, 46, W, 10);
+    ctx.fillStyle = '#ff6b6b'; ctx.fillText('ROBOTNIC', 6, 48);
+    for (let i = 0; i < 8; i++) { ctx.fillStyle = i < B.hp ? (B.pinch ? '#ff3b3b' : '#ffd23f') : 'rgba(255,255,255,.12)'; ctx.fillRect(56 + i * 37, 47, 34, 6); }
+    if (B.hp > 0) { ctx.fillStyle = '#fff'; ctx.fillRect(56 + (B.hp - 1) * 37, 53, 34 * (1 - B.sub / B.subMax), 2); }
+  } else {
+    const bossNext = S.wave % 2 === 0, f = B ? 1 : S.waveT / WAVE_LEN;
+    ctx.textAlign = 'right'; ctx.fillStyle = bossNext ? '#ff6b6b' : '#8f86c9'; ctx.fillText(bossNext ? 'NEXT: DR. ROBOTNIC' : 'NEXT: WAVE ' + (S.wave + 1), W - 6, 38);
+    bar(6, 47, W - 12, 5, f, bossNext ? (f > .85 && blink ? '#ffffff' : '#ff3b3b') : '#ffd23f');
+    for (let i = 1; i < 6; i++) { ctx.fillStyle = 'rgba(5,3,15,.8)'; ctx.fillRect(6 + (W - 12) * i / 6, 47, 1, 5); }
+  }
 
-  // Bottom panel: the sock drawer, the gun, the dryer
+  // Bottom panel: what Iain is carrying, his weapon, the hamper
   const y0 = HUD_BOT;
   ctx.fillStyle = '#0b0820'; ctx.fillRect(0, y0, W, H - y0);
   ctx.fillStyle = '#2b2550'; ctx.fillRect(0, y0, W, 2);
-  ctx.textAlign = 'left'; ctx.font = FONT(5); ctx.fillStyle = '#8f86c9'; ctx.fillText('SOCK DRAWER', 6, y0 + 6);
-  const avail = sockColours();
-  for (let k = 0; k < 7; k++) {
-    const sx = 6 + k * 29, sy = y0 + 14, zip = S.zips.find(z => z.k === k);
-    ctx.fillStyle = k < avail ? 'rgba(255,255,255,.07)' : 'rgba(255,255,255,.02)'; ctx.fillRect(sx, sy, 26, 24);
-    ctx.strokeStyle = k < avail ? SOCKS[k] : 'rgba(255,255,255,.08)'; ctx.lineWidth = 1; ctx.strokeRect(sx + .5, sy + .5, 25, 23);
-    if (S.drawer[k]) drawSock(sx + 11, sy + 12, k, .2);
-    if (zip) { const f = zip.t / .6; drawSock(sx + 8 - 4 * (1 - f), sy + 12 - 10 * (1 - f), k, .2); drawSock(sx + 16 + 4 * (1 - f) - 8 * (1 - f), sy + 12 - 10 * (1 - f), k, -.2); }
+  ctx.textAlign = 'left'; ctx.font = FONT(5); ctx.fillStyle = '#8f86c9'; ctx.fillText('CARRYING ' + S.hand.length + '/' + HAND, 6, y0 + 6);
+  for (let i = 0; i < HAND; i++) {
+    const sx = 6 + i * 33, sy = y0 + 15, k = S.hand[i];
+    ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fillRect(sx, sy, 30, 30);
+    ctx.strokeStyle = i === 0 && k !== undefined ? '#ffd23f' : 'rgba(255,255,255,.2)'; ctx.lineWidth = i === 0 ? 2 : 1; ctx.strokeRect(sx + .5, sy + .5, 29, 29);
+    if (k !== undefined) drawSock(sx + 13, sy + 15, k, .2, 1.4);
   }
-  ctx.font = FONT(5); ctx.fillStyle = '#cfc8ff'; ctx.fillText('GUN LV' + S.gun, 6, y0 + 45);
-  ctx.fillStyle = '#ffd23f'; ctx.fillText(gun(S.gun).name, 50, y0 + 45);
-  const need = pairsToNext(S.gun);
-  for (let i = 0; i < need; i++) { ctx.fillStyle = i < S.gunPairs ? '#ffd23f' : 'rgba(255,255,255,.15)'; ctx.fillRect(6 + i * 14, y0 + 55, 11, 7); }
-  ctx.fillStyle = '#8f86c9'; ctx.fillText('PAIRS TO ' + gun(S.gun + 1).name, 10 + need * 14, y0 + 56);
-  const powers = [];
-  if (S.iain.shield > 0) powers.push('SHIELD ' + Math.ceil(S.iain.shield));
-  if (S.iain.homing > 0) powers.push('AIM ' + Math.ceil(S.iain.homing));
-  if (powers.length) { ctx.fillStyle = '#4ff0ff'; ctx.textAlign = 'right'; ctx.fillText(powers.join(' '), 282, y0 + 6); }
-  // dryer button
-  const ready = S.dryer >= DRYER_FULL, bx = W - 70, by = y0 + 6, bw = 64, bh = 72;
-  ctx.fillStyle = ready ? (Math.floor(performance.now() / 250) % 2 ? '#4ff0ff' : '#2aa6b5') : '#2b2550'; ctx.fillRect(bx, by, bw, bh);
-  ctx.fillStyle = 'rgba(79,240,255,.55)'; ctx.fillRect(bx, by + bh * (1 - S.dryer / DRYER_FULL), 5, bh * (S.dryer / DRYER_FULL));
-  ctx.strokeStyle = ready ? '#05030f' : '#cfc8ff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bx + 34, by + 28, 13, 0, 7); ctx.stroke();
-  if (ready) { ctx.beginPath(); ctx.arc(bx + 34, by + 28, 7, performance.now() / 100, performance.now() / 100 + 4); ctx.stroke(); }
-  ctx.textAlign = 'center'; ctx.font = FONT(5); ctx.fillStyle = ready ? '#05030f' : '#cfc8ff';
-  ctx.fillText(ready ? 'TAP ME' : 'DRYER ' + S.dryer + '/' + DRYER_FULL, bx + 34, by + 52);
+  if (S.hand.length) { ctx.fillStyle = '#ffd23f'; ctx.fillText('^ TOP', 6, y0 + 49); }
+  S.zips.forEach(z => { const f = z.t / .6; ctx.globalAlpha = f; drawSock(W - 60 - 14 * (1 - f), y0 + 30 - 30 * (1 - f), z.k, .3); drawSock(W - 52 + 14 * (1 - f), y0 + 30 - 30 * (1 - f), z.k, -.3); ctx.globalAlpha = 1; });
+  // the weapon
+  const WP = WEAPONS[S.weapon];
+  ctx.fillStyle = '#8f86c9'; ctx.fillText('WEAPON', 112, y0 + 6);
+  ctx.font = FONT(6); ctx.fillStyle = WP.col; ctx.fillText(WP.name, 112, y0 + 17);
+  ctx.font = FONT(5); ctx.fillStyle = '#cfc8ff'; ctx.fillText('LV', 112, y0 + 31);
+  for (let i = 0; i < MAXLV; i++) { ctx.fillStyle = i < S.gun ? WP.col : 'rgba(255,255,255,.12)'; ctx.fillRect(126 + i * 16, y0 + 29, 13, 9); }
+  if (S.iain.shield > 0) { ctx.fillStyle = '#b46cff'; ctx.fillText('SHIELD ' + Math.ceil(S.iain.shield), 112, y0 + 44); }
+  // hint line
+  ctx.textAlign = 'left';
+  if (S.hand.length >= HAND && blink) { ctx.fillStyle = '#ff6b6b'; ctx.fillText('HANDS FULL: DROP ONE IN A BASKET', 6, y0 + 66); }
+  else if (S.hand.length < HAND) { ctx.fillStyle = '#5a5290'; ctx.fillText('SOCKS IAIN HAS EVER LOST: 0', 6, y0 + 66); }
+  // the hamper: pairs fill it, a full one fires the dryer and upgrades the gun
+  const need = hamperNeed(S.hampers), hx = W - 100, hy = y0 + 10, hw = 42, hh = 62, full = S.fullT > 0;
+  ctx.fillStyle = full && blink ? '#4ff0ff' : '#5a3d22'; ctx.fillRect(hx, hy, hw, hh);
+  ctx.fillStyle = '#7a5530'; for (let r = 0; r < hh; r += 6) ctx.fillRect(hx, hy + r, hw, 2); // wicker
+  const fh = (hh - 4) * (full ? 1 : S.hamper / need);
+  ctx.fillStyle = '#1a1338'; ctx.fillRect(hx + 3, hy + 2, hw - 6, hh - 4 - fh);
+  for (let i = 0; i < (full ? need : S.hamper); i++) { // folded pairs stacked up inside
+    const py = hy + hh - 2 - (i + 1) * (hh - 4) / need;
+    ctx.fillStyle = SOCKS[(i * 3) % SOCKS.length]; ctx.fillRect(hx + 5, py + 1, hw - 10, (hh - 4) / need - 2);
+  }
+  ctx.strokeStyle = '#c9a26b'; ctx.lineWidth = 1.5; ctx.strokeRect(hx + .5, hy + .5, hw - 1, hh - 1);
+  const tx = W - 52;
+  ctx.fillStyle = '#8f86c9'; ctx.fillText('HAMPER', tx, y0 + 8);
+  ctx.font = FONT(10); ctx.fillStyle = '#fff'; ctx.fillText(S.hamper + '/' + need, tx, y0 + 18);
+  ctx.font = FONT(5); ctx.fillStyle = '#8f86c9'; ctx.fillText('PAIRS', tx, y0 + 32);
+  ctx.fillStyle = '#4ff0ff'; ctx.fillText('FULL =', tx, y0 + 46); ctx.fillText('DRYER', tx, y0 + 55); ctx.fillText(S.gun < MAXLV ? '+GUN UP' : '+1,000', tx, y0 + 64);
 
   // banners
   ctx.textAlign = 'center';
@@ -1047,16 +1163,15 @@ function drawHUD() {
     if (S.wave === S.startWave) { ctx.font = FONT(6); ctx.fillStyle = '#fff'; ctx.fillText('STAGE: LONDON', W / 2, 150); }
     ctx.globalAlpha = 1;
   }
-  if (S.warn > 0) {
+  if (S.warn > 0 && B) {
     const on = Math.floor(S.warn * 4) % 2;
     ctx.fillStyle = on ? 'rgba(226,38,77,.85)' : 'rgba(5,3,15,.85)'; ctx.fillRect(0, 196, W, 54);
     ctx.font = FONT(16); ctx.fillStyle = on ? '#fff' : '#ff3b3b'; ctx.fillText('WARNING', W / 2, 202);
-    ctx.font = FONT(6); ctx.fillStyle = '#fff'; ctx.fillText('DR. ROBOTNIC: ' + S.boss.def.name, W / 2, 226);
-    if (S.bossNo === 0) { ctx.font = FONT(5); ctx.fillText('NIC HAS FOUND THE WEBSITE', W / 2, 238); }
+    ctx.font = FONT(6); ctx.fillStyle = '#fff'; ctx.fillText('DR. ROBOTNIC: ' + B.def.name, W / 2, 226);
   }
   const crit = S.socks.filter(s => s.ground && s.ground / s.max < .5);
   if (crit.length) {
-    const on = Math.floor(performance.now() / 180) % 2, y = B && B.phase !== 'enter' ? 58 : 54;
+    const on = Math.floor(now / 180) % 2, y = 58;
     ctx.fillStyle = on ? 'rgba(226,38,77,.92)' : 'rgba(120,10,30,.92)'; ctx.fillRect(0, y, W, 14);
     ctx.font = FONT(7); ctx.fillStyle = '#fff'; ctx.fillText('! SOCK ALERT ! ' + crit.length + (crit.length > 1 ? ' SOCKS' : ' SOCK') + ' ON THE FLOOR !', W / 2, y + 4);
     crit.forEach(s => { // an arrow above each one, in the sky where your finger isn't
@@ -1066,13 +1181,30 @@ function drawHUD() {
       ctx.font = FONT(6); ctx.fillStyle = '#fff'; ctx.fillText(Math.ceil(s.ground), ax + 14, ay + 2);
     });
   }
-  if (S.cut > 0 && B) drawCutscene(B);
   if (S.b2 > 0) {
     ctx.globalAlpha = Math.min(1, S.b2);
     ctx.fillStyle = 'rgba(5,3,15,.78)'; ctx.fillRect(0, 290, W, 24);
     ctx.font = FONT(8); ctx.fillStyle = S.b2Col; ctx.fillText(S.b2Text, W / 2, 298);
     ctx.globalAlpha = 1;
   }
+  if (S.cut > 0) drawCutscene();
+}
+function drawBaskets() {
+  const I = S.iain;
+  S.baskets.forEach(b => {
+    const match = b.k >= 0 && S.hand.includes(b.k), on = b.inside, x = b.x - 20, y = b.y - 12, p = b.pulse > 0 ? 1 + b.pulse : 1;
+    ctx.save(); ctx.translate(b.x, b.y); ctx.scale(p, p); ctx.translate(-b.x, -b.y);
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(b.x, b.y + 13, 22, 4, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#6b4a2a'; ctx.fillRect(x, y, 40, 24);
+    ctx.fillStyle = '#8a6238'; for (let r = 2; r < 24; r += 6) ctx.fillRect(x, y + r, 40, 2);
+    ctx.strokeStyle = match ? (Math.floor(performance.now() / 160) % 2 ? '#2ecc71' : '#fff') : b.k >= 0 ? SOCKS[b.k] : on ? '#ffd23f' : '#c9a26b';
+    ctx.lineWidth = match ? 3 : 2; ctx.strokeRect(x - .5, y - .5, 41, 25);
+    if (b.k >= 0) drawSock(b.x - 2, b.y - 8, b.k, .4, 1.3);
+    ctx.restore();
+    ctx.font = FONT(5); ctx.textAlign = 'center';
+    if (match) { ctx.fillStyle = '#2ecc71'; ctx.fillText('MATCH!', b.x, y - 8); }
+    else { ctx.fillStyle = 'rgba(207,200,255,.55)'; ctx.fillText(b.k >= 0 ? SOCKNAME[b.k].toUpperCase() : 'BASKET', b.x, y - 8); }
+  });
 }
 function draw() {
   ctx.save();
@@ -1093,6 +1225,7 @@ function draw() {
   // landing shadows for anything heading into the zone: the dodge telegraph
   S.nips.forEach(n => { if (n.y > GROUND - 160) drawShadow(n.x, n.landY, clamp(1 - (n.landY - n.y) / 220, 0, 1)); });
   S.socks.forEach(s => { if (!s.ground && s.y > GROUND - 140) drawShadow(s.x, s.landY, clamp(1 - (s.landY - s.y) / 200, 0, 1), 'rgba(79,240,255,'); });
+  drawBaskets();
   drawJeep();
   S.crates.forEach(drawCrate);
   S.socks.forEach(s => {
@@ -1107,12 +1240,20 @@ function draw() {
   if (S.sack) { ctx.fillStyle = '#c9a26b'; ctx.beginPath(); ctx.arc(S.sack.x, S.sack.y, 14, 0, 7); ctx.fill(); ctx.fillStyle = '#05030f'; ctx.font = FONT(5); ctx.textAlign = 'center'; ctx.fillText('SOCKS', S.sack.x, S.sack.y + 2); }
   drawIain();
   drawBoss();
-  S.shots.forEach(b => { ctx.fillStyle = SOCKS[b.k]; ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, 7); ctx.fill(); ctx.strokeStyle = '#05030f'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(b.x - 4, b.y); ctx.lineTo(b.x + 4, b.y); ctx.stroke(); });
+  S.shots.forEach(b => {
+    if (b.kind === 'pierce') { ctx.fillStyle = '#4ff0ff'; ctx.fillRect(b.x - 2, b.y - 9, 4, 18); ctx.fillStyle = '#fff'; ctx.fillRect(b.x - 1, b.y - 9, 2, 18); }
+    else if (b.kind === 'thunder') { ctx.fillStyle = '#ff9f1c'; ctx.beginPath(); ctx.arc(b.x, b.y, 6, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillRect(b.x - 1, b.y - 9, 2, 4); }
+    else if (b.kind === 'love') { ctx.fillStyle = '#ff6fb5'; ctx.beginPath(); ctx.arc(b.x - 2.5, b.y - 1, 3, 0, 7); ctx.arc(b.x + 2.5, b.y - 1, 3, 0, 7); ctx.fill(); ctx.beginPath(); ctx.moveTo(b.x - 5.5, b.y); ctx.lineTo(b.x + 5.5, b.y); ctx.lineTo(b.x, b.y + 6); ctx.fill(); }
+    else { ctx.fillStyle = SOCKS[b.k]; ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, 7); ctx.fill(); ctx.strokeStyle = '#05030f'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(b.x - 4, b.y); ctx.lineTo(b.x + 4, b.y); ctx.stroke(); }
+  });
   S.nips.forEach(drawNip);
-  S.parts.forEach(p => { ctx.globalAlpha = Math.min(1, p.life * 2); ctx.fillStyle = p.col; ctx.fillRect(p.x, p.y, p.s, p.s); });
+  S.parts.forEach(p => {
+    ctx.globalAlpha = Math.min(1, p.life * 2);
+    if (p.col === 'ring') { ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, p.s * (1.2 - p.life * 2), 0, 7); ctx.stroke(); }
+    else { ctx.fillStyle = p.col; ctx.fillRect(p.x, p.y, p.s, p.s); }
+  });
   ctx.globalAlpha = 1;
   ctx.fillStyle = '#fff'; S.snow.forEach(f => ctx.fillRect(f.x, f.y, 2, 2));
-  drawInk();
   ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
   S.texts.forEach(t => { ctx.globalAlpha = Math.min(1, t.life * 2); ctx.font = FONT(t.size); ctx.fillStyle = '#000'; ctx.fillText(t.txt, t.x + 1, t.y + 1); ctx.fillStyle = t.col; ctx.fillText(t.txt, t.x, t.y); });
   ctx.globalAlpha = 1;
@@ -1141,6 +1282,8 @@ function idleDraw() { // behind the menu: an untouched London
 function endRun(why, sock) {
   if (mode !== 'play') return;
   mode = 'over';
+  const prevBest = save.best, prevLast = save.last;
+  save.last = S.score;
   if (S.score > save.best) save.best = S.score;
   if (S.wave > save.bestWave) save.bestWave = S.wave;
   writeSave();
@@ -1152,11 +1295,15 @@ function endRun(why, sock) {
   } else {
     sfx.boom();
     $('over-title').innerHTML = 'LONDON HAS<br>FALLEN';
-    $('over-why').innerHTML = 'The nips have flattened the capital. But check the drawer: <b>every sock is still paired</b>. It\'s alright. Al-ri-i-i-ight.';
+    $('over-why').innerHTML = 'The nips have flattened the capital. But check the hamper: <b>every sock is still paired</b>. It\'s alright. Al-ri-i-i-ight.';
   }
-  $('over-score').textContent = S.score;
-  $('over-stats').innerHTML = 'WAVE ' + S.wave + ' &middot; ' + S.pairs + ' PAIRS FOLDED &middot; GUN LV' + S.gun +
-    '<br>BEST ' + save.best + ' &middot; FURTHEST WAVE ' + save.bestWave + ' &middot; ROBOTNICS BEATEN ' + save.bosses +
+  $('over-score').textContent = fmt(S.score);
+  const diff = (a, b) => { const d = a - b; return '<span class="' + (d >= 0 ? 'up' : 'dn') + '">' + (d >= 0 ? '+' : '-') + fmt(Math.abs(d)) + '</span>'; };
+  $('over-cmp').innerHTML = !prevLast && !prevBest ? '<span style="grid-column:1/3;text-align:center;color:#4ff0ff">FIRST GAME: THAT\'S THE SCORE TO BEAT</span>' : (S.score > prevBest && prevBest > 0 ? '<span class="newbest" style="grid-column:1/3;text-align:center">NEW HIGH SCORE!</span>' : '') +
+    '<span class="k">LAST GAME</span><span>' + fmt(prevLast) + (prevLast ? ' ' + diff(S.score, prevLast) : '') + '</span>' +
+    '<span class="k">BEST</span><span>' + fmt(prevBest) + (prevBest ? ' ' + (S.score > prevBest ? diff(S.score, prevBest) : '<span class="dn">' + fmt(prevBest - S.score) + ' TO GO</span>') : '') + '</span>';
+  $('over-stats').innerHTML = 'WAVE ' + S.wave + ' &middot; ' + S.pairs + ' PAIRS FOLDED &middot; ' + gunName() + ' LV' + S.gun +
+    '<br>FURTHEST WAVE ' + save.bestWave + ' &middot; ROBOTNICS BEATEN ' + save.bosses +
     '<br>EAST 17 TRACKS SPOTTED ' + save.tracks.length + '/17' +
     (save.checkpoint > 1 ? '<br>CHECKPOINT SAVED: WAVE ' + save.checkpoint : '');
   $('over-again').style.display = TEST ? 'none' : '';
@@ -1170,7 +1317,7 @@ function openMenu() {
   const cb = $('cont-btn');
   if (save.checkpoint > 1) { cb.style.display = ''; cb.textContent = 'STAY ANOTHER DAY: WAVE ' + save.checkpoint; }
   else cb.style.display = 'none';
-  $('menu-stats').innerHTML = save.runs ? 'BEST ' + save.best + ' &middot; FURTHEST WAVE ' + save.bestWave + '<br>PAIRS FOLDED ' + save.pairs + ' &middot; ROBOTNICS BEATEN ' + save.bosses + ' &middot; EAST 17 ' + save.tracks.length + '/17' : 'NO SOCK HAS EVER BEEN LOST';
+  $('menu-stats').innerHTML = save.runs ? 'BEST ' + fmt(save.best) + ' &middot; LAST ' + fmt(save.last) + '<br>' + ' &middot; FURTHEST WAVE ' + save.bestWave + '<br>PAIRS FOLDED ' + save.pairs + ' &middot; ROBOTNICS BEATEN ' + save.bosses + ' &middot; EAST 17 ' + save.tracks.length + '/17' : 'NO SOCK HAS EVER BEEN LOST';
   show('menu');
 }
 function start(wave) { newRun(wave); mode = 'play'; show(null); }
@@ -1192,7 +1339,6 @@ addEventListener('keydown', e => {
   keys[k] = true;
   if (k === ' ' || k.startsWith('Arrow')) e.preventDefault();
   if (mode === 'play' && S.cut > 0 && (k === ' ' || k === 'Enter')) { if (S.cutMax - S.cut > .8) S.cut = .001; return; }
-  if (k === 'e' || k === ' ' || k === 'Shift') fireDryer();
   if (k === 'p' || k === 'Escape') { if (mode === 'play') pause(); else if (mode === 'paused') $('resume-btn').click(); }
   if (k === 'm') { muted = !muted; try { localStorage.setItem('nicattack.muted', muted ? '1' : '0'); } catch (e) {} }
 });
@@ -1206,7 +1352,6 @@ cv.addEventListener('pointerdown', e => {
   const p = toGame(e);
   if (S.cut > 0) { if (S.cutMax - S.cut > .8) S.cut = .001; return; }
   if (p.x > W - 30 && p.y < 26) return pause();
-  if (p.x > W - 72 && p.y > HUD_BOT) return fireDryer();
   pid = e.pointerId; lastP = p; cv.setPointerCapture(e.pointerId);
 });
 cv.addEventListener('pointermove', e => {
@@ -1225,7 +1370,13 @@ if (TEST) window.__nicattack = {
   warp(w) { S.wave = w - 1; nextWave(); S.waveT = 0; },
   boss() { if (!S.boss) startBoss(); },
   jeep() { S.jeepT = 0; S.wave = Math.max(3, S.wave); },
-  crate(k) { S.crates.push({ kind: k, x: S.iain.x, y: S.iain.y - 120, vy: 52, t: 0, ground: 0, landY: S.iain.y }); },
+  crate(k, w) { S.crates.push({ kind: k, w: w || 'spread', x: S.iain.x, y: S.iain.y - 120, vy: 52, t: 0, ground: 0, landY: S.iain.y }); },
+  sock(k, x, y) { S.socks.push({ k, x: x ?? S.iain.x, y: y ?? S.iain.y - 26, vx: 0, vy: 0, t: 0, ground: 6, max: 6, landY: y ?? S.iain.y - 26 }); },
+  place(x, y) { S.iain.x = x; S.iain.y = y; },
+  bossNo(n) { S.bossNo = n; },
+  hit(n) { bossDamage(n); },
+  hurt() { S.iain.inv = 0; hurtIain(); },
+  skip() { if (S.cut > 0) S.cut = .001; },
 };
 if (hasTicket()) openMenu(); else show('gate');
 requestAnimationFrame(loop);
