@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>NicAttack LDN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#05030f;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+body{display:flex;align-items:center;justify-content:center;font-family:'Press Start 2P',ui-monospace,monospace;color:#fff}
+#stage{position:relative;height:100vh;height:100dvh;aspect-ratio:9/16;max-width:100vw}
+canvas{display:block;width:100%;height:100%;image-rendering:pixelated;cursor:crosshair}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:18px 14px;background:rgba(5,3,15,.9);gap:11px;overflow-y:auto}
+.screen.show{display:flex}
+h1{font-size:clamp(20px,5.6vh,30px);line-height:1.15;color:#ffd23f;text-shadow:3px 3px 0 #e2264d,6px 6px 0 #2d1b69}
+h1 small{display:block;font-size:.42em;color:#4ff0ff;text-shadow:2px 2px 0 #2d1b69;margin-top:8px;letter-spacing:2px}
+p{font-size:clamp(8px,1.4vh,10px);line-height:1.9;color:#cfc8ff;max-width:320px}
+p b{color:#ffd23f;font-weight:400}
+.btn{font-family:inherit;font-size:clamp(10px,1.7vh,12px);padding:13px 16px;border:0;border-radius:4px;background:#ffd23f;color:#1a0f3d;box-shadow:0 5px 0 #b8860b;cursor:pointer;min-width:240px;text-decoration:none;display:inline-block}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #b8860b}
+.btn.alt{background:#4ff0ff;box-shadow:0 5px 0 #138a99}
+.btn.ghost{background:transparent;color:#cfc8ff;box-shadow:none;border:2px solid #4b3d8f}
+.stats{font-size:8px;color:#8f86c9;line-height:2}
+.big{font-size:clamp(26px,6vh,40px);color:#ffd23f}
+.heads{display:flex;gap:14px;align-items:center}
+.headpic{width:64px;height:64px;border-radius:50%;border:4px solid #ffd23f;box-shadow:0 0 0 4px #e2264d}
+.headpic.boss{border-color:#ff3b3b;box-shadow:0 0 0 4px #2d1b69;width:52px;height:52px}
+.vs{font-size:10px;color:#ff3b3b}
+.how{display:grid;gap:7px;max-width:330px;text-align:left}
+.how div{display:flex;gap:10px;align-items:flex-start;font-size:8px;line-height:1.8;color:#cfc8ff;background:rgba(79,240,255,.06);border:1px solid rgba(79,240,255,.2);border-radius:4px;padding:7px 8px}
+.how i{font-style:normal;color:#05030f;background:#ffd23f;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:2px;font-size:9px}
+.how b{color:#ffd23f;font-weight:400}
+.fine{font-size:7px;color:#6b62a3;line-height:1.9;max-width:300px}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="cv" width="720" height="1280"></canvas>
+
+  <!-- Gate: you don't defend London until Nic is whole again. -->
+  <div class="screen" id="gate">
+    <h1>ACCESS<br>DENIED<small>NICATTACK LDN</small></h1>
+    <p>London cannot be defended by a man who has not first put Nic back together.</p>
+    <p><b>Score 100% on Pin the Nip</b> to deploy. Every single time.</p>
+    <a class="btn" href="game.html">PIN THE NIPS</a>
+  </div>
+
+  <div class="screen" id="menu">
+    <div class="heads"><img class="headpic" src="img/iain-head.png" alt=""><span class="vs">VS</span><img class="headpic boss" src="img/nic-head.png" alt=""></div>
+    <h1>NICATTACK<br>LDN<small>IAIN VS DR. ROBOTNIC</small></h1>
+    <p>Nic has found the website. He is not happy. He has built the <b>Nic-Mobile</b>, he is raining nips on London, and for twenty years he has secretly been behind the world's missing socks. Only one man has <b>never lost a sock</b>.</p>
+    <div class="how">
+      <div><i>1</i><span><b>Drag anywhere</b>: Iain moves exactly with your finger, anywhere in the laundry zone. He throws by himself. Watch for the <b>shadows</b>: that is where a nip will land.</span></div>
+      <div><i>2</i><span>Grab every sock. Singles wait in your <b>sock drawer</b> (no limit). Two the same = a <b>folded pair</b>. Pairs <b>upgrade your gun</b> and charge the <b>DRYER</b>.</span></div>
+      <div><i>3</i><span>Get hit and your singles <b>spill out</b> like rings. Grab them before the countdown ends. <b>Iain does not lose socks.</b></span></div>
+      <div><i>4</i><span>Every minute, <b>Dr. RobotNic</b> attacks. Eight hits and he runs, dropping his sack of stolen socks.</span></div>
+    </div>
+    <button class="btn" id="new-btn">NEW GAME</button>
+    <button class="btn alt" id="cont-btn" style="display:none"></button>
+    <div class="stats" id="menu-stats"></div>
+    <div class="fine">Iain was given a strict 10 minute limit. Time limits are for cowards. This game does not end.<br>Content approved by Jane and Emily. Please take any concerns up with them.</div>
+  </div>
+
+  <div class="screen" id="paused">
+    <h1>PAUSED</h1>
+    <p>Slow it down.</p>
+    <button class="btn" id="resume-btn">RESUME</button>
+    <button class="btn ghost" id="quit-btn">QUIT TO MENU</button>
+  </div>
+
+  <div class="screen" id="over">
+    <h1 id="over-title">GAME<br>OVER</h1>
+    <p id="over-why"></p>
+    <div class="big" id="over-score">0</div>
+    <div class="stats" id="over-stats"></div>
+    <a class="btn" id="over-again" href="game.html">PIN THE NIPS TO GO AGAIN</a>
+    <button class="btn ghost" id="over-menu" style="display:none">BACK TO MENU</button>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+// ===================== GATE =====================
+// The ticket is written by game.html only on a 100% Pin the Nip. It lives in
+// sessionStorage, so it never outlives the tab, and a run that ends spends it:
+// to play again you pin the nips again. ?sockdrawer is Paul's testing key.
+const TICKET = 'nicattack.ticket';
+const SAVE = 'nicattack.v1';
+const TEST = new URLSearchParams(location.search).has('sockdrawer');
+
+function ss(fn) { try { return fn(sessionStorage); } catch (e) { return null; } }
+function hasTicket() { return TEST || ss(s => s.getItem(TICKET)) === '1'; }
+function spendTicket() { if (!TEST) ss(s => s.removeItem(TICKET)); }
+
+function loadSave() {
+  const base = { best: 0, bestWave: 0, checkpoint: 1, pairs: 0, runs: 0, tracks: [], bestGun: 1, bosses: 0 };
+  try { return Object.assign(base, JSON.parse(localStorage.getItem(SAVE) || '{}')); }
+  catch (e) { return base; }
+}
+let save = loadSave();
+function writeSave() { try { localStorage.setItem(SAVE, JSON.stringify(save)); } catch (e) {} }
+
+// ===================== LAYOUT =====================
+// Top to bottom: HUD, sky, London, the Embankment, Iain's laundry zone, the
+// sock drawer. The sky is short on purpose: nips do not have far to fall.
+const W = 360, H = 640, CELL = 6;
+const GROUND = 372, TOPY = 160;            // London sits between these
+const ZONE_TOP = 384, ZONE_BOT = 552;      // Iain's 2D laundry zone (his feet live here)
+const IAIN_MIN_Y = ZONE_TOP + 44;
+const HUD_BOT = 556;
+const HS = 2.1;                            // building heights are drawn at 1/HS of their design height
+const COLS = W / CELL, ROWS = Math.floor((GROUND - TOPY) / CELL);
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+ctx.scale(2, 2);
+ctx.imageSmoothingEnabled = false;
+const FONT = n => n + 'px "Press Start 2P", monospace';
+const rnd = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+const img = src => { const i = new Image(); i.src = src; return i; };
+const HEAD = img('img/iain-head.png');
+const NICHEAD = img('img/nic-head.png');
+const NIPIMG = [1, 2, 3, 4, 5].map(n => img('img/nip-' + n + '.png'));
+
+// ===================== SOUND (naff on purpose) =====================
+let actx = null, muted = false;
+try { muted = localStorage.getItem('nicattack.muted') === '1'; } catch (e) {}
+function beep(freq, dur, type = 'square', vol = .05, slide = 0) {
+  if (muted) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime;
+    o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t + dur);
+  } catch (e) {}
+}
+const seq = (notes, gap = 90, type = 'square') => notes.forEach((f, i) => setTimeout(() => beep(f, .12, type), i * gap));
+const sfx = {
+  shot: () => beep(900, .03, 'square', .012, 200),
+  pop: () => beep(880, .09, 'triangle', .05, -500),
+  boom: () => beep(120, .3, 'sawtooth', .06, -90),
+  catch: () => beep(660, .05, 'square', .035),
+  pair: () => seq([660, 990]),
+  upgrade: () => seq([523, 659, 784, 1046, 1318], 70),
+  down: () => seq([600, 400, 250], 90, 'sawtooth'),
+  spill: () => seq([1200, 900, 700, 500, 350], 40, 'triangle'),
+  hurt: () => beep(200, .3, 'square', .06, -150),
+  wave: () => seq([523, 659, 784, 1046]),
+  dryer: () => beep(90, 1.1, 'sawtooth', .05, 400),
+  power: () => seq([784, 988, 1175, 1568], 60, 'triangle'),
+  lost: () => seq([400, 300, 200, 100], 220, 'sawtooth'),
+  horn: () => { beep(330, .25, 'square', .05); setTimeout(() => beep(330, .4, 'square', .05), 300); },
+  roar: () => beep(110, .7, 'sawtooth', .07, -60),
+  klaxon: () => [0, 1, 2, 3].forEach(i => setTimeout(() => beep(i % 2 ? 440 : 660, .22, 'square', .05), i * 250)),
+  dink: () => { beep(1500, .06, 'square', .06); beep(220, .25, 'sawtooth', .06, -120); },
+  tick: () => beep(1800, .02, 'square', .02),
+  clang: () => beep(2400, .03, 'triangle', .02),
+  victory: () => seq([523, 523, 523, 659, 784, 659, 784, 1046], 110),
+};
+
+// ===================== LONDON =====================
+// Destructible skyline: a grid of CELLxCELL blocks, each holding a building id.
+// Each building is a predicate on (x, design height above the street).
+const ell = (x, h, cx, ch, rx, rh) => ((x - cx) / rx) ** 2 + ((h - ch) / rh) ** 2 <= 1;
+const BUILDINGS = [
+  { name: 'WALTHAMSTOW', col: '#8a4b3a', in: (x, h) => x < 30 && h < 72 },
+  { name: 'PARLIAMENT', col: '#9c8452', in: (x, h) => x >= 32 && x < 66 && (h < 104 || (h < 120 && Math.floor(x / 6) % 2)) },
+  { name: 'BIG BEN', col: '#b59a5a', in: (x, h) => (x >= 66 && x < 84 && h < 244) || (x >= 70 && x < 80 && h < 276) || (x >= 73 && x < 77 && h < 300) },
+  { name: 'COUNTY HALL', col: '#a89a86', in: (x, h) => x >= 86 && x < 120 && h < 84 },
+  { name: "ST PAUL'S", col: '#c9c3b5', in: (x, h) => (x >= 122 && x < 168 && h < 112) || (h >= 112 && ell(x, h, 145, 112, 19, 44)) || (x >= 142 && x < 148 && h < 176) },
+  { name: 'BT TOWER', col: '#7d8a99', in: (x, h) => (x >= 179 && x < 188 && h < 232) || (x >= 173 && x < 194 && h >= 180 && h < 216) || (x >= 182 && x < 185 && h < 266) },
+  { name: 'WALKIE-TALKIE', col: '#5f7f8f', in: (x, h) => x >= 198 + Math.max(0, 6 - h / 26) && x < 240 - Math.max(0, 6 - h / 26) && h < 178 },
+  { name: 'THE SHARD', col: '#8fb3c9', in: (x, h) => x >= 244 && x < 300 && h < Math.max(110, 425 - Math.abs(x - 272) * 10.5) },
+  { name: 'THE GHERKIN', col: '#3f7f6e', in: (x, h) => x >= 302 && x < 338 && h >= 0 && ell(x, h, 320, 82, 17, 124) },
+  { name: 'CANARY WHARF', col: '#9aa3b5', in: (x, h) => (x >= 340 && x < 360 && h < 236) || (x >= 344 && x < 356 && h < 262 - Math.abs(x - 350) * 2.6) },
+  { name: 'THE SKYLINE', col: '#2e2b4d', in: (x, h) => h < 64 + 150 * hash(Math.floor(x / 15), 3) },
+];
+let city = new Uint8Array(COLS * ROWS), cityFull = city, cityTotal = 0, cityLeft = 0, cityDirty = true;
+let bTotal = [], bLeft = [], bFallen = [], scorch = new Uint8Array(COLS * ROWS);
+const cityCv = document.createElement('canvas');
+cityCv.width = W * 2; cityCv.height = H * 2;
+const cctx = cityCv.getContext('2d'); cctx.scale(2, 2);
+
+function buildCity() {
+  city = new Uint8Array(COLS * ROWS); scorch = new Uint8Array(COLS * ROWS); cityTotal = 0;
+  bTotal = BUILDINGS.map(() => 0);
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const x = c * CELL + CELL / 2, h = (GROUND - (TOPY + r * CELL + CELL / 2)) * HS;
+    const bi = BUILDINGS.findIndex(b => b.in(x, h));
+    if (bi >= 0) { city[r * COLS + c] = bi + 1; cityTotal++; bTotal[bi]++; }
+  }
+  cityFull = city.slice();
+  bLeft = bTotal.slice(); bFallen = BUILDINGS.map(() => false);
+  cityLeft = cityTotal; cityDirty = true;
+}
+function hash(a, b) { let h = (a * 374761393 + b * 668265263) | 0; h = (h ^ (h >> 13)) * 1274126177; return ((h ^ (h >> 16)) >>> 0) / 4294967295; }
+function drawCity() {
+  cctx.clearRect(0, 0, W, H);
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const v = city[r * COLS + c]; if (!v) continue;
+    const x = c * CELL, y = TOPY + r * CELL, b = BUILDINGS[v - 1];
+    cctx.fillStyle = b.col; cctx.fillRect(x, y, CELL, CELL);
+    const sc = scorch[r * COLS + c];
+    if (sc) { cctx.fillStyle = 'rgba(20,8,0,' + (.22 * sc) + ')'; cctx.fillRect(x, y, CELL, CELL); if (hash(c, r + 9) < .12 * sc) { cctx.fillStyle = '#ff6b35'; cctx.fillRect(x + 2, y + 2, 2, 2); } continue; }
+    if (b.name === 'THE GHERKIN' && (c + r) % 3 === 0) { cctx.fillStyle = 'rgba(0,0,0,.25)'; cctx.fillRect(x, y, CELL, CELL); }
+    else if (r % 2 === 0 && c % 2 === 1) {
+      cctx.fillStyle = hash(c, r) > .55 ? '#ffe28a' : 'rgba(0,0,0,.25)';
+      cctx.fillRect(x + 1, y + 1, 3, 3);
+    }
+  }
+  const by = GROUND - 222 / HS; // Big Ben's clock face, while there is a tower to hang it on
+  if (cellAt(75, by)) {
+    cctx.fillStyle = '#f4ecd0'; cctx.beginPath(); cctx.arc(75, by, 4, 0, 7); cctx.fill();
+    cctx.strokeStyle = '#222'; cctx.lineWidth = 1; cctx.beginPath(); cctx.moveTo(75, by); cctx.lineTo(75, by - 3); cctx.moveTo(75, by); cctx.lineTo(77, by); cctx.stroke();
+  }
+  if (cellAt(15, GROUND - 20)) { cctx.fillStyle = '#ffd23f'; cctx.font = FONT(6); cctx.textAlign = 'center'; cctx.fillText('E17', 15, GROUND - 20); }
+  cityDirty = false;
+}
+function cellAt(x, y) {
+  const c = Math.floor(x / CELL), r = Math.floor((y - TOPY) / CELL);
+  if (c < 0 || c >= COLS || r < 0 || r >= ROWS) return 0;
+  return city[r * COLS + c];
+}
+function removeCell(i) {
+  const v = city[i]; city[i] = 0; cityLeft--; bLeft[v - 1]--;
+  if (Math.random() < .55) debris((i % COLS) * CELL + 3, TOPY + Math.floor(i / COLS) * CELL + 3, BUILDINGS[v - 1].col, true);
+}
+function crater(x, y, R) {
+  const hitB = new Set(), before = london();
+  const c0 = Math.floor((x - R) / CELL), c1 = Math.ceil((x + R) / CELL);
+  const r0 = Math.floor((y - R - TOPY) / CELL), r1 = Math.ceil((y + R - TOPY) / CELL);
+  for (let r = Math.max(0, r0); r <= Math.min(ROWS - 1, r1); r++)
+    for (let c = Math.max(0, c0); c <= Math.min(COLS - 1, c1); c++) {
+      const i = r * COLS + c; if (!city[i]) continue;
+      const cx = c * CELL + 3, cy = TOPY + r * CELL + 3;
+      const d2 = (cx - x) ** 2 + (cy - y) ** 2;
+      if (d2 <= R * R) { hitB.add(city[i] - 1); removeCell(i); }
+      else if (d2 <= (R + 10) ** 2) scorch[i] = Math.min(3, scorch[i] + 1);
+    }
+  if (S.fires.length < 30) S.fires.push({ x: x + rnd(-R / 2, R / 2), y: y + R * .6, life: rnd(6, 11), t: rnd(0, 6) });
+  // A block whose original support has been blown away crumbles, Smash-style.
+  for (let c = Math.max(0, c0); c <= Math.min(COLS - 1, c1); c++)
+    for (let r = ROWS - 2; r >= 0; r--) {
+      const i = r * COLS + c;
+      if (city[i] && cityFull[i + COLS] && !city[i + COLS]) removeCell(i);
+    }
+  cityDirty = true;
+  const lost = before - london();
+  if (lost > 0) { S.barHit = .6; say(x, y - 4, '-' + lost + '% LONDON', '#ff3b3b', 7); }
+  hitB.forEach(b => {
+    if (BUILDINGS[b].name === 'THE SKYLINE') return;
+    if (!bFallen[b] && bLeft[b] < bTotal[b] * .4) {
+      // the whole landmark comes down, top first, so nobody misses it
+      bFallen[b] = true; banner2(BUILDINGS[b].name + ' HAS FALLEN', '#ff6b6b');
+      S.collapse.push({ b, t: 0 }); sfx.down(); shake = .6;
+    } else if (!bFallen[b] && Math.random() < .5) say(x, y - 14, BUILDINGS[b].name + ' HIT', '#ff9f6b', 6);
+  });
+}
+function updateCollapse(dt) {
+  for (let k = S.collapse.length - 1; k >= 0; k--) {
+    const cl = S.collapse[k]; cl.t += dt;
+    if (cl.t < .05) continue; cl.t = 0;
+    let found = false;
+    for (let r = 0; r < ROWS && !found; r++) for (let c = 0; c < COLS; c++) {
+      const i = r * COLS + c;
+      if (city[i] === cl.b + 1) { removeCell(i); found = true; if (Math.random() < .3) sfx.tick(); }
+    }
+    cityDirty = true; shake = Math.max(shake, .12);
+    if (!found) S.collapse.splice(k, 1);
+  }
+}
+function repairCity(frac) { // the Yorkshire pudding / the dryer / a beaten boss put a little back
+  let need = Math.round(cityTotal * frac);
+  for (let r = ROWS - 1; r >= 0 && need > 0; r--) for (let c = 0; c < COLS && need > 0; c++) {
+    const i = r * COLS + c, v = cityFull[i];
+    if (v && !city[i] && (r === ROWS - 1 || city[i + COLS] || !cityFull[i + COLS])) { city[i] = v; scorch[i] = 0; need--; cityLeft++; bLeft[v - 1]++; }
+  }
+  BUILDINGS.forEach((b, i) => { if (bLeft[i] >= bTotal[i] * .4) bFallen[i] = false; });
+  S.rubble.fill(0);
+  cityDirty = true;
+}
+// London's health: 100% untouched, 0% when three quarters of it is rubble.
+const london = () => Math.max(0, Math.round((cityLeft / cityTotal - .25) / .75 * 100));
+
+// ===================== EAST 17 =====================
+// Iain hid 17 East 17 songs in his best man's speech. Every wave is one.
+const TRACKS = ['HOUSE OF LOVE', 'DEEP', 'STEAM', 'THUNDER', 'LET IT RAIN', 'AROUND THE WORLD', "IT'S ALRIGHT", 'GOLD', 'SLOW IT DOWN',
+  'HOLD MY BODY TIGHT', 'SET ME FREE', 'UP ALL NIGHT', "AIN'T NO STOPPIN'", 'GOTTA DO SOMETHING', 'LET IT ALL GO', 'I REMEMBER', 'STAY ANOTHER DAY'];
+const trackFor = w => TRACKS[(w - 1) % 17] + (w > 17 ? ' (' + ['REMIX', 'DARK MIX', 'LIVERPOOL MIX', 'PAWS ON THE FLOOR'][Math.floor((w - 18) / 17) % 4] + ')' : '');
+
+// ===================== THE GUN =====================
+const GUNS = [
+  null,
+  { name: 'SINGLE PAIR', rate: .3, n: 1 },
+  { name: 'GOLD', rate: .21, n: 1 },
+  { name: 'DOUBLE KNIT', rate: .21, n: 2 },
+  { name: 'AROUND THE WORLD', rate: .2, n: 3 },
+  { name: 'MAN IN THE MIRROR', rate: .2, n: 3, mirror: 1 },
+  { name: "AIN'T NO STOPPIN'", rate: .18, n: 3, mirror: 1, pierce: 1 },
+];
+const gun = l => l < GUNS.length ? GUNS[l] : { name: 'M.F. POWER ' + (l - GUNS.length + 2), rate: Math.max(.08, .18 - (l - GUNS.length + 1) * .02), n: 3 + Math.min(2, Math.floor((l - GUNS.length + 1) / 2)), mirror: 1, pierce: 1 };
+const pairsToNext = l => 3 + l;
+const gunDps = l => { const g = gun(l); return g.n * (g.mirror ? 2 : 1) / g.rate; };
+
+// ===================== STATE =====================
+const SOCKS = ['#e2264d', '#2f7bff', '#2ecc71', '#ffffff', '#ff9f1c', '#b46cff', '#ff6fb5'];
+const SOCKNAME = ['red', 'blue', 'green', 'white', 'orange', 'purple', 'pink'];
+const WAVE_LEN = 30, DRYER_FULL = 8;
+let S = null, mode = 'menu', last = 0, keys = {}, shake = 0, freeze = 0;
+
+function newRun(startWave) {
+  buildCity();
+  const lvl = Math.min(4, 1 + Math.floor((startWave - 1) / 4));
+  S = {
+    wave: startWave, waveT: 0, banner: 3, b2: 0, b2Text: '', b2Col: '#ffd23f',
+    score: 0, combo: 0, gun: lvl, gunPairs: 0, dryer: 0, pairs: 0, fireT: 0,
+    iain: { x: W / 2, y: ZONE_BOT - 20, face: 1, inv: 0, walk: 0, shield: 0, homing: 0 },
+    drawer: SOCKS.map(() => 0), zips: [],
+    nips: [], socks: [], shots: [], parts: [], texts: [], crates: [], inks: [], snow: [], hazards: [],
+    nipT: 1.2, sockT: .5, crateT: 14, jeepT: 34, jeep: null, lion: null, dryerAnim: 0, startWave,
+    boss: null, bossNo: Math.floor((startWave - 1) / 2), sack: null,
+    fires: [], smoke: [], rubble: new Float32Array(COLS), collapse: [], barHit: 0, alarmT: 0, cut: 0, cutMax: 1,
+  };
+  save.runs++; noteTrack(); writeSave();
+  sfx.wave();
+}
+function noteTrack() {
+  const t = TRACKS[(S.wave - 1) % 17];
+  if (!save.tracks.includes(t)) save.tracks.push(t);
+}
+function banner2(t, col = '#ffd23f', dur = 2.4) { S.b2 = dur; S.b2Text = t; S.b2Col = col; }
+
+// ===================== SPAWNING =====================
+// Difficulty only ever goes up. There is no last wave.
+const speedMul = () => 1 + .07 * (S.wave - 1);
+const nipEvery = () => Math.max(.16, 1.5 * Math.pow(.89, S.wave - 1)) * (S.boss ? 3 : 1);
+const sockEvery = () => Math.max(.5, 1.4 * Math.pow(.955, S.wave - 1));
+const sockColours = () => Math.min(SOCKS.length, 3 + Math.floor((S.wave - 1) / 3));
+const floorY = () => rnd(ZONE_TOP + 16, ZONE_BOT - 4);
+
+// Asteroids rules: a big nip splits into two mediums, a medium into two smalls.
+const NIPDEF = {
+  big:   { img: 0, r: 18, hp: 4, v: 30, pts: 50, R: 15, into: 'mid' },
+  mid:   { img: 2, r: 12, hp: 2, v: 44, pts: 25, R: 11, into: 'small' },
+  small: { img: 1, r: 7,  hp: 1, v: 58, pts: 10, R: 8 },
+  nurse: { img: 3, r: 10, hp: 1, v: 40, pts: 30, R: 10, dive: 1 },
+  wild:  { img: 4, r: 13, hp: 2, v: 42, pts: 30, R: 11, wobble: 1, into: 'small' },
+  pen:   { pen: 1, r: 8, hp: 1, v: 66, pts: 40, R: 6, ink: 1 },
+};
+function spawnNip() {
+  const w = S.wave, pool = [['small', 4], ['mid', 2 + w * .2]];
+  if (w >= 2) pool.push(['big', .8 + w * .15]);
+  if (w >= 3) pool.push(['wild', 1.5]);
+  if (w >= 4) pool.push(['nurse', 1.6]);
+  if (w >= 6) pool.push(['pen', 1.2]);
+  let t = Math.random() * pool.reduce((a, p) => a + p[1], 0), type = 'small';
+  for (const [k, wt] of pool) { if ((t -= wt) <= 0) { type = k; break; } }
+  addNip(type, rnd(22, W - 22), 40, rnd(-15, 15));
+}
+function addNip(type, x, y, vx = 0, vy = null) {
+  const d = NIPDEF[type];
+  S.nips.push({ type, d, x, y, vx, vy: vy ?? d.v * speedMul() * rnd(.85, 1.15), hp: d.hp + (S.wave >= 14 && d.hp > 1 ? 1 : 0), t: rnd(0, 6), spin: rnd(-2, 2), a: 0, hit: 0, dived: false, landY: floorY() });
+}
+function spawnSock(x, y, vx = 0, vy = null) {
+  const k = Math.floor(Math.random() * sockColours());
+  S.socks.push({ k, x: x ?? rnd(18, W - 18), y: y ?? 40, vx, vy: vy ?? rnd(40, 58) + S.wave * 1.2, t: rnd(0, 6), ground: 0, max: 0, landY: floorY() });
+}
+// Things from the speech, delivered from the sky.
+const CRATES = {
+  pizza:   { label: 'PIZZA', col: '#d9a35b' },
+  specs:   { label: 'SPECS', col: '#4ff0ff' },
+  blender: { label: 'BLENDER', col: '#b46cff' },
+  pud:     { label: 'YORKSHIRE', col: '#f2c14e' },
+};
+function spawnCrate() {
+  const pool = ['pizza', 'specs', 'blender'];
+  if (london() < 85) pool.push('pud', 'pud');
+  const kind = pool[Math.floor(Math.random() * pool.length)];
+  S.crates.push({ kind, x: rnd(30, W - 30), y: 40, vy: 52, t: 0, ground: 0, landY: floorY() });
+}
+
+// ===================== FX =====================
+function debris(x, y, col, rub) { if (S && S.parts.length < 400) S.parts.push({ x, y, vx: rnd(-80, 80), vy: -Math.random() * 160, life: rub ? 3 : rnd(.8, 1.3), col, s: rnd(2, 5), rub }); }
+function burst(x, y, n, cols) { for (let i = 0; i < n; i++) debris(x, y, cols[i % cols.length]); }
+function say(x, y, txt, col = '#ffd23f', size = 9) { if (S.texts.length < 16) S.texts.push({ x: clamp(x, 44, W - 44), y, txt, col, size, life: 1.2 }); }
+function inkBlot(x, y) { // Rorschach, courtesy of 2005's unsupervised pen distribution
+  const blobs = Array.from({ length: 7 }, () => ({ dx: Math.random() * 34, dy: rnd(-30, 30), r: rnd(6, 22) }));
+  S.inks.push({ x: clamp(x, 60, W - 60), y: clamp(y, 120, 470), blobs, life: 3.4 });
+}
+
+// ===================== IAIN =====================
+const iainHit = () => ({ x: S.iain.x, y: S.iain.y - 26 });
+function touchesIain(x, y, r) { const h = iainHit(); return (h.x - x) ** 2 + (h.y - y) ** 2 < (r + 11) ** 2; }
+function grabs(x, y) { const h = iainHit(); return (h.x - x) ** 2 + (h.y - y) ** 2 < 26 ** 2; }
+function moveIain(dx, dy) {
+  const I = S.iain;
+  if (dx) I.face = Math.sign(dx);
+  I.walk += Math.min(1.2, Math.hypot(dx, dy) * .12);
+  I.x = clamp(I.x + dx, 14, W - 14);
+  I.y = clamp(I.y + dy, IAIN_MIN_Y, ZONE_BOT);
+}
+function fire() {
+  const I = S.iain, g = gun(S.gun);
+  const origins = [I.x]; if (g.mirror) origins.push(W - I.x);
+  origins.forEach(ox => {
+    for (let i = 0; i < g.n; i++) {
+      const spread = g.n === 1 ? 0 : (i - (g.n - 1) / 2);
+      const vx = g.n >= 3 ? spread * 70 : 0, off = g.n === 2 ? spread * 10 : 0;
+      S.shots.push({ x: ox + off, y: I.y - 56, vx, vy: -520, k: Math.floor(Math.random() * SOCKS.length), pierce: !!g.pierce, hits: new Set(), home: I.homing > 0 });
+    }
+  });
+  sfx.shot();
+}
+function fireDryer() {
+  if (mode !== 'play' || S.dryer < DRYER_FULL || S.dryerAnim > 0) return;
+  S.dryer = 0; S.dryerAnim = 1.4; shake = .6; sfx.dryer();
+  say(W / 2, 250, 'TUMBLE DRY!', '#4ff0ff', 14);
+  if (S.boss && S.boss.phase === 'fight') bossDamage(S.boss.subMax * 2, true); // the dryer hurts Nic too
+}
+function addPairs(n, silent) {
+  for (let i = 0; i < n; i++) {
+    S.pairs++; save.pairs++; S.score += 20;
+    S.dryer = Math.min(DRYER_FULL, S.dryer + 1);
+    if (++S.gunPairs >= pairsToNext(S.gun)) {
+      S.gun++; S.gunPairs = 0; sfx.upgrade();
+      if (S.gun > save.bestGun) save.bestGun = S.gun;
+      banner2('UPGRADE: ' + gun(S.gun).name, '#4ff0ff');
+    }
+  }
+  if (!silent && S.dryer === DRYER_FULL) say(W / 2, 300, 'DRYER READY: TAP IT', '#4ff0ff', 9);
+}
+// Singles wait in the drawer, one slot per colour, no limit. The match folds itself.
+function catchSock(s) {
+  if (S.drawer[s.k]) {
+    S.drawer[s.k] = 0; S.zips.push({ k: s.k, t: .6 });
+    sfx.pair(); say(S.iain.x, S.iain.y - 80, Math.random() < .2 ? "IT'S ALRIGHT" : 'PAIR FOLDED', SOCKS[s.k] === '#ffffff' ? '#ffd23f' : SOCKS[s.k], 7);
+    addPairs(1);
+  } else { S.drawer[s.k] = 1; sfx.catch(); }
+}
+function takeCrate(c) {
+  const I = S.iain; sfx.power();
+  if (c.kind === 'pizza') { // reheated in the box. It goes the way it went.
+    say(I.x, I.y - 90, 'PIZZA BOX COMBUSTS!', '#ff6b35', 8);
+    burst(I.x, I.y - 40, 30, ['#ff6b35', '#ffd23f', '#d9a35b']); shake = .5; freeze = .08;
+    for (let i = S.nips.length - 1; i >= 0; i--) if (Math.hypot(S.nips[i].x - I.x, S.nips[i].y - I.y) < 220) killNip(i, true);
+  } else if (c.kind === 'specs') {
+    I.homing = 10; say(I.x, I.y - 90, 'STREAK-FREE AIM', '#4ff0ff', 8);
+  } else if (c.kind === 'blender') {
+    I.shield = 12; say(I.x, I.y - 90, 'OVEN-BAKED SHIELD', '#b46cff', 8);
+  } else if (c.kind === 'pud') {
+    repairCity(.1); say(W / 2, 300, 'BEST YORKSHIRE PUD EVER', '#f2c14e', 8); say(W / 2, 318, 'LONDON +10%', '#2ecc71', 8);
+  }
+}
+// Sonic rules: singles are your rings. A hit spills them across the floor.
+function hurtIain(why) {
+  const I = S.iain;
+  if (I.inv > 0) return;
+  if (I.shield > 0) { say(I.x, I.y - 80, 'BLENDER SAYS NO', '#b46cff', 7); I.inv = .5; return; }
+  I.inv = 1.6; sfx.hurt(); shake = .35; freeze = .07; S.combo = 0;
+  const singles = S.drawer.map((v, k) => v ? k : -1).filter(k => k >= 0);
+  if (singles.length) {
+    sfx.spill();
+    singles.forEach((k, i) => {
+      S.drawer[k] = 0;
+      const a = -Math.PI / 2 + (i - (singles.length - 1) / 2) * .7;
+      S.socks.push({ k, x: I.x, y: I.y - 30, vx: Math.cos(a) * 120, vy: Math.sin(a) * 160, t: 0, ground: 0, max: 0, landY: clamp(I.y + rnd(-50, 10), ZONE_TOP + 16, ZONE_BOT - 4), spilt: true });
+    });
+    say(I.x, I.y - 90, why || 'SOCKS EVERYWHERE!', '#ff6b6b', 8);
+  } else if (S.gun > 1) {
+    S.gun--; S.gunPairs = 0; sfx.down();
+    banner2('DOWNGRADED: ' + gun(S.gun).name, '#ff6b6b', 1.8);
+    say(I.x, I.y - 90, why || 'NIPPED!', '#ff6b6b', 9);
+  } else say(I.x, I.y - 90, why || 'NIPPED!', '#ff6b6b', 9);
+}
+
+// ===================== DR. ROBOTNIC =====================
+// Robotnik rules: eight big hits, a flash and a clang on each, a moment of
+// invincibility after, faster when he's nearly done, then he runs for it and
+// the sack of stolen socks he's been hoarding for twenty years bursts open.
+const BOSSES = [
+  { kind: 'oven',    name: 'THE PIZZA OVEN', line: "SERIOUSLY IAIN, I'D RATHER NOT." },
+  { kind: 'dish',    name: 'THE DISHWASHER', line: "THERE ARE THINGS I'D RATHER NOT BE PUBLIC KNOWLEDGE." },
+  { kind: 'blender', name: 'THE BLENDER',    line: 'IT WAS DUST FREE, IAIN. DUST FREE.' },
+];
+const FLEE = ['CURSE YOU, IAIN LOUDON!', "THIS IS GOING ON THE WEBSITE, ISN'T IT", "I'LL BE BACK AFTER THE FIRST DANCE!"];
+function startBoss() {
+  const def = BOSSES[S.bossNo % 3], loop = Math.floor(S.bossNo / 3);
+  const subMax = Math.max(5, Math.round((4 + 2 * loop) * gunDps(S.gun) / 3.3));
+  S.boss = { def, loop, x: W / 2, y: -50, tx: W / 2, hp: 8, sub: 0, subMax, inv: 0, t: 0, phase: 'enter', atkT: 2.4, pinch: false, flash: 0, swing: 0, talk: 3.5, line: def.line };
+  S.warn = 2.2; S.banner = 0; sfx.klaxon();
+}
+const bossBox = B => ({ x: B.x, y: B.y, rx: 32, ry: 24 });
+function bossDamage(n, big) {
+  const B = S.boss;
+  if (!B || B.phase !== 'fight' || B.inv > 0) { if (B && B.inv > 0) sfx.clang(); return; }
+  B.sub += n; B.flash = .06; sfx.tick();
+  while (B.sub >= B.subMax && B.hp > 0) {
+    B.sub -= B.subMax; B.hp--; B.inv = big ? .4 : 1.0; B.flash = .25;
+    freeze = .09; shake = .4; sfx.dink();
+    burst(B.x, B.y, 14, ['#fff', '#ffd23f', '#ff6b35']);
+    say(B.x, B.y + 36, 'HIT ' + (8 - B.hp) + '/8', '#fff', 9);
+    S.score += 150 * (B.loop + 1);
+    if (B.hp <= 3 && !B.pinch) { B.pinch = true; B.line = 'TEN MINUTES, IAIN! I SAID TEN MINUTES!'; B.talk = 2.5; }
+    if (B.hp <= 0) { B.phase = 'die'; B.t = 0; B.sub = 0; freeze = .2; sfx.boom(); break; }
+  }
+}
+function updateBoss(dt) {
+  const B = S.boss, I = S.iain;
+  B.t += dt; if (B.inv > 0) B.inv -= dt; if (B.flash > 0) B.flash -= dt; if (B.talk > 0) B.talk -= dt;
+  const sp = (B.pinch ? 1.6 : 1) * (1 + B.loop * .25);
+  if (B.phase === 'enter') {
+    B.y += 60 * dt;
+    if (B.y >= 104) { B.y = 104; B.phase = 'intro'; B.talk = 0; S.cut = S.cutMax = S.bossNo === 0 ? 5.5 : 4.2; }
+    return;
+  }
+  if (B.phase === 'fight') {
+    // drift towards a new spot every so often, Robotnik's lazy hover
+    if (Math.abs(B.tx - B.x) < 4) B.tx = clamp(B.def.kind === 'blender' ? I.x + rnd(-40, 40) : rnd(50, W - 50), 46, W - 46);
+    B.x += Math.sign(B.tx - B.x) * Math.min(Math.abs(B.tx - B.x), (B.def.kind === 'blender' ? 34 : 70) * sp * dt);
+    B.y = 104 + Math.sin(B.t * 2) * 6;
+    B.atkT -= dt * sp;
+    if (B.def.kind === 'oven' && B.atkT <= 0) {
+      B.atkT = 2.1;
+      const n = B.pinch ? 2 : 1;
+      for (let i = 0; i < n; i++) {
+        const tx = clamp(I.x + (i ? rnd(-90, 90) : rnd(-20, 20)), 20, W - 20), ty = clamp(I.y - 10 + rnd(-30, 30), ZONE_TOP + 20, ZONE_BOT - 6);
+        S.hazards.push({ type: 'pizza', x: B.x, y: B.y + 20, sx: B.x, sy: B.y + 20, tx, ty, t: 0, dur: 1.15 / Math.min(1.6, sp) });
+      }
+      say(B.x, B.y + 44, 'HOT!', '#ff6b35', 7);
+    }
+    if (B.def.kind === 'dish' && B.atkT <= 0) {
+      B.atkT = 2.4;
+      const xs = [I.x]; if (B.pinch) xs.push(clamp(I.x + (Math.random() < .5 ? -1 : 1) * rnd(60, 120), 20, W - 20));
+      xs.forEach(x => S.hazards.push({ type: 'jet', x, t: 0, warn: .9 / Math.min(1.5, sp), dur: .5 }));
+    }
+    if (B.def.kind === 'blender') {
+      B.swing += dt * (1.5 + (B.pinch ? .9 : 0) + B.loop * .2);
+      const a = Math.sin(B.swing) * .75, L = 352;
+      B.ball = { x: B.x + Math.sin(a) * L, y: B.y + Math.cos(a) * L };
+      if (touchesIain(B.ball.x, B.ball.y, 16)) hurtIain('BLENDED!');
+    }
+  } else if (B.phase === 'die') {
+    if (Math.random() < .5) { burst(B.x + rnd(-30, 30), B.y + rnd(-20, 20), 6, ['#fff', '#ff6b35', '#ffd23f']); if (Math.random() < .3) sfx.boom(); }
+    shake = Math.max(shake, .2);
+    if (B.t > 1.8) { B.phase = 'flee'; B.t = 0; B.line = FLEE[S.bossNo % FLEE.length]; B.talk = 3; sfx.victory(); dropSack(B.x, B.y); }
+  } else if (B.phase === 'flee') {
+    B.x += 120 * dt; B.y -= 70 * dt;
+    if (Math.random() < .4) S.parts.push({ x: B.x - 20, y: B.y + 10, vx: rnd(-20, 0), vy: rnd(-30, -10), life: 1, col: '#666', s: 5 });
+    if (B.y < -60) { S.boss = null; S.bossNo++; save.bosses++; nextWave(); }
+  }
+}
+function dropSack(x, y) {
+  S.sack = { x, y, vy: 0, landY: (ZONE_TOP + ZONE_BOT) / 2 };
+  banner2('DR. ROBOTNIC DEFEATED', '#2ecc71', 2.6);
+}
+function updateSack(dt) {
+  const k = S.sack; k.vy += 300 * dt; k.y += k.vy * dt;
+  if (k.y >= k.landY) {
+    const n = 4 + Math.floor(S.bossNo / 3) * 2;
+    say(k.x, k.landY - 30, "NIC'S STOLEN SOCKS!", '#ffd23f', 8); say(k.x, k.landY - 14, '+' + n + ' PAIRS', '#2ecc71', 9);
+    for (let i = 0; i < n * 2; i++) burst(k.x, k.landY, 2, [SOCKS[i % SOCKS.length]]);
+    addPairs(n, true); repairCity(.06);
+    S.score += 1000 * (Math.floor(S.bossNo / 3) + 1); freeze = .1; shake = .5;
+    S.sack = null;
+  }
+}
+function updateHazards(dt) {
+  for (let i = S.hazards.length - 1; i >= 0; i--) {
+    const h = S.hazards[i]; h.t += dt;
+    if (h.type === 'pizza') {
+      const f = Math.min(1, h.t / h.dur);
+      h.x = h.sx + (h.tx - h.sx) * f; h.y = h.sy + (h.ty - h.sy) * f - Math.sin(f * Math.PI) * 50;
+      if (f >= 1) { h.type = 'fire'; h.t = 0; burst(h.tx, h.ty, 12, ['#ff6b35', '#ffd23f']); sfx.boom(); }
+    } else if (h.type === 'fire') {
+      if (touchesIain(h.tx, h.ty - 8, 24)) hurtIain('PIZZA BOX FIRE!');
+      if (h.t > 1.1) S.hazards.splice(i, 1);
+    } else if (h.type === 'jet') {
+      if (h.t > h.warn && h.t < h.warn + h.dur && Math.abs(S.iain.x - h.x) < 15) hurtIain('HIGH PRESSURE RINSE!');
+      if (h.t > h.warn + h.dur) S.hazards.splice(i, 1);
+    }
+  }
+}
+function nextWave() {
+  S.waveT = 0; S.wave++; S.banner = 2.6; sfx.wave(); noteTrack();
+  S.score += 100 * S.wave;
+  if (S.wave % 4 === 1 && S.wave > save.checkpoint) { save.checkpoint = S.wave; banner2('CHECKPOINT SAVED', '#4ff0ff'); }
+  if (S.wave > save.bestWave) save.bestWave = S.wave;
+  writeSave();
+}
+
+// ===================== UPDATE =====================
+function update(dt) {
+  const I = S.iain;
+  if (S.cut > 0) { // cutscene: everything holds still while Nic monologues
+    S.cut -= dt;
+    if (S.cut <= 0 && S.boss) { S.boss.phase = 'fight'; S.boss.inv = 0; }
+    return;
+  }
+  // Waves. Every second wave ends with Nic.
+  if (!S.boss) {
+    S.waveT += dt;
+    if (S.waveT >= WAVE_LEN) { if (S.wave % 2 === 0) { S.waveT = 0; startBoss(); } else nextWave(); }
+  } else updateBoss(dt);
+  if (S.sack) updateSack(dt);
+  if (S.banner > 0) S.banner -= dt;
+  if (S.b2 > 0) S.b2 -= dt;
+  if (S.warn > 0) S.warn -= dt;
+
+  // Spawns
+  S.nipT -= dt; if (S.nipT <= 0) { spawnNip(); S.nipT = nipEvery() * rnd(.6, 1.4); }
+  S.sockT -= dt; if (S.sockT <= 0) { spawnSock(); S.sockT = sockEvery() * rnd(.6, 1.4); }
+  S.crateT -= dt; if (S.crateT <= 0) { spawnCrate(); S.crateT = rnd(16, 26); }
+  if (S.wave >= 3 && !S.boss) { S.jeepT -= dt; if (S.jeepT <= 0 && !S.jeep && !S.lion) { startJeep(); S.jeepT = rnd(50, 80); } }
+  if ((S.wave - 1) % 17 === 16 && Math.random() < .5) S.snow.push({ x: Math.random() * W, y: 40, v: rnd(20, 50) }); // Stay Another Day: it snows
+
+  // Iain: keyboard moves him; a finger moves him 1:1 in the pointer handlers
+  let kx = 0, ky = 0;
+  if (keys.ArrowLeft || keys.a) kx -= 1; if (keys.ArrowRight || keys.d) kx += 1;
+  if (keys.ArrowUp || keys.w) ky -= 1; if (keys.ArrowDown || keys.s) ky += 1;
+  if (kx || ky) moveIain(kx * 280 * dt, ky * 280 * dt);
+  if (I.inv > 0) I.inv -= dt;
+  if (I.shield > 0) I.shield -= dt;
+  if (I.homing > 0) I.homing -= dt;
+  S.fireT -= dt; if (S.fireT <= 0) { fire(); S.fireT = gun(S.gun).rate; } // he throws by himself. Always.
+  for (let i = S.zips.length - 1; i >= 0; i--) { S.zips[i].t -= dt; if (S.zips[i].t <= 0) S.zips.splice(i, 1); }
+
+  // Dryer: every nip on screen gets sucked into the drum
+  if (S.dryerAnim > 0) {
+    S.dryerAnim -= dt;
+    S.nips.forEach(n => { n.x += (W / 2 - n.x) * dt * 3; n.y += (250 - n.y) * dt * 3; n.spin = 18; });
+    if (S.dryerAnim <= 0) {
+      S.nips.forEach(n => { S.score += n.d.pts; burst(n.x, n.y, 5, ['#4ff0ff', '#fff', '#ffd23f']); });
+      S.nips = []; repairCity(.05); say(W / 2, 270, 'LONDON +5%', '#2ecc71', 9);
+    }
+  }
+
+  // Nips
+  for (let i = S.nips.length - 1; i >= 0; i--) {
+    const n = S.nips[i];
+    if (S.dryerAnim > 0) { n.a += n.spin * dt; continue; }
+    n.t += dt; n.a += n.spin * dt; if (n.hit > 0) n.hit -= dt;
+    if (n.d.wobble) n.x += Math.sin(n.t * 2.4) * 40 * dt;
+    if (n.d.dive && !n.dived && n.y > 120) { n.dived = true; n.vx = (I.x - n.x) * .8; n.vy = 170 * speedMul(); n.landY = clamp(I.y - 10, ZONE_TOP + 16, ZONE_BOT); say(n.x, n.y - 14, '!', '#ff6b6b', 12); }
+    if (n.vy < 30) n.vy += 60 * dt; // split fragments get pulled back down
+    n.x += n.vx * dt; n.y += n.vy * dt;
+    if (n.x < 8 || n.x > W - 8) { n.vx *= -1; n.x = clamp(n.x, 8, W - 8); }
+    const bx = n.x, by = n.y + n.d.r * .6;
+    if (by < GROUND && cellAt(bx, by)) { blowUp(n, bx, by); S.nips.splice(i, 1); continue; }
+    if (n.y > ZONE_TOP - 10 && touchesIain(n.x, n.y, n.d.r * .8)) { hurtIain(); burst(n.x, n.y, 8, ['#888', '#ffd23f']); S.nips.splice(i, 1); continue; }
+    if (n.y >= n.landY) {
+      if (n.d.ink) inkBlot(n.x, 380);
+      if (touchesIain(n.x, n.landY - 10, n.d.r + 8)) hurtIain();
+      burst(n.x, n.landY, 8, ['#888', '#555', '#ffd23f']); sfx.boom(); shake = Math.max(shake, .12);
+      S.nips.splice(i, 1);
+    }
+  }
+
+  // Sock balls
+  const B = S.boss;
+  for (let i = S.shots.length - 1; i >= 0; i--) {
+    const b = S.shots[i];
+    if (b.home && S.nips.length) {
+      let best = null, bd = 1e9;
+      S.nips.forEach(n => { const d = (n.x - b.x) ** 2 + (n.y - b.y) ** 2; if (n.y < b.y && d < bd) { bd = d; best = n; } });
+      if (best) b.vx += Math.sign(best.x - b.x) * 900 * dt;
+      b.vx = clamp(b.vx, -260, 260);
+    }
+    b.x += b.vx * dt; b.y += b.vy * dt;
+    if (b.y < 30 || b.x < -20 || b.x > W + 20) { S.shots.splice(i, 1); continue; }
+    if (B && (B.phase === 'fight') && ((b.x - B.x) / 34) ** 2 + ((b.y - B.y) / 26) ** 2 < 1) {
+      bossDamage(1); burst(b.x, b.y, 2, ['#fff']); S.shots.splice(i, 1); continue;
+    }
+    for (let j = S.nips.length - 1; j >= 0; j--) {
+      const n = S.nips[j];
+      if (b.hits.has(n)) continue;
+      if ((n.x - b.x) ** 2 + (n.y - b.y) ** 2 < (n.d.r + 5) ** 2) {
+        n.hp--; n.hit = .1; b.hits.add(n);
+        if (n.hp <= 0) killNip(j); else beep(300, .04, 'square', .03);
+        if (!b.pierce) { S.shots.splice(i, 1); break; }
+      }
+    }
+  }
+
+  // Socks. Iain has never lost a sock. A sock on the floor sits there with a
+  // countdown ring; get to it in time or history is made.
+  for (let i = S.socks.length - 1; i >= 0; i--) {
+    const s = S.socks[i]; s.t += dt;
+    if (s.ground) {
+      s.ground -= dt;
+      if (s.ground <= 0) { endRun('sock', s); return; }
+    } else {
+      if (s.spilt) { s.vy += 380 * dt; s.x += s.vx * dt; s.y += s.vy * dt; s.x = clamp(s.x, 10, W - 10); if (s.vy > 0 && s.y >= s.landY) land(s); }
+      else { s.vy = Math.min(s.vy + 30 * dt, 120); s.y += s.vy * dt; s.x = clamp(s.x + Math.sin(s.t * 3) * 22 * dt, 10, W - 10); if (s.y >= s.landY) land(s); }
+    }
+    if (I.inv < 1.1 && (s.ground || s.y > ZONE_TOP - 30) && grabs(s.x, s.y)) { S.socks.splice(i, 1); catchSock(s); }
+  }
+  function land(s) {
+    s.y = s.landY; s.ground = s.max = s.spilt ? Math.max(4, 6.5 - S.wave * .1) : Math.max(4, 8 - S.wave * .2);
+    if (!s.spilt) beep(330, .1, 'square', .03);
+  }
+
+  // Crates (no penalty for missing one)
+  for (let i = S.crates.length - 1; i >= 0; i--) {
+    const c = S.crates[i]; c.t += dt;
+    if (c.ground) { c.ground -= dt; if (c.ground <= 0) { S.crates.splice(i, 1); continue; } }
+    else { c.y += c.vy * dt; if (c.y >= c.landY) { c.y = c.landY; c.ground = 5; } }
+    if ((c.ground || c.y > ZONE_TOP - 30) && grabs(c.x, c.y)) { S.crates.splice(i, 1); takeCrate(c); }
+  }
+
+  updateHazards(dt);
+  updateJeep(dt);
+
+  // Particles / text / ink / snow
+  for (let i = S.parts.length - 1; i >= 0; i--) {
+    const p = S.parts[i]; p.vy += 420 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
+    if (p.rub && p.vy > 0 && p.y >= GROUND - S.rubble[clamp(Math.floor(p.x / CELL), 0, COLS - 1)]) { const c = clamp(Math.floor(p.x / CELL), 0, COLS - 1); S.rubble[c] = Math.min(16, S.rubble[c] + .5); S.parts.splice(i, 1); continue; }
+    if (p.life <= 0 || p.y > H) S.parts.splice(i, 1);
+  }
+  for (let i = S.fires.length - 1; i >= 0; i--) {
+    const f = S.fires[i]; f.life -= dt; f.t += dt;
+    if (Math.random() < dt * 6) S.smoke.push({ x: f.x + rnd(-3, 3), y: f.y - 6, life: 2, r: rnd(3, 5) });
+    if (f.life <= 0 || (!cellAt(f.x, f.y + 3) && f.y < GROUND - 4)) S.fires.splice(i, 1);
+  }
+  for (let i = S.smoke.length - 1; i >= 0; i--) { const m = S.smoke[i]; m.y -= 18 * dt; m.x += 6 * dt; m.r += 4 * dt; m.life -= dt; if (m.life <= 0) S.smoke.splice(i, 1); }
+  if (S.barHit > 0) S.barHit -= dt;
+  updateCollapse(dt);
+  // the sock alarm: a sock about to be lost gets a klaxon, wherever your finger is
+  const crit = S.socks.some(s => s.ground && s.ground / s.max < .35);
+  S.alarmT -= dt; if (crit && S.alarmT <= 0) { beep(1250, .09, 'square', .045); S.alarmT = .35; }
+  for (let i = S.texts.length - 1; i >= 0; i--) { const t = S.texts[i]; t.y -= 24 * dt; t.life -= dt; if (t.life <= 0) S.texts.splice(i, 1); }
+  for (let i = S.inks.length - 1; i >= 0; i--) { S.inks[i].life -= dt; if (S.inks[i].life <= 0) S.inks.splice(i, 1); }
+  for (let i = S.snow.length - 1; i >= 0; i--) { const f = S.snow[i]; f.y += f.v * dt; f.x += Math.sin(f.y / 20) * .4; if (f.y > ZONE_BOT) S.snow.splice(i, 1); }
+  if (shake > 0) shake -= dt;
+
+  if (london() <= 0) endRun('city');
+}
+function killNip(j, quiet) {
+  const n = S.nips[j];
+  S.combo++;
+  const mult = Math.min(8, 1 + Math.floor(S.combo / 10));
+  S.score += n.d.pts * mult * (1 + Math.floor(S.wave / 5)); sfx.pop();
+  burst(n.x, n.y, 8, ['#f4b6a6', '#c97b6a', '#fff']);
+  if (!quiet) say(n.x, n.y, '+' + n.d.pts * mult, mult > 1 ? '#4ff0ff' : '#ffd23f', 7);
+  if (S.combo % 10 === 0 && mult > 1) say(W / 2, 140, 'COMBO x' + mult, '#4ff0ff', 10);
+  if (n.d.into) { addNip(n.d.into, n.x, n.y, -80, -40); addNip(n.d.into, n.x, n.y, 80, -40); }
+  S.nips.splice(j, 1);
+}
+function blowUp(n, x, y) {
+  crater(x, y, n.d.R * (1 + Math.min(.6, S.wave * .02)));
+  burst(x, y, 10, ['#ff6b35', '#ffd23f', '#fff']);
+  if (n.d.ink) { inkBlot(x, y); say(x, y - 10, 'INK!', '#6b62ff', 9); }
+  sfx.boom(); shake = Math.max(shake, n.type === 'big' ? .3 : .14);
+}
+
+// The Singida jeep. "This thing is a tank, nothing can stop this jeep."
+function startJeep() {
+  S.jeep = { x: -70, y: rnd(ZONE_TOP + 70, ZONE_BOT - 10), phase: 'drive', t: 0 }; sfx.horn();
+  say(W / 2, 200, 'NOTHING CAN STOP THIS JEEP', '#ffd23f', 8);
+}
+function updateJeep(dt) {
+  const J = S.jeep, I = S.iain;
+  if (J) {
+    J.t += dt;
+    if (J.phase === 'drive') { J.x += 110 * dt; if (J.x >= W / 2 - 30) { J.phase = 'flat'; J.t = 0; beep(80, .6, 'sawtooth', .05, -40); say(J.x + 30, J.y - 50, 'FLAT TYRE', '#ff6b6b', 8); } }
+    else if (J.phase === 'flat') {
+      if (J.t > 1.6 && !S.lion) { S.lion = { x: W + 30, y: J.y, leapt: false }; sfx.roar(); say(W / 2, 220, 'HOLD THE JACK!', '#ffd23f', 11); say(W / 2, 238, 'STAND BY THE JEEP', '#cfc8ff', 7); }
+      if (J.t > 6) J.phase = 'leave';
+    } else { J.x += 140 * dt; if (J.x > W + 80) S.jeep = null; }
+  }
+  const L = S.lion;
+  if (L) {
+    L.x -= 180 * dt;
+    const atJack = J && Math.abs(I.x - (J.x + 30)) < 30 && Math.abs(I.y - J.y) < 26;
+    if (!L.leapt && Math.abs(L.x - I.x) < 22 && Math.abs(L.y - I.y) < 30) {
+      L.leapt = true;
+      if (atJack) { S.score += 500; say(I.x, I.y - 100, 'JUST REALLY HOPE FOR THE BEST', '#2ecc71', 6); say(I.x, I.y - 86, '+500', '#ffd23f', 9); sfx.power(); }
+      else hurtIain('PERFECT AMBUSH DISTANCE');
+    }
+    if (L.x < -40) S.lion = null;
+  }
+}
+
+// ===================== DRAW =====================
+function drawSky() {
+  const g = ctx.createLinearGradient(0, 0, 0, GROUND);
+  const hue = (230 + S.wave * 11) % 360;
+  g.addColorStop(0, `hsl(${hue},50%,8%)`); g.addColorStop(.7, `hsl(${(hue + 35) % 360},50%,22%)`); g.addColorStop(1, `hsl(${(hue + 60) % 360},65%,38%)`);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, GROUND);
+  for (let i = 0; i < 34; i++) { ctx.fillStyle = `rgba(255,255,255,${.3 + hash(i, 7) * .5})`; ctx.fillRect(hash(i, 1) * W, 40 + hash(i, 2) * 180, 1.5, 1.5); }
+  // The London Eye, turning very slowly behind everything
+  const ex = 104, ey = GROUND - 44, er = 32, rot = performance.now() / 9000;
+  ctx.strokeStyle = 'rgba(220,230,255,.35)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(ex, ey, er, 0, 7); ctx.stroke();
+  for (let i = 0; i < 16; i++) {
+    const a = rot + i * Math.PI / 8;
+    ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(ex + Math.cos(a) * er, ey + Math.sin(a) * er); ctx.stroke();
+    ctx.fillStyle = 'rgba(220,230,255,.5)'; ctx.fillRect(ex + Math.cos(a) * er - 1.5, ey + Math.sin(a) * er - 1.5, 3, 3);
+  }
+  ctx.beginPath(); ctx.moveTo(ex - 12, GROUND); ctx.lineTo(ex, ey); ctx.lineTo(ex + 12, GROUND); ctx.stroke();
+}
+function drawZone() {
+  ctx.fillStyle = '#3a3a4a'; ctx.fillRect(0, GROUND, W, 4);           // the Embankment wall
+  ctx.fillStyle = '#2a4a6a'; ctx.fillRect(0, GROUND + 4, W, ZONE_TOP - GROUND - 4); // a strip of Thames
+  ctx.fillStyle = 'rgba(255,255,255,.15)'; for (let x = (performance.now() / 60) % 40 - 40; x < W; x += 40) ctx.fillRect(x, GROUND + 7, 16, 1);
+  // the laundry zone: launderette lino
+  for (let y = ZONE_TOP; y < HUD_BOT; y += 16) for (let x = 0; x < W; x += 16) {
+    ctx.fillStyle = ((x + y) / 16) % 2 ? '#1f1a3a' : '#241f45'; ctx.fillRect(x, y, 16, 16);
+  }
+  ctx.fillStyle = 'rgba(79,240,255,.07)'; ctx.font = FONT(10); ctx.textAlign = 'center'; ctx.fillText('THE LAUNDRY ZONE', W / 2, ZONE_TOP + 90);
+}
+function drawSock(x, y, k, a = 0, scale = 1) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(a); ctx.scale(scale, scale);
+  ctx.fillStyle = SOCKS[k];
+  ctx.fillRect(-3, -9, 6, 12); ctx.fillRect(-3, 1, 10, 6);     // leg + foot
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(-3, -6, 6, 2); // stripe
+  ctx.fillStyle = '#fff'; ctx.fillRect(-3, -9, 6, 2);           // cuff
+  ctx.restore();
+}
+function drawIainAt(x, y, face, alpha) {
+  const I = S.iain;
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, y, 13, 4, 0, 0, 7); ctx.fill(); // shadow
+  const step = Math.sin(I.walk) * 3;
+  ctx.fillStyle = '#4a6fa5'; // jeans
+  ctx.fillRect(x - 7, y - 22, 6, 20 + step / 2); ctx.fillRect(x + 1, y - 22, 6, 20 - step / 2);
+  ctx.fillStyle = '#8b1e2d'; ctx.fillRect(x - 9, y - 3 + step / 2, 8, 3); ctx.fillRect(x + 1, y - 3 - step / 2, 8, 3); // trainers
+  ctx.fillStyle = '#111'; ctx.fillRect(x - 10, y - 44, 20, 24); // black tee
+  ctx.strokeStyle = '#7fdcb5'; ctx.lineWidth = 1.3; ctx.beginPath(); ctx.arc(x, y - 33, 5, 0, 7);   // peace sign
+  ctx.moveTo(x, y - 38); ctx.lineTo(x, y - 28); ctx.moveTo(x, y - 33); ctx.lineTo(x - 3.5, y - 29.5); ctx.moveTo(x, y - 33); ctx.lineTo(x + 3.5, y - 29.5); ctx.stroke();
+  ctx.fillStyle = '#e9b9a0';
+  const arm = S.fireT > gun(S.gun).rate * .6 ? -16 : 0;
+  ctx.fillRect(x - 14, y - 42, 4, 17); ctx.fillRect(x + 10, y - 42 + arm, 4, 17);
+  ctx.save(); ctx.translate(x, y - 56);
+  if (face < 0) ctx.scale(-1, 1);
+  if (HEAD.complete && HEAD.naturalWidth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(HEAD, -15, -15, 30, 30); ctx.imageSmoothingEnabled = false; }
+  else { ctx.fillStyle = '#e9b9a0'; ctx.fillRect(-11, -11, 22, 22); }
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
+function drawIain() {
+  const I = S.iain;
+  if (gun(S.gun).mirror) drawIainAt(W - I.x, I.y, -I.face, .4); // Man In The Mirror
+  if (!(I.inv > 0 && Math.floor(I.inv * 14) % 2)) drawIainAt(I.x, I.y, I.face, 1);
+  if (I.shield > 0) { ctx.strokeStyle = `rgba(180,108,255,${.4 + .3 * Math.sin(performance.now() / 100)})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(I.x, I.y - 34, 34, 0, 7); ctx.stroke(); }
+  if (I.homing > 0) { ctx.strokeStyle = '#4ff0ff'; ctx.lineWidth = 1.3; ctx.strokeRect(I.x - 10, I.y - 61, 8, 5); ctx.strokeRect(I.x + 2, I.y - 61, 8, 5); }
+}
+function drawShadow(x, y, f, col = 'rgba(255,60,60,') {
+  ctx.fillStyle = col + (.15 + .45 * f) + ')';
+  ctx.beginPath(); ctx.ellipse(x, y, 6 + 8 * f, 2 + 3 * f, 0, 0, 7); ctx.fill();
+}
+function drawNip(n) {
+  ctx.save(); ctx.translate(n.x, n.y);
+  if (n.vy > 0) { ctx.fillStyle = n.d.dive && n.dived ? 'rgba(255,60,60,.6)' : 'rgba(255,120,40,.5)'; ctx.fillRect(-n.d.r * .4, -n.d.r * 2.2, n.d.r * .8, n.d.r * 1.4); }
+  ctx.rotate(n.a);
+  if (n.d.pen) { // a biro, as handed to an entire primary school in 2005
+    ctx.fillStyle = '#2f7bff'; ctx.fillRect(-2, -11, 4, 18); ctx.fillStyle = '#fff'; ctx.fillRect(-2, -11, 4, 4); ctx.fillStyle = '#111'; ctx.fillRect(-1, 7, 2, 4);
+  } else {
+    const im = NIPIMG[n.d.img];
+    if (im.complete && im.naturalWidth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(im, -n.d.r, -n.d.r, n.d.r * 2, n.d.r * 2); ctx.imageSmoothingEnabled = false; }
+    else { ctx.fillStyle = '#c97b6a'; ctx.beginPath(); ctx.arc(0, 0, n.d.r, 0, 7); ctx.fill(); }
+  }
+  if (n.hit > 0) { ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(0, 0, n.d.r, 0, 7); ctx.fill(); }
+  ctx.restore();
+  if (n.hp > 1) { ctx.fillStyle = '#ff6b6b'; for (let i = 0; i < n.hp; i++) ctx.fillRect(n.x - n.d.r + i * 5, n.y - n.d.r - 6, 3, 3); }
+}
+function drawCrate(c) {
+  const d = CRATES[c.kind];
+  if (c.ground && c.ground < 1.5 && Math.floor(performance.now() / 120) % 2) return;
+  const bob = c.ground ? 0 : Math.sin(c.t * 4) * 2;
+  if (!c.ground) { ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.moveTo(c.x - 12, c.y - 10 + bob); ctx.quadraticCurveTo(c.x, c.y - 30 + bob, c.x + 12, c.y - 10 + bob); ctx.fill(); }
+  ctx.fillStyle = d.col; ctx.fillRect(c.x - 11, c.y - 9 + bob, 22, 16);
+  ctx.strokeStyle = '#05030f'; ctx.lineWidth = 1; ctx.strokeRect(c.x - 11, c.y - 9 + bob, 22, 16);
+  ctx.fillStyle = '#05030f'; ctx.font = FONT(8); ctx.textAlign = 'center'; ctx.fillText('?', c.x, c.y + 4 + bob);
+  ctx.font = FONT(5); ctx.fillStyle = d.col; ctx.fillText(d.label, c.x, c.y + 15 + bob);
+}
+function drawJeep() {
+  const J = S.jeep;
+  if (J) {
+    const x = J.x, y = J.y, tilt = J.phase === 'flat' ? 3 : 0;
+    if (S.lion || J.phase === 'flat') { ctx.fillStyle = 'rgba(255,210,63,.08)'; ctx.fillRect(0, y - 30, W, 34); } // the lion's lane
+    ctx.fillStyle = '#6b7a3a'; ctx.fillRect(x, y - 26 + tilt / 2, 56, 16); ctx.fillRect(x + 10, y - 38, 32, 13);
+    ctx.fillStyle = '#9fc7e0'; ctx.fillRect(x + 13, y - 36, 11, 8); ctx.fillRect(x + 28, y - 36, 11, 8);
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(x + 11, y - 7, 7, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x + 45, y - 5 + tilt / 2, 8, J.phase === 'flat' ? 3.5 : 7, 0, 0, 7); ctx.fill();
+    if (J.phase === 'flat') { ctx.fillStyle = '#ffd23f'; ctx.fillRect(x + 25, y - 12, 7, 12); ctx.font = FONT(5); ctx.textAlign = 'center'; ctx.fillText('JACK', x + 29, y - 15); }
+  }
+  const L = S.lion;
+  if (L) {
+    const x = L.x, y = L.y - (L.leapt && Math.abs(L.x - S.iain.x) < 60 ? 40 - Math.abs(L.x - S.iain.x) * .6 : 0);
+    ctx.fillStyle = '#d9a35b'; ctx.fillRect(x - 15, y - 18, 28, 11); ctx.fillRect(x - 13, y - 7, 4, 7); ctx.fillRect(x + 7, y - 7, 4, 7);
+    ctx.fillStyle = '#8a5a2b'; ctx.beginPath(); ctx.arc(x - 17, y - 20, 8, 0, 7); ctx.fill();
+    ctx.fillStyle = '#d9a35b'; ctx.beginPath(); ctx.arc(x - 18, y - 20, 5.5, 0, 7); ctx.fill();
+    ctx.fillRect(x + 13, y - 20, 7, 2);
+  }
+}
+function drawHazards() {
+  S.hazards.forEach(h => {
+    if (h.type === 'pizza') {
+      drawShadow(h.tx, h.ty, Math.min(1, h.t / h.dur));
+      ctx.save(); ctx.translate(h.x, h.y); ctx.rotate(h.t * 8);
+      ctx.fillStyle = '#d9a35b'; ctx.fillRect(-9, -9, 18, 18); ctx.fillStyle = '#ff6b35'; ctx.fillRect(-9, -13, 18, 5); ctx.fillStyle = '#ffd23f'; ctx.fillRect(-5, -15, 4, 4);
+      ctx.restore();
+    } else if (h.type === 'fire') {
+      for (let i = 0; i < 6; i++) { ctx.fillStyle = i % 2 ? '#ffd23f' : '#ff6b35'; const fx = h.tx + Math.sin(h.t * 20 + i) * 14, fh = 10 + Math.random() * 18; ctx.fillRect(fx - 3, h.ty - fh, 6, fh); }
+      ctx.fillStyle = 'rgba(255,107,53,.25)'; ctx.beginPath(); ctx.ellipse(h.tx, h.ty, 26, 8, 0, 0, 7); ctx.fill();
+    } else if (h.type === 'jet') {
+      const B = S.boss, top = B ? B.y + 22 : 100;
+      if (h.t < h.warn) { ctx.strokeStyle = Math.floor(h.t * 12) % 2 ? 'rgba(255,60,60,.9)' : 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(h.x, top); ctx.lineTo(h.x, ZONE_BOT); ctx.stroke(); ctx.setLineDash([]); }
+      else { ctx.fillStyle = 'rgba(120,200,255,.75)'; ctx.fillRect(h.x - 12, top, 24, ZONE_BOT - top); ctx.fillStyle = '#fff'; for (let i = 0; i < 10; i++) ctx.fillRect(h.x - 10 + Math.random() * 20, top + Math.random() * (ZONE_BOT - top), 3, 3); }
+    }
+  });
+}
+function drawBoss() {
+  const B = S.boss; if (!B) return;
+  const x = B.x, y = B.y, hurt = B.flash > 0 || (B.inv > 0 && Math.floor(B.inv * 16) % 2);
+  if (B.def.kind === 'blender' && B.ball && B.phase === 'fight') { // Green Hill wrecking ball, but it's the blender
+    ctx.strokeStyle = '#bbb'; ctx.lineWidth = 2; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(x, y + 16); ctx.lineTo(B.ball.x, B.ball.y); ctx.stroke(); ctx.setLineDash([]);
+    ctx.save(); ctx.translate(B.ball.x, B.ball.y); ctx.rotate(Math.sin(B.swing) * -.4);
+    ctx.fillStyle = '#b46cff'; ctx.beginPath(); ctx.moveTo(-12, -14); ctx.lineTo(12, -14); ctx.lineTo(9, 10); ctx.quadraticCurveTo(0, 18, -9, 10); ctx.closePath(); ctx.fill(); // melted jug
+    ctx.fillStyle = '#333'; ctx.fillRect(-10, 10, 20, 8); ctx.fillStyle = '#ffd23f'; ctx.fillRect(-3, -6, 6, 10);
+    ctx.restore();
+  }
+  // the gadget hanging under the pod
+  if (B.def.kind === 'oven') { ctx.fillStyle = '#555'; ctx.fillRect(x - 16, y + 14, 32, 18); ctx.fillStyle = '#ff6b35'; ctx.fillRect(x - 11, y + 18, 22, 9); }
+  if (B.def.kind === 'dish') { ctx.fillStyle = '#9aa'; ctx.fillRect(x - 14, y + 14, 28, 14); ctx.fillStyle = '#4ff0ff'; ctx.fillRect(x - 3, y + 28, 6, 6); }
+  // the Nic-Mobile
+  ctx.fillStyle = 'rgba(255,140,40,.8)'; ctx.fillRect(x - 6, y + 14, 12, 4 + Math.random() * 6);
+  ctx.fillStyle = hurt ? '#fff' : '#d8d8e0'; ctx.beginPath(); ctx.ellipse(x, y + 4, 34, 15, 0, 0, Math.PI); ctx.fill();
+  ctx.fillStyle = hurt ? '#fff' : '#e2264d'; ctx.fillRect(x - 34, y + 2, 68, 4);
+  ctx.save(); ctx.beginPath(); ctx.arc(x, y - 4, 17, Math.PI, 0); ctx.lineTo(x + 17, y + 3); ctx.lineTo(x - 17, y + 3); ctx.closePath(); ctx.clip();
+  if (NICHEAD.complete && NICHEAD.naturalWidth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(NICHEAD, x - 16, y - 21, 32, 32); ctx.imageSmoothingEnabled = false; }
+  if (B.pinch) { ctx.fillStyle = 'rgba(255,0,0,.25)'; ctx.fillRect(x - 17, y - 22, 34, 26); }
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(180,230,255,.8)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y - 4, 17, Math.PI, 0); ctx.stroke();
+  if (B.pinch && Math.random() < .3) S.parts.push({ x: x + rnd(-20, 20), y: y, vx: rnd(-10, 10), vy: rnd(-40, -20), life: .8, col: '#777', s: 4 });
+  if (B.talk > 0) {
+    ctx.font = FONT(5); ctx.textAlign = 'center';
+    const lines = wrap(B.line, 26), bw = 150, bh = 8 + lines.length * 9, bx = clamp(x, 80, W - 80), byy = y + 40;
+    ctx.fillStyle = '#fff'; ctx.fillRect(bx - bw / 2, byy, bw, bh); ctx.fillStyle = '#05030f';
+    lines.forEach((l, i) => ctx.fillText(l, bx, byy + 11 + i * 9));
+  }
+}
+function drawCutscene(B) {
+  const el = S.cutMax - S.cut;
+  ctx.fillStyle = 'rgba(5,3,15,.55)'; ctx.fillRect(0, 0, W, H);
+  const bx = 14, by = 150, bw = W - 28, bh = 128;
+  ctx.fillStyle = '#0b0820'; ctx.fillRect(bx, by, bw, bh);
+  ctx.strokeStyle = '#ff3b3b'; ctx.lineWidth = 3; ctx.strokeRect(bx, by, bw, bh);
+  ctx.save(); ctx.beginPath(); ctx.arc(bx + 40, by + 44, 28, 0, 7); ctx.clip();
+  if (NICHEAD.complete && NICHEAD.naturalWidth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(NICHEAD, bx + 12, by + 16, 56, 56); ctx.imageSmoothingEnabled = false; }
+  ctx.restore();
+  ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bx + 40, by + 44, 28, 0, 7); ctx.stroke();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.font = FONT(9); ctx.fillStyle = '#ff3b3b'; ctx.fillText('DR. ROBOTNIC', bx + 80, by + 18);
+  ctx.font = FONT(6); ctx.fillStyle = '#4ff0ff'; ctx.fillText('PILOTING: ' + B.def.name, bx + 80, by + 34);
+  const story = S.bossNo === 0 ? 'NIC HAS FOUND THE WEBSITE. HE IS NOT HAPPY. ' : '';
+  const full = story + '"' + B.def.line + '"';
+  const shown = full.slice(0, Math.floor(el * 34));
+  ctx.font = FONT(7); ctx.fillStyle = '#fff';
+  wrap(shown, 34).forEach((l, i) => ctx.fillText(l, bx + 12, by + 80 + i * 12));
+  if (el > .8 && Math.floor(performance.now() / 300) % 2) { ctx.textAlign = 'right'; ctx.font = FONT(6); ctx.fillStyle = '#ffd23f'; ctx.fillText('TAP TO FIGHT', bx + bw - 10, by + bh - 14); }
+  ctx.textAlign = 'center';
+}
+function wrap(t, n) { const out = []; let cur = ''; t.split(' ').forEach(w => { if ((cur + ' ' + w).trim().length > n) { out.push(cur.trim()); cur = w; } else cur += ' ' + w; }); if (cur.trim()) out.push(cur.trim()); return out; }
+function drawInk() {
+  S.inks.forEach(k => {
+    ctx.globalAlpha = Math.min(.9, k.life);
+    ctx.fillStyle = '#120a3a';
+    k.blobs.forEach(b => { [1, -1].forEach(s => { ctx.beginPath(); ctx.arc(k.x + s * b.dx, k.y + b.dy, b.r, 0, 7); ctx.fill(); }); });
+  });
+  ctx.globalAlpha = 1;
+}
+function bar(x, y, w, h, frac, col) {
+  ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = col; ctx.fillRect(x, y, w * clamp(frac, 0, 1), h);
+}
+function drawHUD() {
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = 'rgba(5,3,15,.7)'; ctx.fillRect(0, 0, W, 40);
+  ctx.font = FONT(8); ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.fillText(String(S.score).padStart(6, '0'), 6, 5);
+  const mult = Math.min(8, 1 + Math.floor(S.combo / 10));
+  if (mult > 1) { ctx.fillStyle = '#4ff0ff'; ctx.fillText('x' + mult, 62, 5); }
+  ctx.fillStyle = '#ffd23f'; ctx.font = FONT(5); ctx.fillText('WAVE ' + S.wave + ': ' + trackFor(S.wave), 6, 17);
+  ctx.textAlign = 'right'; ctx.fillStyle = '#8f86c9'; ctx.fillText('BEST ' + Math.max(save.best, S.score), W - 32, 6);
+  ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.fillRect(W - 27, 3, 22, 20); ctx.fillStyle = '#fff'; ctx.fillRect(W - 20, 8, 3, 10); ctx.fillRect(W - 14, 8, 3, 10);
+  // London's health, the thing you are protecting
+  const lp = london();
+  ctx.textAlign = 'left'; ctx.fillStyle = '#cfc8ff'; ctx.fillText('LONDON', 6, 28);
+  if (S.barHit > 0) { ctx.fillStyle = Math.floor(S.barHit * 12) % 2 ? '#ff3b3b' : '#fff'; ctx.fillRect(44, 25, 244, 11); }
+  bar(46, 27, 240, 7, lp / 100, lp > 55 ? '#2ecc71' : lp > 25 ? '#ffb347' : (Math.floor(performance.now() / 200) % 2 ? '#ff3b3b' : '#7a1020'));
+  ctx.textAlign = 'right'; ctx.fillStyle = '#fff'; ctx.fillText(lp + '%', W - 6, 28);
+  // boss bar: eight pips, like it's 1991
+  const B = S.boss;
+  if (B && B.phase !== 'enter') {
+    ctx.fillStyle = 'rgba(5,3,15,.7)'; ctx.fillRect(0, 40, W, 16);
+    ctx.textAlign = 'left'; ctx.fillStyle = '#ff6b6b'; ctx.font = FONT(5); ctx.fillText('DR. ROBOTNIC', 6, 45);
+    for (let i = 0; i < 8; i++) { ctx.fillStyle = i < B.hp ? (B.pinch ? '#ff3b3b' : '#ffd23f') : 'rgba(255,255,255,.12)'; ctx.fillRect(84 + i * 22, 43, 19, 8); }
+    if (B.hp > 0) { ctx.fillStyle = '#fff'; ctx.fillRect(84 + (B.hp - 1) * 22, 51, 19 * (1 - B.sub / B.subMax), 2); }
+  } else { ctx.textAlign = 'center'; ctx.fillStyle = '#7fdcb5'; ctx.font = FONT(5); ctx.fillText('SOCKS IAIN HAS EVER LOST: 0', W / 2, 44); }
+
+  // Bottom panel: the sock drawer, the gun, the dryer
+  const y0 = HUD_BOT;
+  ctx.fillStyle = '#0b0820'; ctx.fillRect(0, y0, W, H - y0);
+  ctx.fillStyle = '#2b2550'; ctx.fillRect(0, y0, W, 2);
+  ctx.textAlign = 'left'; ctx.font = FONT(5); ctx.fillStyle = '#8f86c9'; ctx.fillText('SOCK DRAWER', 6, y0 + 6);
+  const avail = sockColours();
+  for (let k = 0; k < 7; k++) {
+    const sx = 6 + k * 29, sy = y0 + 14, zip = S.zips.find(z => z.k === k);
+    ctx.fillStyle = k < avail ? 'rgba(255,255,255,.07)' : 'rgba(255,255,255,.02)'; ctx.fillRect(sx, sy, 26, 24);
+    ctx.strokeStyle = k < avail ? SOCKS[k] : 'rgba(255,255,255,.08)'; ctx.lineWidth = 1; ctx.strokeRect(sx + .5, sy + .5, 25, 23);
+    if (S.drawer[k]) drawSock(sx + 11, sy + 12, k, .2);
+    if (zip) { const f = zip.t / .6; drawSock(sx + 8 - 4 * (1 - f), sy + 12 - 10 * (1 - f), k, .2); drawSock(sx + 16 + 4 * (1 - f) - 8 * (1 - f), sy + 12 - 10 * (1 - f), k, -.2); }
+  }
+  ctx.font = FONT(5); ctx.fillStyle = '#cfc8ff'; ctx.fillText('GUN LV' + S.gun, 6, y0 + 45);
+  ctx.fillStyle = '#ffd23f'; ctx.fillText(gun(S.gun).name, 50, y0 + 45);
+  const need = pairsToNext(S.gun);
+  for (let i = 0; i < need; i++) { ctx.fillStyle = i < S.gunPairs ? '#ffd23f' : 'rgba(255,255,255,.15)'; ctx.fillRect(6 + i * 14, y0 + 55, 11, 7); }
+  ctx.fillStyle = '#8f86c9'; ctx.fillText('PAIRS TO ' + gun(S.gun + 1).name, 10 + need * 14, y0 + 56);
+  const powers = [];
+  if (S.iain.shield > 0) powers.push('SHIELD ' + Math.ceil(S.iain.shield));
+  if (S.iain.homing > 0) powers.push('AIM ' + Math.ceil(S.iain.homing));
+  if (powers.length) { ctx.fillStyle = '#4ff0ff'; ctx.textAlign = 'right'; ctx.fillText(powers.join(' '), 282, y0 + 6); }
+  // dryer button
+  const ready = S.dryer >= DRYER_FULL, bx = W - 70, by = y0 + 6, bw = 64, bh = 72;
+  ctx.fillStyle = ready ? (Math.floor(performance.now() / 250) % 2 ? '#4ff0ff' : '#2aa6b5') : '#2b2550'; ctx.fillRect(bx, by, bw, bh);
+  ctx.fillStyle = 'rgba(79,240,255,.55)'; ctx.fillRect(bx, by + bh * (1 - S.dryer / DRYER_FULL), 5, bh * (S.dryer / DRYER_FULL));
+  ctx.strokeStyle = ready ? '#05030f' : '#cfc8ff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bx + 34, by + 28, 13, 0, 7); ctx.stroke();
+  if (ready) { ctx.beginPath(); ctx.arc(bx + 34, by + 28, 7, performance.now() / 100, performance.now() / 100 + 4); ctx.stroke(); }
+  ctx.textAlign = 'center'; ctx.font = FONT(5); ctx.fillStyle = ready ? '#05030f' : '#cfc8ff';
+  ctx.fillText(ready ? 'TAP ME' : 'DRYER ' + S.dryer + '/' + DRYER_FULL, bx + 34, by + 52);
+
+  // banners
+  ctx.textAlign = 'center';
+  if (S.banner > 0) {
+    ctx.globalAlpha = Math.min(1, S.banner);
+    ctx.font = FONT(18); ctx.fillStyle = '#e2264d'; ctx.fillText('WAVE ' + S.wave, W / 2 + 3, 113);
+    ctx.fillStyle = '#ffd23f'; ctx.fillText('WAVE ' + S.wave, W / 2, 110);
+    ctx.font = FONT(8); ctx.fillStyle = '#4ff0ff'; ctx.fillText(trackFor(S.wave), W / 2, 136);
+    if (S.wave === S.startWave) { ctx.font = FONT(6); ctx.fillStyle = '#fff'; ctx.fillText('STAGE: LONDON', W / 2, 150); }
+    ctx.globalAlpha = 1;
+  }
+  if (S.warn > 0) {
+    const on = Math.floor(S.warn * 4) % 2;
+    ctx.fillStyle = on ? 'rgba(226,38,77,.85)' : 'rgba(5,3,15,.85)'; ctx.fillRect(0, 196, W, 54);
+    ctx.font = FONT(16); ctx.fillStyle = on ? '#fff' : '#ff3b3b'; ctx.fillText('WARNING', W / 2, 202);
+    ctx.font = FONT(6); ctx.fillStyle = '#fff'; ctx.fillText('DR. ROBOTNIC: ' + S.boss.def.name, W / 2, 226);
+    if (S.bossNo === 0) { ctx.font = FONT(5); ctx.fillText('NIC HAS FOUND THE WEBSITE', W / 2, 238); }
+  }
+  const crit = S.socks.filter(s => s.ground && s.ground / s.max < .5);
+  if (crit.length) {
+    const on = Math.floor(performance.now() / 180) % 2, y = B && B.phase !== 'enter' ? 58 : 54;
+    ctx.fillStyle = on ? 'rgba(226,38,77,.92)' : 'rgba(120,10,30,.92)'; ctx.fillRect(0, y, W, 14);
+    ctx.font = FONT(7); ctx.fillStyle = '#fff'; ctx.fillText('! SOCK ALERT ! ' + crit.length + (crit.length > 1 ? ' SOCKS' : ' SOCK') + ' ON THE FLOOR !', W / 2, y + 4);
+    crit.forEach(s => { // an arrow above each one, in the sky where your finger isn't
+      const ax = clamp(s.x, 12, W - 12), ay = y + 18;
+      ctx.fillStyle = on ? '#ff3b3b' : '#fff'; ctx.beginPath(); ctx.moveTo(ax - 8, ay + 14); ctx.lineTo(ax + 8, ay + 14); ctx.lineTo(ax, ay + 24); ctx.fill();
+      drawSock(ax, ay + 4, s.k, 0, .9);
+      ctx.font = FONT(6); ctx.fillStyle = '#fff'; ctx.fillText(Math.ceil(s.ground), ax + 14, ay + 2);
+    });
+  }
+  if (S.cut > 0 && B) drawCutscene(B);
+  if (S.b2 > 0) {
+    ctx.globalAlpha = Math.min(1, S.b2);
+    ctx.fillStyle = 'rgba(5,3,15,.78)'; ctx.fillRect(0, 290, W, 24);
+    ctx.font = FONT(8); ctx.fillStyle = S.b2Col; ctx.fillText(S.b2Text, W / 2, 298);
+    ctx.globalAlpha = 1;
+  }
+}
+function draw() {
+  ctx.save();
+  if (shake > 0) ctx.translate(rnd(-4, 4) * shake, rnd(-4, 4) * shake);
+  drawSky();
+  if (cityDirty) drawCity();
+  ctx.drawImage(cityCv, 0, 0, W, H);
+  // rubble piles at the foot of London, smoke and fires on the wounded buildings
+  ctx.fillStyle = '#4a4458';
+  for (let c = 0; c < COLS; c++) { const h = S.rubble[c]; if (h > .5) { ctx.fillRect(c * CELL - 1, GROUND - h, CELL + 2, h); ctx.fillStyle = '#5c5568'; ctx.fillRect(c * CELL + 1, GROUND - h, 2, 2); ctx.fillStyle = '#4a4458'; } }
+  S.smoke.forEach(m => { ctx.fillStyle = 'rgba(70,64,80,' + (.45 * m.life / 2) + ')'; ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, 7); ctx.fill(); });
+  S.fires.forEach(f => { for (let i = 0; i < 3; i++) { ctx.fillStyle = i === 1 ? '#ffd23f' : '#ff6b35'; const fh = 4 + Math.abs(Math.sin(f.t * 9 + i * 2)) * 8; ctx.fillRect(f.x - 4 + i * 3, f.y - fh, 3, fh); } });
+  drawZone();
+  if (S.socks.some(s => s.ground && s.ground / s.max < .35) && Math.floor(performance.now() / 180) % 2) {
+    ctx.strokeStyle = '#ff3b3b'; ctx.lineWidth = 4; ctx.strokeRect(2, ZONE_TOP + 2, W - 4, HUD_BOT - ZONE_TOP - 4);
+  }
+  if (S.dryerAnim > 0) { ctx.strokeStyle = 'rgba(79,240,255,.6)'; ctx.lineWidth = 3; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(W / 2, 250, 40 + i * 30 + (1.4 - S.dryerAnim) * 40, performance.now() / 200 + i, performance.now() / 200 + i + 4); ctx.stroke(); } }
+  // landing shadows for anything heading into the zone: the dodge telegraph
+  S.nips.forEach(n => { if (n.y > GROUND - 160) drawShadow(n.x, n.landY, clamp(1 - (n.landY - n.y) / 220, 0, 1)); });
+  S.socks.forEach(s => { if (!s.ground && s.y > GROUND - 140) drawShadow(s.x, s.landY, clamp(1 - (s.landY - s.y) / 200, 0, 1), 'rgba(79,240,255,'); });
+  drawJeep();
+  S.crates.forEach(drawCrate);
+  S.socks.forEach(s => {
+    if (s.ground) { // countdown ring: when it closes, history is made
+      const f = s.ground / s.max;
+      ctx.strokeStyle = f > .4 ? '#ffd23f' : '#ff3b3b'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(s.x, s.y - 3, 11, -Math.PI / 2, -Math.PI / 2 + f * Math.PI * 2); ctx.stroke();
+      if (f > .4 || Math.floor(performance.now() / 110) % 2) drawSock(s.x, s.y - 3, s.k, 1.4);
+    } else drawSock(s.x, s.y, s.k, s.spilt ? s.t * 12 : Math.sin(s.t * 3) * .5);
+  });
+  drawHazards();
+  if (S.sack) { ctx.fillStyle = '#c9a26b'; ctx.beginPath(); ctx.arc(S.sack.x, S.sack.y, 14, 0, 7); ctx.fill(); ctx.fillStyle = '#05030f'; ctx.font = FONT(5); ctx.textAlign = 'center'; ctx.fillText('SOCKS', S.sack.x, S.sack.y + 2); }
+  drawIain();
+  drawBoss();
+  S.shots.forEach(b => { ctx.fillStyle = SOCKS[b.k]; ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, 7); ctx.fill(); ctx.strokeStyle = '#05030f'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(b.x - 4, b.y); ctx.lineTo(b.x + 4, b.y); ctx.stroke(); });
+  S.nips.forEach(drawNip);
+  S.parts.forEach(p => { ctx.globalAlpha = Math.min(1, p.life * 2); ctx.fillStyle = p.col; ctx.fillRect(p.x, p.y, p.s, p.s); });
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#fff'; S.snow.forEach(f => ctx.fillRect(f.x, f.y, 2, 2));
+  drawInk();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  S.texts.forEach(t => { ctx.globalAlpha = Math.min(1, t.life * 2); ctx.font = FONT(t.size); ctx.fillStyle = '#000'; ctx.fillText(t.txt, t.x + 1, t.y + 1); ctx.fillStyle = t.col; ctx.fillText(t.txt, t.x, t.y); });
+  ctx.globalAlpha = 1;
+  ctx.restore();
+  drawHUD();
+  ctx.textBaseline = 'alphabetic';
+}
+
+// ===================== LOOP / SCREENS =====================
+const $ = id => document.getElementById(id);
+function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('show', s.id === id)); }
+
+function loop(t) {
+  const dt = Math.min(.05, (t - last) / 1000 || 0); last = t;
+  if (mode === 'play') { if (freeze > 0) freeze -= dt; else update(dt); } // hit-stop: the world holds its breath
+  if (S) draw(); else idleDraw();
+  requestAnimationFrame(loop);
+}
+function idleDraw() { // behind the menu: an untouched London
+  if (!idleDraw.done) { buildCity(); idleDraw.done = true; }
+  const keep = S; S = { wave: 1 }; drawSky(); S = keep;
+  if (cityDirty) drawCity(); ctx.drawImage(cityCv, 0, 0, W, H);
+  ctx.fillStyle = '#1f1a3a'; ctx.fillRect(0, GROUND, W, H - GROUND);
+}
+
+function endRun(why, sock) {
+  if (mode !== 'play') return;
+  mode = 'over';
+  if (S.score > save.best) save.best = S.score;
+  if (S.wave > save.bestWave) save.bestWave = S.wave;
+  writeSave();
+  spendTicket();
+  if (why === 'sock') {
+    sfx.lost();
+    $('over-title').innerHTML = 'A SOCK<br>WAS LOST';
+    $('over-why').innerHTML = 'For the first time in recorded history, <b>Iain has lost a sock</b>. A ' + SOCKNAME[sock.k] + ' one. Somewhere, Dr. RobotNic is laughing.';
+  } else {
+    sfx.boom();
+    $('over-title').innerHTML = 'LONDON HAS<br>FALLEN';
+    $('over-why').innerHTML = 'The nips have flattened the capital. But check the drawer: <b>every sock is still paired</b>. It\'s alright. Al-ri-i-i-ight.';
+  }
+  $('over-score').textContent = S.score;
+  $('over-stats').innerHTML = 'WAVE ' + S.wave + ' &middot; ' + S.pairs + ' PAIRS FOLDED &middot; GUN LV' + S.gun +
+    '<br>BEST ' + save.best + ' &middot; FURTHEST WAVE ' + save.bestWave + ' &middot; ROBOTNICS BEATEN ' + save.bosses +
+    '<br>EAST 17 TRACKS SPOTTED ' + save.tracks.length + '/17' +
+    (save.checkpoint > 1 ? '<br>CHECKPOINT SAVED: WAVE ' + save.checkpoint : '');
+  $('over-again').style.display = TEST ? 'none' : '';
+  $('over-menu').style.display = TEST ? '' : 'none';
+  show('over');
+}
+
+function openMenu() {
+  mode = 'menu'; S = null; idleDraw.done = false;
+  save = loadSave();
+  const cb = $('cont-btn');
+  if (save.checkpoint > 1) { cb.style.display = ''; cb.textContent = 'STAY ANOTHER DAY: WAVE ' + save.checkpoint; }
+  else cb.style.display = 'none';
+  $('menu-stats').innerHTML = save.runs ? 'BEST ' + save.best + ' &middot; FURTHEST WAVE ' + save.bestWave + '<br>PAIRS FOLDED ' + save.pairs + ' &middot; ROBOTNICS BEATEN ' + save.bosses + ' &middot; EAST 17 ' + save.tracks.length + '/17' : 'NO SOCK HAS EVER BEEN LOST';
+  show('menu');
+}
+function start(wave) { newRun(wave); mode = 'play'; show(null); }
+
+$('new-btn').onclick = () => start(1);
+$('cont-btn').onclick = () => start(save.checkpoint);
+$('resume-btn').onclick = () => { mode = 'play'; show(null); last = performance.now(); };
+$('quit-btn').onclick = () => { if (S) { if (S.score > save.best) save.best = S.score; writeSave(); } openMenu(); };
+$('over-menu').onclick = openMenu;
+function pause() { if (mode === 'play') { mode = 'paused'; show('paused'); } }
+document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+// ===================== INPUT =====================
+// Touch: relative drag, 1:1. Put your finger anywhere and Iain moves exactly as
+// far as your finger does, as fast as it does, and your finger never covers him.
+// Mouse: Iain simply follows the pointer around the laundry zone.
+addEventListener('keydown', e => {
+  const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  keys[k] = true;
+  if (k === ' ' || k.startsWith('Arrow')) e.preventDefault();
+  if (mode === 'play' && S.cut > 0 && (k === ' ' || k === 'Enter')) { if (S.cutMax - S.cut > .8) S.cut = .001; return; }
+  if (k === 'e' || k === ' ' || k === 'Shift') fireDryer();
+  if (k === 'p' || k === 'Escape') { if (mode === 'play') pause(); else if (mode === 'paused') $('resume-btn').click(); }
+  if (k === 'm') { muted = !muted; try { localStorage.setItem('nicattack.muted', muted ? '1' : '0'); } catch (e) {} }
+});
+addEventListener('keyup', e => { keys[e.key.length === 1 ? e.key.toLowerCase() : e.key] = false; });
+
+function toGame(e) { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; }
+let pid = null, lastP = null;
+cv.addEventListener('pointerdown', e => {
+  if (mode !== 'play') return;
+  e.preventDefault();
+  const p = toGame(e);
+  if (S.cut > 0) { if (S.cutMax - S.cut > .8) S.cut = .001; return; }
+  if (p.x > W - 30 && p.y < 26) return pause();
+  if (p.x > W - 72 && p.y > HUD_BOT) return fireDryer();
+  pid = e.pointerId; lastP = p; cv.setPointerCapture(e.pointerId);
+});
+cv.addEventListener('pointermove', e => {
+  if (mode !== 'play') return;
+  const p = toGame(e);
+  if (e.pointerType === 'mouse') { const I = S.iain; moveIain(p.x - I.x, p.y + 30 - I.y); return; }
+  if (e.pointerId !== pid || !lastP) return;
+  moveIain(p.x - lastP.x, p.y - lastP.y); lastP = p;
+});
+const up = e => { if (e.pointerId === pid) { pid = null; lastP = null; } };
+cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+
+// ===================== BOOT =====================
+if (TEST) window.__nicattack = {
+  get S() { return S; },
+  warp(w) { S.wave = w - 1; nextWave(); S.waveT = 0; },
+  boss() { if (!S.boss) startBoss(); },
+  jeep() { S.jeepT = 0; S.wave = Math.max(3, S.wave); },
+  crate(k) { S.crates.push({ kind: k, x: S.iain.x, y: S.iain.y - 120, vy: 52, t: 0, ground: 0, landY: S.iain.y }); },
+};
+if (hasTicket()) openMenu(); else show('gate');
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

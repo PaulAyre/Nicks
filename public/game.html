@@ -107,6 +107,17 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
 .lb-row .name{color:var(--gold)}
 .lb-row .score{color:var(--muted)}
 
+/* 100% EASTER EGG */
+.unlock{display:none;flex-direction:column;align-items:center;gap:.75rem;margin:.25rem 0 .5rem;padding:1.1rem 1.25rem;border:2px solid #ffd23f;border-radius:10px;background:linear-gradient(135deg,#1a0f3d,#2d1b69);max-width:360px;animation:unlockPop .6s cubic-bezier(.2,1.6,.4,1)}
+.unlock.show{display:flex}
+.unlock-flash{font-weight:800;letter-spacing:2px;color:#ffd23f;font-size:.85rem;animation:unlockBlink .5s steps(2) infinite}
+.unlock p{color:#cfc8ff;font-size:.85rem;line-height:1.5}
+.btn-arcade{background:#ffd23f;color:#1a0f3d;box-shadow:0 5px 0 #b8860b;font-weight:800}
+.btn-arcade:active{transform:translateY(3px);box-shadow:0 2px 0 #b8860b}
+@keyframes unlockPop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes unlockBlink{50%{color:#4ff0ff}}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:300}
+
 @media(max-width:400px){
   .game-header h1{font-size:1.3rem}
   .board-container,.tray,.submit-hint,.reveal-note{width:96vw}
@@ -177,6 +188,11 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
   <div class="results-stars" id="result-stars"></div>
   <div class="results-detail" id="result-msg"></div>
   <div class="breakdown" id="breakdown"></div>
+  <div class="unlock" id="unlock">
+    <div class="unlock-flash">PERFECT RECONSTRUCTION</div>
+    <p>Nic is whole again. All five, dead on. Something is falling on London...</p>
+    <a class="btn btn-arcade" href="nicattack.html">&#9654; PLAY NICATTACK LDN</a>
+  </div>
   <div class="results-btns">
     <button class="btn btn-gold" id="share-btn">Share Result</button>
     <button class="btn-outline" id="reveal-btn">Where They Really Were</button>
@@ -490,6 +506,36 @@ function showResults({ score, rows }) {
 
   buildLeaderboard('results-lb', score);
   results.classList.add('show');
+  document.getElementById('unlock').classList.toggle('show', score === 100);
+  if (score === 100) perfectUnlock();
+}
+
+// === 100% EASTER EGG ===
+// A perfect Nic writes a one-tab ticket that nicattack.html checks on entry.
+// The arcade game spends it when a run ends, so every go starts back here.
+function perfectUnlock() {
+  try { sessionStorage.setItem('nicattack.ticket', '1'); } catch (e) {}
+  const cv = document.createElement('canvas');
+  cv.id = 'confetti';
+  cv.width = innerWidth; cv.height = innerHeight;
+  document.body.appendChild(cv);
+  const c = cv.getContext('2d');
+  const cols = ['#c9a84c', '#e4c76b', '#ffd23f', '#4ff0ff', '#e2264d', '#fff', '#22c55e'];
+  const bits = Array.from({ length: 180 }, () => ({
+    x: innerWidth / 2, y: innerHeight * .35,
+    vx: (Math.random() - .5) * 18, vy: -Math.random() * 16 - 4,
+    s: 4 + Math.random() * 6, a: Math.random() * 6, va: (Math.random() - .5) * .4,
+    col: cols[Math.floor(Math.random() * cols.length)],
+  }));
+  let frames = 0;
+  (function tick() {
+    c.clearRect(0, 0, cv.width, cv.height);
+    bits.forEach(b => {
+      b.vy += .35; b.vx *= .99; b.x += b.vx; b.y += b.vy; b.a += b.va;
+      c.save(); c.translate(b.x, b.y); c.rotate(b.a); c.fillStyle = b.col; c.fillRect(-b.s / 2, -b.s / 4, b.s, b.s / 2); c.restore();
+    });
+    if (++frames < 260) requestAnimationFrame(tick); else cv.remove();
+  })();
 }
 
 function buildLeaderboard(elId, playerScore) {
@@ -524,6 +570,8 @@ function newGame() {
 document.getElementById('start-btn').addEventListener('click', () => {
   instructions.style.display = 'none';
   newGame();
+  // Testing key: game.html?perfect drops every nip on its true home.
+  if (new URLSearchParams(location.search).has('perfect')) NIPS.forEach((n, i) => placeAt(i, n.x, n.y));
 });
 document.getElementById('submit-btn').addEventListener('click', () => {
   if (placed.filter(Boolean).length === 5 && gameActive) judge();
