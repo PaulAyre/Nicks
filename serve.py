@@ -7,7 +7,11 @@ This site is deliberately kept out of any work tooling; it is a private gift.
 Two homes: the Mac (127.0.0.1 behind the cloudflared tunnel) and, from 24 Sep
 2026, the Hetzner apps box in a container. Set BIND=0.0.0.0 in the container.
 
-Open house (no password) happens if EITHER:
+PUBLIC (default since 18 Oct 2026, Paul): no password at all. Set NICKS_PUBLIC=0
+to bring the login back. Every response carries X-Robots-Tag: noindex so search
+engines never list it.
+
+When NICKS_PUBLIC=0, open house (no password) happens if EITHER:
   - the OPEN-UNTIL file holds a future timestamp (open-day.sh, Mac), or
   - now is inside the OPEN_FROM..OPEN_UNTIL window from the environment.
 The window is how the wedding day works on the server: it opens and re-locks
@@ -57,8 +61,14 @@ def open_window():
     return start <= datetime.datetime.now() < end
 
 
+# Paul, 18 Oct 2026: "Take the password off the site now and just make sure
+# it's not searchable." Public unless NICKS_PUBLIC=0.
+PUBLIC = os.environ.get("NICKS_PUBLIC", "1") != "0"
+NOINDEX = "noindex, nofollow, noarchive, nosnippet, noimageindex"
+
+
 def open_house():
-    if open_window():
+    if PUBLIC or open_window():
         return True
     try:
         with open(OPEN_FLAG) as fh:
@@ -118,6 +128,10 @@ def add_score(entry):
 
 
 class AuthHandler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header("X-Robots-Tag", NOINDEX)
+        super().end_headers()
+
     def _json(self, code, body):
         data = json.dumps(body).encode()
         self.send_response(code)
