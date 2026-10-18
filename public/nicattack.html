@@ -60,7 +60,7 @@ p b{color:#ffd23f;font-weight:400}
   <div class="screen" id="gate">
     <h1>ACCESS<br>DENIED<small>NICATTACK LDN</small></h1>
     <p>London cannot be defended by a man who has not first put Nic back together.</p>
-    <p><b>Score 95% or more on Pin the Nip</b> to deploy. Every single time.</p>
+    <p><b>Score 95% or more on Pin the Nip</b> to deploy.</p>
     <a class="btn" href="game.html">PIN THE NIPS</a>
   </div>
 
@@ -109,8 +109,7 @@ p b{color:#ffd23f;font-weight:400}
     <div class="stats">HIGH SCORES</div>
     <div class="board" id="board-over"></div>
     <div class="stats" id="over-stats"></div>
-    <a class="btn" id="over-again" href="game.html">PIN THE NIPS TO GO AGAIN</a>
-    <button class="btn ghost" id="over-menu" style="display:none">BACK TO MENU</button>
+    <button class="btn" id="over-menu">PLAY AGAIN</button>
   </div>
 </div>
 
@@ -120,15 +119,15 @@ p b{color:#ffd23f;font-weight:400}
 
 // ===================== GATE =====================
 // The ticket is written by game.html only on a 95%+ Pin the Nip. It lives in
-// sessionStorage, so it never outlives the tab, and a run that ends spends it:
-// to play again you pin the nips again. ?sockdrawer is Paul's testing key.
+// sessionStorage, so it never outlives the tab. Losing a run does NOT spend it
+// (Paul, 18 Oct 2026): game over goes straight back to the menu.
+// ?sockdrawer is Paul's testing key.
 const TICKET = 'nicattack.ticket';
 const SAVE = 'nicattack.v1';
 const TEST = new URLSearchParams(location.search).has('sockdrawer');
 
 function ss(fn) { try { return fn(sessionStorage); } catch (e) { return null; } }
 function hasTicket() { return TEST || ss(s => s.getItem(TICKET)) === '1'; }
-function spendTicket() { if (!TEST) ss(s => s.removeItem(TICKET)); }
 
 function loadSave() {
   const base = { best: 0, last: 0, bestWave: 0, checkpoint: 1, pairs: 0, runs: 0, tracks: [], bestGun: 1, bosses: 0 };
@@ -1443,7 +1442,6 @@ function endRun(why, sock) {
   if (S.score > save.best) save.best = S.score;
   if (S.wave > save.bestWave) save.bestWave = S.wave;
   writeSave();
-  spendTicket();
   if (why === 'sock') {
     sfx.lost();
     $('over-title').innerHTML = 'A SOCK<br>WAS LOST';
@@ -1476,8 +1474,6 @@ function endRun(why, sock) {
     try { const res = await postScore(Object.assign({ name }, run)); form.hidden = true; renderBoard($('board-over'), res.scores, res.rank); }
     catch (e) { console.error('[nicattack] score post failed', e); $('entry-go').disabled = false; $('entry-go').textContent = "DIDN'T SEND. TRY AGAIN"; }
   };
-  $('over-again').style.display = TEST ? 'none' : '';
-  $('over-menu').style.display = TEST ? '' : 'none';
   show('over');
 }
 
@@ -1569,6 +1565,7 @@ if (TEST) window.__nicattack = {
   hurt() { S.iain.inv = 0; hurtIain(); },
   skip() { if (S.cut > 0) S.cut = .001; },
   lp() { return [london(), cityLeft, cityTotal]; },
+  end(why) { endRun(why || 'london'); },
 };
 if (hasTicket()) openMenu(); else show('gate');
 requestAnimationFrame(loop);
