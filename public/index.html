@@ -42,6 +42,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
 .preview-wrap picture img{width:100%;display:block;filter:blur(14px) brightness(0.7);transform:scale(1.1)}
 .preview-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,10,0.1) 0%,rgba(10,10,10,0.85) 100%);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:2rem}
 .preview-overlay .lock{font-size:2rem;margin-bottom:.5rem}
+.preview-overlay .lock.wobble{animation:lockwob .25s}
+@keyframes lockwob{0%,100%{transform:rotate(0)}30%{transform:rotate(-14deg)}70%{transform:rotate(14deg)}}
 .preview-overlay p{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:.85rem;color:rgba(255,255,255,0.7);letter-spacing:1px}
 
 /* BUTTONS */
@@ -269,9 +271,9 @@ footer a{color:rgba(201,168,76,0.4);text-decoration:none}
           <source srcset="img/nic.avif" type="image/avif">
           <img src="img/nic.jpg" alt="Exclusive content preview" width="440" height="440" loading="lazy">
         </picture>
-        <div class="preview-overlay">
-          <div class="lock">&#128274;</div>
-          <p>SUBSCRIBE TO UNLOCK FULL GALLERY</p>
+        <div class="preview-overlay" id="secret-lock">
+          <div class="lock" id="secret-lock-icon">&#128274;</div>
+          <p id="secret-lock-text">SUBSCRIBE TO UNLOCK FULL GALLERY</p>
         </div>
       </div>
       <div class="shot-note">Subscriber content &middot; blurred for preview</div>
@@ -546,6 +548,27 @@ window.addEventListener('scroll', () => {
   sticky.classList.toggle('show', on);
   document.body.classList.toggle('bar', on);
 }, { passive: true });
+
+// ===== SECRET DOOR =====
+// Tap the padlock on the blurred preview five times, quickly, and it opens
+// straight into NicAttack: the same one-tab ticket a 95% Pin the Nip writes.
+// For Nic, who has already earned it once (Paul, 18 Oct 2026).
+(() => {
+  const door = document.getElementById('secret-lock');
+  const icon = document.getElementById('secret-lock-icon');
+  let taps = [];
+  door.addEventListener('click', () => {
+    const now = Date.now();
+    taps = taps.filter(t => now - t < 2500).concat(now);
+    icon.classList.remove('wobble'); void icon.offsetWidth; icon.classList.add('wobble');
+    if (taps.length < 5) return;
+    taps = [];
+    try { sessionStorage.setItem('nicattack.ticket', '1'); } catch (e) {}
+    icon.innerHTML = '&#128275;';
+    document.getElementById('secret-lock-text').textContent = 'WELCOME BACK, NIC. SOMETHING IS FALLING ON LONDON...';
+    setTimeout(() => { location.href = 'nicattack.html'; }, 1200);
+  });
+})();
 </script>
 </body>
 </html>
