@@ -3,6 +3,7 @@
 <head>
 <meta name="robots" content="noindex, nofollow">
 <meta charset="UTF-8">
+<script src="i18n.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Pin the Nipple on the Nic - nicsfivenips.com</title>
 <style>
@@ -479,6 +480,9 @@ function judge() {
   setTimeout(() => showResults(res), 800);
 }
 
+// The language switcher (i18n.js) translates strings this page builds itself.
+const T = s => (window.i18n ? window.i18n.t(s) : s);
+
 function showResults({ score, rows }) {
   const stars = score >= 90 ? 5 : score >= 75 ? 4 : score >= 55 ? 3 : score >= 35 ? 2 : 1;
   document.getElementById('result-stars').textContent = '⭐'.repeat(stars);
@@ -491,8 +495,8 @@ function showResults({ score, rows }) {
     [35, "You have invented a new person. He is fine, but he is not Nic."],
     [0,  "Were you even looking at the same torso? Nic is disappointed."],
   ];
-  let msg = msgs.find(m => score >= m[0])[1];
-  if (perfect) msg += ' ' + perfect + (perfect === 1 ? ' nip was' : ' nips were') + ' dead on.';
+  let msg = T(msgs.find(m => score >= m[0])[1]);
+  if (perfect) msg += ' ' + T(perfect + (perfect === 1 ? ' nip was' : ' nips were') + ' dead on.');
 
   document.getElementById('final-score').textContent = score + '%';
   document.getElementById('result-msg').textContent = msg;
@@ -500,8 +504,8 @@ function showResults({ score, rows }) {
   document.getElementById('breakdown').innerHTML = rows.map(r => `
     <div class="bd-row ${r.band}">
       <span class="chip"><img src="${r.nip.img}" alt=""></span>
-      <span class="nm">${r.nip.id}. ${r.nip.name}</span>
-      <span class="ds">${r.dist <= PERFECT ? 'spot on' : r.dist.toFixed(1) + '% out'}</span>
+      <span class="nm">${r.nip.id}. ${T(r.nip.name)}</span>
+      <span class="ds">${r.dist <= PERFECT ? T('spot on') : r.dist.toFixed(1) + T('% out')}</span>
       <span class="pt">${r.pts}</span>
     </div>
   `).join('');

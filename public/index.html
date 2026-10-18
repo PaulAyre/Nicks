@@ -3,6 +3,7 @@
 <head>
 <meta name="robots" content="noindex, nofollow">
 <meta charset="UTF-8">
+<script src="i18n.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nic's 5 Nips - The Internet's Most Exclusive Anatomical Experience</title>
 <meta name="description" content="5 Nipples. 1 Legend. Unlimited Wonder. Join 15,000+ subscribers experiencing the phenomenon.">
@@ -523,6 +524,17 @@ for (let i = 0; i < 6; i++) {
   chatEl.appendChild(div);
 }
 setTimeout(addChatMessage, 2000);
+
+// The red bar wraps to two lines on phones (and is taller in Khmer), so the
+// nav sits wherever the bar actually ends rather than at a fixed 34px.
+function seatNav() {
+  const h = document.querySelector('.urgency').offsetHeight;
+  document.querySelector('body > nav').style.top = h + 'px';
+  document.body.style.paddingTop = h + 'px';
+}
+seatNav();
+window.addEventListener('resize', seatNav);
+window.addEventListener('i18n-ready', () => requestAnimationFrame(seatNav));
 
 // ===== HARD SELL =====
 // A countdown that never reaches zero, because the offer never actually ends.

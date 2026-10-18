@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script src="i18n.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>NicAttack LDN</title>
@@ -50,6 +51,7 @@ p b{color:#ffd23f;font-weight:400}
 .entry .btn{min-width:0}
 .entry[hidden]{display:none}
 .fine{font-size:7px;color:#6b62a3;line-height:1.9;max-width:300px}
+body.playing .i18n-bar{display:none}
 </style>
 </head>
 <body>
@@ -1419,7 +1421,10 @@ function draw() {
 
 // ===================== LOOP / SCREENS =====================
 const $ = id => document.getElementById(id);
-function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('show', s.id === id)); }
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('show', s.id === id));
+  document.body.classList.toggle('playing', !id); // the language flags step aside mid-game
+}
 
 function loop(t) {
   const dt = Math.min(.05, (t - last) / 1000 || 0); last = t;

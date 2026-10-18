@@ -3,6 +3,7 @@
 <head>
 <meta name="robots" content="noindex, nofollow">
 <meta charset="UTF-8">
+<script src="i18n.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stories - Nic's 5 Nips</title>
 <style>
@@ -304,9 +305,14 @@ const stories = [
   }
 ];
 
+// The language switcher (i18n.js) translates strings this page builds itself.
+const T = s => (window.i18n ? window.i18n.t(s) : s);
+
 // Render list view
 const listView = document.getElementById('list-view');
 const articleView = document.getElementById('article-view');
+
+window.addEventListener('i18n-ready', () => { if (!listView.classList.contains('hide')) renderList(); });
 
 function renderList() {
   listView.innerHTML = stories.map((s, i) => `
@@ -316,7 +322,7 @@ function renderList() {
         <div class="card-tag">${s.tag}</div>
         <div class="card-title">${s.title}</div>
         <div class="card-excerpt">${s.excerpt}</div>
-        <div class="card-meta">${s.date} &middot; ${s.author} &middot; ${s.views} views</div>
+        <div class="card-meta">${s.date} &middot; ${s.author} &middot; ${s.views} ${T('views')}</div>
       </div>
     </div>
   `).join('');
@@ -335,10 +341,10 @@ function openArticle(idx) {
     <button class="back-btn" id="back-btn">&larr; BACK TO STORIES</button>
     <div class="article-tag">${s.tag}</div>
     <h1 class="article-title">${s.title}</h1>
-    <div class="article-meta">By ${s.author} &middot; ${s.date} &middot; ${liveViews.toLocaleString()} views</div>
+    <div class="article-meta">${T('By')} ${s.author} &middot; ${s.date} &middot; ${liveViews.toLocaleString()} ${T('views')}</div>
     <div class="article-body">${s.body}</div>
     <div class="share-row">
-      <span><span class="views">${liveViews.toLocaleString()}</span> views</span>
+      <span><span class="views">${liveViews.toLocaleString()}</span> ${T('views')}</span>
       <span style="font-size:.75rem;color:var(--gold);cursor:pointer" id="share-article">Share this story</span>
     </div>
     <div class="related">
@@ -378,7 +384,7 @@ function getRelated(currentIdx) {
       <div class="card-body">
         <div class="card-tag">${s.tag}</div>
         <div class="card-title">${s.title}</div>
-        <div class="card-meta">${s.date} &middot; ${s.views} views</div>
+        <div class="card-meta">${s.date} &middot; ${s.views} ${T('views')}</div>
       </div>
     </div>`;
   }).join('');
