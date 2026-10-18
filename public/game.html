@@ -189,8 +189,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,10,0.9
   <div class="results-detail" id="result-msg"></div>
   <div class="breakdown" id="breakdown"></div>
   <div class="unlock" id="unlock">
-    <div class="unlock-flash">PERFECT RECONSTRUCTION</div>
-    <p>Nic is whole again. All five, dead on. Something is falling on London...</p>
+    <div class="unlock-flash" id="unlock-flash">PERFECT RECONSTRUCTION</div>
+    <p id="unlock-note">Nic is whole again. All five, dead on. Something is falling on London...</p>
     <a class="btn btn-arcade" href="nicattack.html">&#9654; PLAY NICATTACK LDN</a>
   </div>
   <div class="results-btns">
@@ -218,6 +218,7 @@ const NIPS = [
   { id: 4, name: "The School Nurse Special", img: "img/nip-4.png", size: 10.33, x: 72.67, y: 52.33 },
   { id: 5, name: "The Wildcard",             img: "img/nip-5.png", size: 12.33, x: 47.08, y: 69.83 },
 ];
+const UNLOCK_AT = 95; // a score this high or better opens NicAttack
 const PERFECT = 3;    // within this many % of the board = full marks
 const ZERO_AT = 25;   // this far out = nothing
 const DRAG_SLOP = 6;  // px of movement before a tap becomes a drag
@@ -506,12 +507,19 @@ function showResults({ score, rows }) {
 
   buildLeaderboard('results-lb', score);
   results.classList.add('show');
-  document.getElementById('unlock').classList.toggle('show', score === 100);
-  if (score === 100) perfectUnlock();
+  const unlocked = score >= UNLOCK_AT;
+  if (unlocked) {
+    document.getElementById('unlock-flash').textContent = score === 100 ? 'PERFECT RECONSTRUCTION' : 'NEAR-PERFECT RECONSTRUCTION';
+    document.getElementById('unlock-note').textContent = score === 100
+      ? 'Nic is whole again. All five, dead on. Something is falling on London...'
+      : 'Nic is whole again. Close enough. Something is falling on London...';
+  }
+  document.getElementById('unlock').classList.toggle('show', unlocked);
+  if (unlocked) perfectUnlock();
 }
 
-// === 100% EASTER EGG ===
-// A perfect Nic writes a one-tab ticket that nicattack.html checks on entry.
+// === 95%+ EASTER EGG ===
+// A (near) perfect Nic writes a one-tab ticket that nicattack.html checks on entry.
 // The arcade game spends it when a run ends, so every go starts back here.
 function perfectUnlock() {
   try { sessionStorage.setItem('nicattack.ticket', '1'); } catch (e) {}
